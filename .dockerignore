@@ -1,0 +1,11 @@
+dist
+node_modules
+.vscode
+bun.lock
+*.env
+README.md
+nodemon.json
+docker-compose.yml
+Dockerfile
+.gitignore
+package-lock.json

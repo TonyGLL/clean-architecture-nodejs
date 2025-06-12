@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: postgres_ca_nodejs
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ca_nodejs
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ca_nodejs_network
+
+  app_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CONFIG_FILE: dev.env
+    image: ca_nodejs:0.0.1
+    container_name: ca_nodejs
+    ports:
+      - '3000:3000'
+    environment:
+      - CONFIG_FILE=dev.env
+      - DB_SOURCE=postgresql://root:secret@postgres_ca_nodejs:5432/ca_nodejs?sslmode=disable
+    depends_on:
+      - db
+    networks:
+      - ca_nodejs_network
+
+networks:
+  ca_nodejs_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

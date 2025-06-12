@@ -1,4 +1,4 @@
-import express, { type Application } from "express";
+import express, { Request, Response, type Application } from "express";
 import mainRouter from "../infraestructure/http/routes";
 import morgan from "morgan";
 import cors from "cors";
@@ -20,6 +20,7 @@ class App {
     }
 
     private routes(): void {
+        this.express.use('/health', (_: Request, res: Response) => { res.status(200).json({ ok: true }) });
         this.express.use('/api/v1', mainRouter);
     }
 }
