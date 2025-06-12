@@ -1,0 +1,32 @@
+{
+  "name": "clean-architecture-nodejs",
+  "version": "0.0.0",
+  "license": "ISC",
+  "main": "server.ts",
+  "author": "Tony Gonzalez",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun tsc",
+    "dev": "nodemon"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/morgan": "^1.9.10",
+    "@types/pg": "^8.15.4",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0",
+    "pg": "^8.16.0"
+  }
+}
