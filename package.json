@@ -5,9 +5,8 @@
   "main": "server.ts",
   "author": "Tony Gonzalez",
   "private": true,
-  "type": "module",
   "scripts": {
-    "build": "bun tsc",
+    "build": "tsc",
     "dev": "nodemon"
   },
   "devDependencies": {
@@ -22,11 +21,15 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
+    "inversify": "^7.5.2",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "reflect-metadata": "^0.2.2"
   }
 }

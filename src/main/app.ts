@@ -1,4 +1,7 @@
 import express, { type Application } from "express";
+import mainRouter from "../infraestructure/http/routes";
+import morgan from "morgan";
+import cors from "cors";
 
 class App {
     public express: Application;
@@ -10,12 +13,14 @@ class App {
     }
 
     private middlewares(): void {
+        this.express.use(cors({ origin: '*' }));
         this.express.use(express.json());
         this.express.use(express.urlencoded({ extended: true }));
+        this.express.use(morgan('dev'));
     }
 
     private routes(): void {
-        this.express.use('/api/v1', () => { console.log('/api/v1') });
+        this.express.use('/api/v1', mainRouter);
     }
 }
 
