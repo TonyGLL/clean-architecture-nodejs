@@ -2,6 +2,7 @@ import express, { Request, Response, type Application } from "express";
 import mainRouter from "../infraestructure/http/routes";
 import morgan from "morgan";
 import cors from "cors";
+import helmet from "helmet";
 
 class App {
     public express: Application;
@@ -17,6 +18,7 @@ class App {
         this.express.use(express.json());
         this.express.use(express.urlencoded({ extended: true }));
         this.express.use(morgan('dev'));
+        this.express.use(helmet());
     }
 
     private routes(): void {
