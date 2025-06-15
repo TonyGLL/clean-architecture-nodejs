@@ -5,6 +5,8 @@ import { TYPES } from "../../../infraestructure/ioc/types";
 import { IUserRepository } from "../../../domain/repositories/user.repository";
 import { IHashingService } from "../../../domain/services/hashing.service";
 import { IJwtService } from "../../services/jwt.service";
+import { HttpError } from "../../../domain/errors/http.error";
+import { HttpStatusCode } from "../../shared/http.status";
 
 @injectable()
 export class LoginUseCase {
@@ -16,14 +18,14 @@ export class LoginUseCase {
 
     public async execute(dto: LoginUserDTO): Promise<[number, AuthResponseDTO | object]> {
         const user = await this.userRepository.findByEmail(dto.email);
-        if (!user || !user.password) throw new Error();
+        if (!user || !user.password) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
 
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
-        if (!isPasswordValid) return [400, { error: 'Bad credentials' }];
+        if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
         const token = this.jwtService.generateToken({ id: user.id });
 
         delete user.password;
-        return [200, { user, token }];
+        return [HttpStatusCode.OK, { user, token }];
     }
 }

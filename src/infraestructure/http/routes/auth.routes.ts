@@ -8,7 +8,6 @@ const router = Router();
 const controller = container.get<AuthController>(AuthController);
 
 router.post('/login', loginValidator, expressValidatorErrors, controller.login);
-
-router.post('/register', registerValidator, expressValidatorErrors, (_: Request, res: Response) => { res.status(200).json({ message: 'POST from auth/register' }) });
+router.post('/register', registerValidator, expressValidatorErrors, controller.register);
 
 export default router;

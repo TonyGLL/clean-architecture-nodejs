@@ -3,6 +3,8 @@ import { IUserRepository } from "../../../domain/repositories/user.repository";
 import { User } from "../../../domain/entities/user";
 import { TYPES } from "../../ioc/types";
 import { Pool } from "pg";
+import { HttpError } from "../../../domain/errors/http.error";
+import { HttpStatusCode } from "../../../application/shared/http.status";
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {
@@ -18,11 +20,33 @@ export class PostgresUserRepository implements IUserRepository {
         const res = await this.pool.query(query);
         if (!res.rows.length) return null;
 
-        const { id, name, password } = res.rows[0];
-        return new User(id, name, email, password);
+        const { id, name, last_name, role, age, phone } = res.rows[0];
+        return new User(id, name, last_name, email, role, age, phone);
     }
 
-    public async save(user: Omit<User, "id">): Promise<User> {
-        throw new Error("Method not implemented.");
+    public async saveUser(user: Omit<User, "id">): Promise<User | null> {
+        const query = {
+            text: "INSERT INTO users u (name, last_name, email, role, age, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            values: [user.name, user.last_name, user.email, user.role, user.age, user.phone]
+        }
+        const res = await this.pool.query(query);
+        if (!res.rows.length) return null;
+
+        const { id, name, last_name, email, role, age, phone } = res.rows[0];
+        return new User(id, name, last_name, email, role, age, phone);
+    }
+
+    public async saveUserPassword(userId: number, password: string): Promise<void> {
+        try {
+            const query = {
+                text: "INSERT INTO password p (value) VALUES ($2) WHERE p.user_id = $1",
+                values: [userId, password]
+            }
+            await this.pool.query(query);
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, error.message);
+            }
+        }
     }
 }
