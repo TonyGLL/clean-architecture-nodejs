@@ -34,7 +34,7 @@ export class AuthUseCase {
         const existUser = await this.userRepository.findByEmail(dto.email);
         if (existUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'User already exist.');
 
-        const user = new User(null, dto.name, dto.lastName, dto.email, dto.role, dto.age, dto.phone);
+        const user = new User(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
 
         const newUser = await this.userRepository.saveUser(user);
         if (!newUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Db dont exist id.');

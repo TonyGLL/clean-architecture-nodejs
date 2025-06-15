@@ -26,8 +26,8 @@ export class PostgresUserRepository implements IUserRepository {
 
     public async saveUser(user: Omit<User, "id">): Promise<User | null> {
         const query = {
-            text: "INSERT INTO users u (name, last_name, email, role, age, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-            values: [user.name, user.last_name, user.email, user.role, user.age, user.phone]
+            text: "INSERT INTO users u (name, last_name, email, birth_date, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            values: [user.name, user.last_name, user.email, user.birth_date, user.phone]
         }
         const res = await this.pool.query(query);
         if (!res.rows.length) return null;

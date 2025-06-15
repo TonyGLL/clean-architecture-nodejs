@@ -8,7 +8,6 @@ export interface RegisterUserDTO {
     lastName: string;
     email: string;
     password: string;
-    role: number;
-    age?: number;
+    birth_date?: Date;
     phone?: string;
 }
