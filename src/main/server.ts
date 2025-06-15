@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import app from './app';
-import { config } from '../infraestructure/config/env';
+import { config } from '@infraestructure/config/env';
 
 const PORT = config.PORT;
 

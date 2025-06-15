@@ -5,17 +5,17 @@ import { TYPES } from './types';
 import pool from '../database/postgres/config';
 
 //* Repos
-import { IUserRepository } from './../../domain/repositories/user.repository';
+import { IUserRepository } from '@domain/repositories/user.repository';
 import { PostgresUserRepository } from '../database/postgres/postgres.user.repository';
 
 //* Services
-import { IHashingService } from './../../domain/services/hashing.service';
-import { IJwtService } from '../../application/services/jwt.service';
+import { IHashingService } from '@domain/services/hashing.service';
+import { IJwtService } from '@application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
 
 //* Use Cases
-import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
-import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
+import { LoginUseCase } from '@application/use-cases/auth/login.use-case';
+import { RegisterUseCase } from '@application/use-cases/auth/register.use-case';
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';

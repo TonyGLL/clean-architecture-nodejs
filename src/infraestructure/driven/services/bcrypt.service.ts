@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { IHashingService } from "../../../domain/services/hashing.service";
+import { IHashingService } from "@domain/services/hashing.service";
 import { compare, hash } from "bcryptjs";
 
 @injectable()

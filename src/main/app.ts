@@ -1,9 +1,9 @@
 import express, { Request, Response, type Application } from "express";
-import mainRouter from "../infraestructure/http/routes";
+import mainRouter from "@infraestructure/http/routes";
 import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
-import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
+import { errorHandler } from "@infraestructure/http/middlewares/error.handler";
 
 class App {
     public express: Application;

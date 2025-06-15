@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 import { AuthResponseDTO } from "../../dtos/auth.response.dto";
 import { LoginUserDTO } from "../../dtos/auth.dto";
-import { TYPES } from "../../../infraestructure/ioc/types";
-import { IUserRepository } from "../../../domain/repositories/user.repository";
-import { IHashingService } from "../../../domain/services/hashing.service";
+import { TYPES } from "@infraestructure/ioc/types";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { IHashingService } from "@domain/services/hashing.service";
 import { IJwtService } from "../../services/jwt.service";
-import { HttpError } from "../../../domain/errors/http.error";
+import { HttpError } from "@domain/errors/http.error";
 import { HttpStatusCode } from "../../shared/http.status";
 
 @injectable()
