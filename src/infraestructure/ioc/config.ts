@@ -14,8 +14,7 @@ import { IJwtService } from '../../application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
 
 //* Use Cases
-import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
-import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
+import { AuthUseCase } from '../../application/use-cases/auth.use-case';
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';
@@ -34,8 +33,7 @@ container.bind<IHashingService>(TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(TYPES.IJwtService).to(JwtService);
 
 //* Use Cases (Concrete classes)
-container.bind<RegisterUseCase>(RegisterUseCase).toSelf();
-container.bind<LoginUseCase>(LoginUseCase).toSelf();
+container.bind<AuthUseCase>(AuthUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthController>(AuthController).toSelf();
