@@ -25,4 +25,14 @@ export class AuthController {
             next(error);
         }
     }
+
+    public restorePassword = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { email } = req.body;
+            const [status, data] = await this.authUseCase.executeRestorePassword(email);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
 }

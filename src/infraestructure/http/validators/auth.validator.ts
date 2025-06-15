@@ -17,3 +17,8 @@ export const registerValidator = [
     body('age').isInt().withMessage('Field `age` is invalid or missing'),
     body('phone').isString().withMessage('Field `phone` is invalid or missing')
 ];
+
+export const restorePasswordValidator = [
+    //* Required
+    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail()
+];

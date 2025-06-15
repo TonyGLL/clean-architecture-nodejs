@@ -46,4 +46,11 @@ export class AuthUseCase {
 
         return [HttpStatusCode.CREATED, { token, user }];
     }
+
+    public async executeRestorePassword(email: string): Promise<[number, object]> {
+        const existUser = await this.userRepository.findByEmail(email);
+        if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
+
+        return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
+    }
 }
