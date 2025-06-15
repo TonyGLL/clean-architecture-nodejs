@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 import { RegisterUserDTO } from "../../dtos/auth.dto";
-import { IUserRepository } from "@domain/repositories/user.repository";
-import { IHashingService } from "@domain/services/hashing.service";
-import { TYPES } from "@infraestructure/ioc/types";
+import { IUserRepository } from "../../../domain/repositories/user.repository";
+import { IHashingService } from "../../../domain/services/hashing.service";
+import { TYPES } from "../../../infraestructure/ioc/types";
 import { IJwtService } from "../../services/jwt.service";
 import { HttpStatusCode } from "../../shared/http.status";
-import { HttpError } from "@domain/errors/http.error";
-import { User } from "@domain/entities/user";
+import { HttpError } from "../../../domain/errors/http.error";
+import { User } from "../../../domain/entities/user";
 
 @injectable()
 export class RegisterUseCase {

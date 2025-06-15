@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { LoginUseCase } from "@application/use-cases/auth/login.use-case";
-import { RegisterUseCase } from "@application/use-cases/auth/register.use-case";
+import { LoginUseCase } from "../../../application/use-cases/auth/login.use-case";
+import { RegisterUseCase } from "../../../application/use-cases/auth/register.use-case";
 
 @injectable()
 export class AuthController {

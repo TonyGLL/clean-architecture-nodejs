@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
-import { HttpStatusCode } from "@application/shared/http.status";
+import { HttpStatusCode } from "../../../application/shared/http.status";
 
 export const expressValidatorErrors = (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);

@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { IJwtService } from "@application/services/jwt.service";
+import { IJwtService } from "../../../application/services/jwt.service";
 import { config } from "../../config/env";
 import { sign } from "jsonwebtoken";
 
