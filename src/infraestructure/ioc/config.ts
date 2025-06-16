@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import { Container } from 'inversify';
 import { Pool } from 'pg';
-import { TYPES } from './types';
+import { DOMAIN_TYPES } from '../../domain/ioc.types';
+import { APPLICATION_TYPES } from '../../application/ioc.types';
+import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
 //* Repos
@@ -23,14 +25,15 @@ import { BcryptService } from '../driven/services/bcrypt.service';
 const container = new Container();
 
 //* DB
-container.bind<Pool>(TYPES.PostgresPool).toConstantValue(pool);
+container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 
 //* Respositories (Inteface -> Implementation)
-container.bind<IUserRepository>(TYPES.IUserRepository).to(PostgresUserRepository);
+container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
 
 //* Services (Interface -> Implementation)
-container.bind<IHashingService>(TYPES.IHashingService).to(BcryptService);
-container.bind<IJwtService>(TYPES.IJwtService).to(JwtService);
+// Assuming BcryptService is the concrete implementation for IHashingService
+container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
+container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 
 //* Use Cases (Concrete classes)
 container.bind<AuthUseCase>(AuthUseCase).toSelf();
