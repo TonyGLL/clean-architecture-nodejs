@@ -1,20 +1,21 @@
 import { inject, injectable } from "inversify";
 import { AuthResponseDTO } from "../dtos/auth.response.dto";
 import { LoginUserDTO, RegisterUserDTO } from "../dtos/auth.dto";
-import { TYPES } from "../../infraestructure/ioc/types";
+import { DOMAIN_TYPES } from "../../domain/ioc.types";
+import { APPLICATION_TYPES } from "../ioc.types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IHashingService } from "../../domain/services/hashing.service";
 import { IJwtService } from "../services/jwt.service";
 import { HttpError } from "../../domain/errors/http.error";
-import { HttpStatusCode } from "../shared/http.status";
+import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
 
 @injectable()
 export class AuthUseCase {
     constructor(
-        @inject(TYPES.IUserRepository) private userRepository: IUserRepository,
-        @inject(TYPES.IHashingService) private hasingService: IHashingService,
-        @inject(TYPES.IJwtService) private jwtService: IJwtService
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
+        @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
     public async executeLogin(dto: LoginUserDTO): Promise<[number, AuthResponseDTO | object]> {

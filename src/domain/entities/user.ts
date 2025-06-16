@@ -1,4 +1,4 @@
-import { HttpStatusCode } from "../../application/shared/http.status";
+import { HttpStatusCode } from "../shared/http.status";
 import { HttpError } from "../errors/http.error";
 import { IHashingService } from "../services/hashing.service";
 
