@@ -6,7 +6,7 @@ import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IHashingService } from "../../domain/services/hashing.service";
 import { IJwtService } from "../services/jwt.service";
 import { HttpError } from "../../domain/errors/http.error";
-import { HttpStatusCode } from "../shared/http.status";
+import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
 
 @injectable()
