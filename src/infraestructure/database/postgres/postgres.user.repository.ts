@@ -4,7 +4,7 @@ import { User } from "../../../domain/entities/user";
 import { TYPES } from "../../ioc/types";
 import { Pool } from "pg";
 import { HttpError } from "../../../domain/errors/http.error";
-import { HttpStatusCode } from "../../../application/shared/http.status";
+import { HttpStatusCode } from "../../../domain/shared/http.status";
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {
