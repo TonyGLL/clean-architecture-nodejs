@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 import { AuthResponseDTO } from "../dtos/auth.response.dto";
-import { LoginUserDTO, RegisterUserDTO } from "../dtos/auth.dto";
+import { LoginUserDTO, RegisterUserDTO, RestorePasswordDTO } from "../dtos/auth.dto";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { APPLICATION_TYPES } from "../ioc.types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
@@ -27,7 +27,7 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        const token = this.jwtService.generateToken({ id: user.id });
+        const token = this.jwtService.generateToken({ id: user.id }, '1h');
 
         delete user.password;
         return [HttpStatusCode.OK, { user, token }];
@@ -54,7 +54,7 @@ export class RegisterUseCase {
         await user.setPassword(dto.password, this.hasingService);
         await this.userRepository.saveUserPassword(userSaved.id!, user.password!);
 
-        const token = this.jwtService.generateToken({ id: userSaved.id });
+        const token = this.jwtService.generateToken({ id: userSaved.id }, '1h');
 
         const newUser = new User(userSaved.id, userSaved.name, userSaved.last_name, userSaved.email, userSaved.birth_date, userSaved.phone);
 
@@ -63,23 +63,43 @@ export class RegisterUseCase {
 }
 
 @injectable()
-export class RestorePasswordUseCase {
+export class SendEmailUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
-        @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService
+        @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
     public async execute(email: string): Promise<[number, object]> {
         const existUser = await this.userRepository.findByEmail(email);
         if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        const token = uuidv4(); // Generate token
-
-        // In a real application, you would save the token with user ID and expiry
-        // For example: await this.passwordResetRepository.createToken(existUser.id, token, expiryDate);
+        const token = this.jwtService.generateToken({ id: existUser.id }, '2m');
 
         await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
 
         return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
+    }
+}
+
+@injectable()
+export class RestorePasswordUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
+        @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
+    ) { }
+
+    public async execute(dto: RestorePasswordDTO): Promise<[number, object]> {
+        const existUser = await this.userRepository.findByEmail(dto.email);
+        if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
+
+        this.jwtService.validateToken(dto.token);
+
+        const password = await this.hashingService.hash(dto.password);
+
+        await this.userRepository.updatePassword(existUser.id, password);
+
+        return [HttpStatusCode.NO_CONTENT, {}];
     }
 }

@@ -1,7 +1,10 @@
 import { injectable } from "inversify";
 import { IJwtService } from "../../../application/services/jwt.service";
 import { config } from "../../config/env";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
+import { StringValue } from 'ms';
+import { HttpError } from "../../../domain/errors/http.error";
+import { HttpStatusCode } from "../../../domain/shared/http.status";
 
 @injectable()
 export class JwtService implements IJwtService {
@@ -11,7 +14,11 @@ export class JwtService implements IJwtService {
         if (!this.secret) throw new Error('Secret missing');
     }
 
-    public generateToken(payload: object): string {
-        return sign(payload, this.secret, { expiresIn: '1h' });
+    public generateToken(payload: object, expiresIn: StringValue): string {
+        return sign(payload, this.secret, { expiresIn });
+    }
+
+    public validateToken(token: string): void {
+        if (!verify(token, this.secret)) throw new HttpError(HttpStatusCode.UNAUTHORIZED, 'UNAUTHORIZED');
     }
 }

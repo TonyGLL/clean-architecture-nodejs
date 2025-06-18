@@ -11,3 +11,9 @@ export interface RegisterUserDTO {
     birth_date?: Date;
     phone?: string;
 }
+
+export interface RestorePasswordDTO {
+    email: string;
+    token: string;
+    password: string;
+}

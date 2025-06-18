@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 
 export const loginValidator = [
     //* Required
@@ -17,7 +17,13 @@ export const registerValidator = [
     body('phone').isString().withMessage('Field `phone` is invalid or missing')
 ];
 
-export const restorePasswordValidator = [
+export const sendEmailValidator = [
     //* Required
     body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail()
+];
+
+export const restorePasswordValidator = [
+    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail(),
+    param('token').notEmpty().isString().withMessage('Field `token` is invalid or missing'),
+    body('password').notEmpty().isString().withMessage('Field `password` is invalid or missing')
 ];

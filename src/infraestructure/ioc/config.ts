@@ -18,7 +18,7 @@ import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
 
 //* Use Cases
-import { LoginUseCase, RegisterUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
+import { LoginUseCase, RegisterUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';
@@ -41,6 +41,7 @@ container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 //* Use Cases (Concrete classes)
 container.bind<LoginUseCase>(LoginUseCase).toSelf();
 container.bind<RegisterUseCase>(RegisterUseCase).toSelf();
+container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
 container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
 
 //* Controllers (Concrete classes)
