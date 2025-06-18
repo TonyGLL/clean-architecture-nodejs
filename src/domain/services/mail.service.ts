@@ -1,3 +1,3 @@
 export interface IMailService {
-    sendRestorePasswordEmail(email: string): Promise<void>;
+    sendRestorePasswordEmail(email: string, token: string): Promise<void>;
 }
