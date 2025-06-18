@@ -37,15 +37,17 @@ export class AuthUseCase {
 
         const user = new User(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
 
-        const newUser = await this.userRepository.saveUser(user);
-        if (!newUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Db dont exist id.');
+        const userSaved = await this.userRepository.saveUser(user);
+        if (!userSaved) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Db dont exist id.');
 
         await user.setPassword(dto.password, this.hasingService);
-        await this.userRepository.saveUserPassword(newUser.id!, user.password!);
+        await this.userRepository.saveUserPassword(userSaved.id!, user.password!);
 
-        const token = this.jwtService.generateToken({ id: newUser.id });
+        const token = this.jwtService.generateToken({ id: userSaved.id });
 
-        return [HttpStatusCode.CREATED, { token, user }];
+        const newUser = new User(userSaved.id, userSaved.name, userSaved.last_name, userSaved.email, userSaved.birth_date, userSaved.phone);
+
+        return [HttpStatusCode.CREATED, { token, user: newUser }];
     }
 
     public async executeRestorePassword(email: string): Promise<[number, object]> {
