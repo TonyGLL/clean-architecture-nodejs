@@ -1,16 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { AuthUseCase } from "../../../application/use-cases/auth.use-case";
+import { LoginUseCase, RegisterUseCase, RestorePasswordUseCase } from "../../../application/use-cases/auth.use-case";
 
 @injectable()
 export class AuthController {
     constructor(
-        @inject(AuthUseCase) private authUseCase: AuthUseCase
+        @inject(LoginUseCase) private loginUseCase: LoginUseCase,
+        @inject(RegisterUseCase) private registerUseCase: RegisterUseCase,
+        @inject(RestorePasswordUseCase) private restorePasswordUseCase: RestorePasswordUseCase,
     ) { }
 
     public login = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const [status, data] = await this.authUseCase.executeLogin(req.body);
+            const [status, data] = await this.loginUseCase.execute(req.body);
             res.status(status).json(data);
         } catch (error) {
             next(error);
@@ -19,7 +21,7 @@ export class AuthController {
 
     public register = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const [status, data] = await this.authUseCase.executeRegister(req.body);
+            const [status, data] = await this.registerUseCase.execute(req.body);
             res.status(status).json(data);
         } catch (error) {
             next(error);
@@ -29,7 +31,7 @@ export class AuthController {
     public restorePassword = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email } = req.body;
-            const [status, data] = await this.authUseCase.executeRestorePassword(email);
+            const [status, data] = await this.restorePasswordUseCase.execute(email);
             res.status(status).json(data);
         } catch (error) {
             next(error);

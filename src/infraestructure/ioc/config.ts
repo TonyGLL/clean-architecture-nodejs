@@ -14,9 +14,11 @@ import { PostgresUserRepository } from '../database/postgres/postgres.user.repos
 import { IHashingService } from './../../domain/services/hashing.service';
 import { IJwtService } from '../../application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
+import { IMailService } from '../../domain/services/mail.service';
+import { NodeMailerService } from '../driven/services/node-mailer.service';
 
 //* Use Cases
-import { AuthUseCase } from '../../application/use-cases/auth.use-case';
+import { LoginUseCase, RegisterUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';
@@ -34,9 +36,12 @@ container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRep
 // Assuming BcryptService is the concrete implementation for IHashingService
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
+container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 
 //* Use Cases (Concrete classes)
-container.bind<AuthUseCase>(AuthUseCase).toSelf();
+container.bind<LoginUseCase>(LoginUseCase).toSelf();
+container.bind<RegisterUseCase>(RegisterUseCase).toSelf();
+container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthController>(AuthController).toSelf();

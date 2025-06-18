@@ -9,16 +9,17 @@ import { IJwtService } from "../services/jwt.service";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
+import { IMailService } from "../../domain/services/mail.service";
 
 @injectable()
-export class AuthUseCase {
+export class LoginUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
-    public async executeLogin(dto: LoginUserDTO): Promise<[number, AuthResponseDTO | object]> {
+    public async execute(dto: LoginUserDTO): Promise<[number, AuthResponseDTO | object]> {
         const user = await this.userRepository.findByEmail(dto.email);
         if (!user || !user.password) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
 
@@ -30,8 +31,17 @@ export class AuthUseCase {
         delete user.password;
         return [HttpStatusCode.OK, { user, token }];
     }
+}
 
-    public async executeRegister(dto: RegisterUserDTO): Promise<[number, object]> {
+@injectable()
+export class RegisterUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
+        @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
+    ) { }
+
+    public async execute(dto: RegisterUserDTO): Promise<[number, object]> {
         const existUser = await this.userRepository.findByEmail(dto.email);
         if (existUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'User already exist.');
 
@@ -49,10 +59,20 @@ export class AuthUseCase {
 
         return [HttpStatusCode.CREATED, { token, user: newUser }];
     }
+}
 
-    public async executeRestorePassword(email: string): Promise<[number, object]> {
+@injectable()
+export class RestorePasswordUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
+        @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService
+    ) { }
+
+    public async execute(email: string): Promise<[number, object]> {
         const existUser = await this.userRepository.findByEmail(email);
         if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
+
+        await this.mailService.sendRestorePasswordEmail(email);
 
         return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
     }
