@@ -10,6 +10,7 @@ import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
 import { IMailService } from "../../domain/services/mail.service";
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
 
 @injectable()
 export class LoginUseCase {
@@ -72,7 +73,12 @@ export class RestorePasswordUseCase {
         const existUser = await this.userRepository.findByEmail(email);
         if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        await this.mailService.sendRestorePasswordEmail(email);
+        const token = uuidv4(); // Generate token
+
+        // In a real application, you would save the token with user ID and expiry
+        // For example: await this.passwordResetRepository.createToken(existUser.id, token, expiryDate);
+
+        await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
 
         return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
     }
