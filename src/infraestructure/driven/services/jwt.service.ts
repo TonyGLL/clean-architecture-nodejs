@@ -18,7 +18,20 @@ export class JwtService implements IJwtService {
         return sign(payload, this.secret, { expiresIn });
     }
 
-    public validateToken(token: string): void {
-        if (!verify(token, this.secret)) throw new HttpError(HttpStatusCode.UNAUTHORIZED, 'UNAUTHORIZED');
+    public validateToken(token: string): any {
+        try {
+            const decoded = verify(token, this.secret);
+            return decoded;
+        } catch (error: any) {
+            // Log error for server-side debugging: console.error("JWT Validation Error:", error.message);
+            if (error.name === "TokenExpiredError") {
+                throw new HttpError(HttpStatusCode.FORBIDDEN, "Token expired.");
+            }
+            if (error.name === "JsonWebTokenError") {
+                throw new HttpError(HttpStatusCode.FORBIDDEN, "Invalid token.");
+            }
+            // Fallback for other errors
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, "Could not process token.");
+        }
     }
 }

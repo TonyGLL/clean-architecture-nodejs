@@ -1,3 +1,4 @@
+import { Role } from './role';
 import { HttpStatusCode } from "../shared/http.status";
 import { HttpError } from "../errors/http.error";
 import { IHashingService } from "../services/hashing.service";
@@ -12,7 +13,8 @@ export class User {
         public phone?: string,
         public password?: string,
         public readonly created_at?: Date,
-        public readonly updated_at?: Date
+        public readonly updated_at?: Date,
+        public roles?: Role[]
     ) { }
 
     public async setPassword(password: string, hashingService: IHashingService): Promise<void> {
