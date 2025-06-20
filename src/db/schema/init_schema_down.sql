@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS user_roles;
+
 -- Eliminar tablas si existen (para pruebas)
 DROP TABLE IF EXISTS user_permissions;
 DROP TABLE IF EXISTS passwords;

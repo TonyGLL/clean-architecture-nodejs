@@ -6,9 +6,11 @@ import { APPLICATION_TYPES } from "../ioc.types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { IHashingService } from "../../domain/services/hashing.service";
 import { IJwtService } from "../services/jwt.service";
+import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
+import { Role } from "../../domain/entities/role";
 import { IMailService } from "../../domain/services/mail.service";
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
 
@@ -17,7 +19,8 @@ export class LoginUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
-        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
+        @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository
     ) { }
 
     public async execute(dto: LoginUserDTO): Promise<[number, AuthResponseDTO | object]> {
@@ -27,9 +30,13 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
+        if (!user.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'User ID missing after findByEmail');
+        const roles = await this.userRoleRepository.findRolesByUserId(user.id as unknown as string); // Assuming id is string for UUID
+
         const token = this.jwtService.generateToken({ id: user.id }, '1h');
 
         delete user.password;
+        user.roles = roles;
         return [HttpStatusCode.OK, { user, token }];
     }
 }
@@ -39,7 +46,8 @@ export class RegisterUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
-        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
+        @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository
     ) { }
 
     public async execute(dto: RegisterUserDTO): Promise<[number, object]> {
@@ -57,6 +65,9 @@ export class RegisterUseCase {
         const token = this.jwtService.generateToken({ id: userSaved.id }, '1h');
 
         const newUser = new User(userSaved.id, userSaved.name, userSaved.last_name, userSaved.email, userSaved.birth_date, userSaved.phone);
+        if (!userSaved.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Saved User ID missing');
+        const savedUserRoles = await this.userRoleRepository.findRolesByUserId(userSaved.id as unknown as string); // Assuming id is string for UUID
+        newUser.roles = savedUserRoles;
 
         return [HttpStatusCode.CREATED, { token, user: newUser }];
     }
