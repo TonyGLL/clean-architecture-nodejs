@@ -4,6 +4,8 @@ import { Role } from '../../../../domain/entities/role';
 import { IRoleRepository } from '../../../../domain/repositories/role.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { GetRolesDTO } from '../../../../application/dtos/role.dto';
+import { HttpError } from '../../../../domain/errors/http.error';
+import { HttpStatusCode } from '../../../../domain/shared/http.status';
 
 @injectable()
 export class PostegresRoleRepository implements IRoleRepository {
@@ -12,8 +14,14 @@ export class PostegresRoleRepository implements IRoleRepository {
     ) { }
 
     public async getRoles(filters: GetRolesDTO): Promise<Role[]> {
+        const query = {
+            text: '',
+            values: [filters.page, filters.page, filters.search]
+        }
+        const results = await this.pool.query(query);
+        if (!results.rows.length) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
 
-        throw new Error('Method not implemented.');
+        return results.rows;
     }
 
     async createRole(role: Role): Promise<Role> {
