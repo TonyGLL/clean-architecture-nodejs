@@ -146,7 +146,8 @@ CREATE INDEX idx_role_permissions_role ON role_permissions(role_id);
 INSERT INTO resources (name, description) VALUES
 ('users', 'Gestión de usuarios del sistema'),
 ('products', 'Catálogo de productos'),
-('orders', 'Gestión de pedidos');
+('orders', 'Gestión de pedidos'),
+('roles', 'Gestión de roles');
 
 -- Insertar acciones disponibles
 INSERT INTO actions (name, description) VALUES

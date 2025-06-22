@@ -1,6 +1,5 @@
 import { inject, injectable } from "inversify";
-import { AuthResponseDTO } from "../dtos/auth.response.dto";
-import { LoginUserDTO, RegisterUserDTO, RestorePasswordDTO } from "../dtos/auth.dto";
+import { AuthResponseDTO, LoginUserDTO, RegisterUserDTO, RestorePasswordDTO } from "../dtos/auth.dto";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { APPLICATION_TYPES } from "../ioc.types";
 import { IUserRepository } from "../../domain/repositories/user.repository";
@@ -10,9 +9,7 @@ import { IUserRoleRepository } from "../../domain/repositories/userRole.reposito
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
-import { Role } from "../../domain/entities/role";
 import { IMailService } from "../../domain/services/mail.service";
-import { v4 as uuidv4 } from 'uuid'; // Import uuid
 
 @injectable()
 export class LoginUseCase {

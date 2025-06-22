@@ -6,8 +6,10 @@ import { IUserRoleRepository } from '../../../../domain/repositories/userRole.re
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 
 @injectable()
-export class PgUserRoleRepository implements IUserRoleRepository {
-    constructor(@inject(INFRASTRUCTURE_TYPES.Pool) private pool: Pool) { }
+export class PostgresUserRoleRepository implements IUserRoleRepository {
+    constructor(
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
 
     async assignRoleToUser(userRole: UserRole): Promise<UserRole> {
         const query = 'INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) RETURNING user_id, role_id';
