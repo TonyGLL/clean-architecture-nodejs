@@ -1,3 +1,5 @@
+import { User } from "../../domain/entities/user";
+
 export interface LoginUserDTO {
     email: string;
     password: string;
@@ -16,4 +18,9 @@ export interface RestorePasswordDTO {
     email: string;
     token: string;
     password: string;
+}
+
+export type AuthResponseDTO = {
+    user: Omit<User, 'password'>;
+    token: string;
 }

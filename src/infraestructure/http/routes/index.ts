@@ -4,7 +4,9 @@ import roleRoutes from './role.routes';
 
 const mainRouter = Router();
 
-mainRouter.use('/auth', authRouter);
-mainRouter.use('/management', roleRoutes); // Grouping role routes under /management
+mainRouter
+    .use('/auth', authRouter)
+    .use('/roles', roleRoutes)
+    ;
 
 export default mainRouter;

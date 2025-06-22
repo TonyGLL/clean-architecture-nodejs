@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
-import { IUserRepository } from "../../../domain/repositories/user.repository";
-import { User } from "../../../domain/entities/user";
+import { IUserRepository } from "../../../../domain/repositories/user.repository";
+import { User } from "../../../../domain/entities/user";
 import { Pool } from "pg";
-import { HttpError } from "../../../domain/errors/http.error";
-import { HttpStatusCode } from "../../../domain/shared/http.status";
-import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
+import { HttpError } from "../../../../domain/errors/http.error";
+import { HttpStatusCode } from "../../../../domain/shared/http.status";
+import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {

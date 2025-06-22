@@ -7,9 +7,11 @@ import { AuthController } from "../controllers/auth.ctrl";
 const router = Router();
 const controller = container.get<AuthController>(AuthController);
 
-router.post('/login', loginValidator, expressValidatorErrors, controller.login);
-router.post('/register', registerValidator, expressValidatorErrors, controller.register);
-router.post('/send-email', sendEmailValidator, expressValidatorErrors, controller.sendEmail);
-router.post('/restore-password', restorePasswordValidator, expressValidatorErrors, controller.restorePassword);
+router
+    .post('/login', loginValidator, expressValidatorErrors, controller.login)
+    .post('/register', registerValidator, expressValidatorErrors, controller.register)
+    .post('/send-email', sendEmailValidator, expressValidatorErrors, controller.sendEmail)
+    .post('/restore-password', restorePasswordValidator, expressValidatorErrors, controller.restorePassword)
+    ;
 
 export default router;

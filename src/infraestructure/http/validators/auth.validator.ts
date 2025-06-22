@@ -23,7 +23,8 @@ export const sendEmailValidator = [
 ];
 
 export const restorePasswordValidator = [
+    //* Required
+    param('token').notEmpty().isString().withMessage('Param `token` is invalid or missing'),
     body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail(),
-    param('token').notEmpty().isString().withMessage('Field `token` is invalid or missing'),
     body('password').notEmpty().isString().withMessage('Field `password` is invalid or missing')
 ];
