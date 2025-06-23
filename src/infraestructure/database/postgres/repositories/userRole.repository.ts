@@ -18,7 +18,7 @@ export class PostgresUserRoleRepository implements IUserRoleRepository {
         return new UserRole(result.rows[0].user_id, result.rows[0].role_id);
     }
 
-    async findRolesByUserId(userId: string): Promise<Role[]> {
+    /* async findRolesByUserId(userId: string): Promise<Role[]> {
         const query = `
             SELECT r.id, r.name
             FROM roles r
@@ -28,7 +28,7 @@ export class PostgresUserRoleRepository implements IUserRoleRepository {
         const values = [userId];
         const result = await this.pool.query(query, values);
         return result.rows.map(row => new Role(row.id, row.name));
-    }
+    } */
 
     async removeRoleFromUser(userId: string, roleId: string): Promise<void> { // Implementation for removeRoleFromUser
         const query = 'DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2';

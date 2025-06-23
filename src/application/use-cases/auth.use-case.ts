@@ -10,6 +10,8 @@ import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { User } from "../../domain/entities/user";
 import { IMailService } from "../../domain/services/mail.service";
+import { Pool } from "pg";
+import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 
 @injectable()
 export class LoginUseCase {
@@ -27,13 +29,10 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        if (!user.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'User ID missing after findByEmail');
-        const roles = await this.userRoleRepository.findRolesByUserId(user.id as unknown as string); // Assuming id is string for UUID
-
         const token = this.jwtService.generateToken({ id: user.id }, '1h');
 
         delete user.password;
-        user.roles = roles;
+
         return [HttpStatusCode.OK, { user, token }];
     }
 }
@@ -44,29 +43,42 @@ export class RegisterUseCase {
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
-        @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository
+        @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: RegisterUserDTO): Promise<[number, object]> {
-        const existUser = await this.userRepository.findByEmail(dto.email);
-        if (existUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'User already exist.');
+        const client = await this.pool.connect();
 
-        const user = new User(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
+        try {
+            await client.query('BEGIN');
 
-        const userSaved = await this.userRepository.saveUser(user);
-        if (!userSaved) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Db dont exist id.');
+            const existUser = await this.userRepository.findByEmail(dto.email);
+            if (existUser) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'User already exist.');
 
-        await user.setPassword(dto.password, this.hasingService);
-        await this.userRepository.saveUserPassword(userSaved.id!, user.password!);
+            const user = new User(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
 
-        const token = this.jwtService.generateToken({ id: userSaved.id }, '1h');
+            const userSaved = await this.userRepository.saveUser(user, client);
+            if (!userSaved) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Db dont exist id.');
 
-        const newUser = new User(userSaved.id, userSaved.name, userSaved.last_name, userSaved.email, userSaved.birth_date, userSaved.phone);
-        if (!userSaved.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Saved User ID missing');
-        const savedUserRoles = await this.userRoleRepository.findRolesByUserId(userSaved.id as unknown as string); // Assuming id is string for UUID
-        newUser.roles = savedUserRoles;
+            await user.setPassword(dto.password, this.hasingService);
+            await this.userRepository.saveUserPassword(userSaved.id!, user.password!, client);
 
-        return [HttpStatusCode.CREATED, { token, user: newUser }];
+            await client.query('COMMIT');
+
+            const token = this.jwtService.generateToken({ id: userSaved.id }, '1h');
+
+            const newUser = new User(userSaved.id, userSaved.name, userSaved.last_name, userSaved.email, userSaved.birth_date, userSaved.phone);
+            if (!userSaved.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Saved User ID missing');
+
+            return [HttpStatusCode.CREATED, { token, user: newUser }];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in CreateUser:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
+        }
     }
 }
 

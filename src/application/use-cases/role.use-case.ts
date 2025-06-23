@@ -4,6 +4,9 @@ import { IRoleRepository } from '../../domain/repositories/role.repository';
 import { Role } from '../../domain/entities/role';
 import { HttpStatusCode } from '../../domain/shared/http.status';
 import { CreateRoleDTO, GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO, RoleResponseDTO } from '../dtos/role.dto';
+import { HttpError } from '../../domain/errors/http.error';
+import { Pool } from 'pg';
+import { INFRASTRUCTURE_TYPES } from '../../infraestructure/ioc/types';
 
 @injectable()
 export class GetRolesUseCase {
@@ -32,12 +35,34 @@ export class GetPermissionsByRoleUseCase {
 @injectable()
 export class CreateRoleUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IRoleRepository) private roleRepository: IRoleRepository
+        @inject(DOMAIN_TYPES.IRoleRepository) private roleRepository: IRoleRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: CreateRoleDTO): Promise<[number, RoleResponseDTO]> {
-        const roleEntity = new Role(null, dto.name);
-        const newRole = await this.roleRepository.createRole(roleEntity);
-        return [HttpStatusCode.CREATED, { id: newRole.id, name: newRole.name }];
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const roleEntity = new Role(null, dto.name, dto.description, dto.permissions);
+            if (!roleEntity.permissions) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'missing permissions');
+
+            const newRole = await this.roleRepository.createRole(roleEntity, client);
+            if (!newRole.id) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'creation error');
+
+            await this.roleRepository.assignPermissionsToRole(newRole.id, roleEntity.permissions, client);
+
+            await client.query('COMMIT');
+
+            return [HttpStatusCode.CREATED, newRole];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in CreateRoleUseCase:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
+        }
+
     }
 }

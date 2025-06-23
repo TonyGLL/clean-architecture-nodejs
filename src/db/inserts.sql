@@ -15,7 +15,11 @@ INSERT INTO roles (name, description) VALUES
 -- 3. Asignar Permisos a los Roles para cada Módulo
 -- Administrador: todos los permisos en todos los módulos
 INSERT INTO role_permissions (role_id, module_id, can_read, can_write, can_update, can_delete) VALUES
-((SELECT id FROM roles WHERE name = 'SuperAdmin'), (SELECT id FROM modules WHERE name = 'users'), TRUE, TRUE, TRUE, TRUE),
+(
+    (SELECT id FROM roles WHERE name = 'SuperAdmin'),
+    (SELECT id FROM modules WHERE name = 'users'),
+    TRUE, TRUE, TRUE, TRUE
+),
 ((SELECT id FROM roles WHERE name = 'SuperAdmin'), (SELECT id FROM modules WHERE name = 'roles'), TRUE, TRUE, TRUE, TRUE),
 ((SELECT id FROM roles WHERE name = 'SuperAdmin'), (SELECT id FROM modules WHERE name = 'products'), TRUE, TRUE, TRUE, TRUE),
 ((SELECT id FROM roles WHERE name = 'SuperAdmin'), (SELECT id FROM modules WHERE name = 'notifications'), TRUE, TRUE, TRUE, TRUE);

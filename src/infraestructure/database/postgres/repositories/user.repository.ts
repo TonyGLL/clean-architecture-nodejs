@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { IUserRepository } from "../../../../domain/repositories/user.repository";
 import { User } from "../../../../domain/entities/user";
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { HttpError } from "../../../../domain/errors/http.error";
 import { HttpStatusCode } from "../../../../domain/shared/http.status";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
@@ -24,37 +24,24 @@ export class PostgresUserRepository implements IUserRepository {
         return new User(id, name, last_name, email, birth_date, phone, password);
     }
 
-    public async saveUser(user: Omit<User, "id">): Promise<User | null> {
-        try {
-            const query = {
-                text: "INSERT INTO users (name, last_name, email, birth_date, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-                values: [user.name, user.last_name, user.email, user.birth_date, user.phone]
-            }
-            const res = await this.pool.query(query);
-            if (!res.rows.length) return null;
-
-            const { id, name, last_name, email, role, age, phone } = res.rows[0];
-            return new User(id, name, last_name, email, role, age, phone);
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpError(HttpStatusCode.BAD_REQUEST, error.message)
-            }
-            return null;
+    public async saveUser(user: Omit<User, "id">, client: PoolClient): Promise<User | null> {
+        const query = {
+            text: "INSERT INTO users (name, last_name, email, birth_date, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            values: [user.name, user.last_name, user.email, user.birth_date, user.phone]
         }
+        const res = await client.query(query);
+        if (!res.rows.length) return null;
+
+        const { id, name, last_name, email, role, age, phone } = res.rows[0];
+        return new User(id, name, last_name, email, role, age, phone);
     }
 
-    public async saveUserPassword(userId: number, password: string): Promise<void> {
-        try {
-            const query = {
-                text: "INSERT INTO passwords (user_id, hash) VALUES ($1, $2)",
-                values: [userId, password]
-            }
-            await this.pool.query(query);
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpError(HttpStatusCode.BAD_REQUEST, error.message);
-            }
+    public async saveUserPassword(userId: number, password: string, client: PoolClient): Promise<void> {
+        const query = {
+            text: "INSERT INTO passwords (user_id, hash) VALUES ($1, $2)",
+            values: [userId, password]
         }
+        await client.query(query);
     }
 
     public async updatePassword(userId: number, password: string): Promise<void> {

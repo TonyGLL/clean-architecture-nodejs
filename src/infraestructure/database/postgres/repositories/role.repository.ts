@@ -1,9 +1,9 @@
 import { injectable, inject } from 'inversify';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { Role } from '../../../../domain/entities/role';
 import { IRoleRepository } from '../../../../domain/repositories/role.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
-import { GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO } from '../../../../application/dtos/role.dto';
+import { GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO, RolePermissions } from '../../../../application/dtos/role.dto';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
 
@@ -99,22 +99,25 @@ export class PostegresRoleRepository implements IRoleRepository {
                     r.id,
                     r.name,
                     COALESCE(
-                        jsonb_object_agg(
-                            m.name,
-                            jsonb_build_object(
-                                'can_write', rp.can_write,
-                                'can_update', rp.can_update,
-                                'can_read', rp.can_read,
-                                'can_delete', rp.can_delete
+                        (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'module_id', m.id,
+                                    'module_name', m.name,
+                                    'can_write', COALESCE(rp.can_write, false),
+                                    'can_update', COALESCE(rp.can_update, false),
+                                    'can_read', COALESCE(rp.can_read, false),
+                                    'can_delete', COALESCE(rp.can_delete, false)
+                                )
                             )
-                        ) FILTER (WHERE m.name IS NOT NULL),
-                        '{}'::jsonb
+                            FROM role_permissions rp
+                            JOIN modules m ON rp.module_id = m.id
+                            WHERE rp.role_id = r.id
+                        ),
+                        '[]'::json
                     ) as permissions
                 FROM roles r
-                LEFT JOIN role_permissions rp ON r.id = rp.role_id
-                LEFT JOIN modules m ON rp.module_id = m.id
-                WHERE r.id = $1
-                GROUP BY r.id, r.name
+                WHERE r.id = $1;
             `;
             const query = {
                 text,
@@ -132,10 +135,53 @@ export class PostegresRoleRepository implements IRoleRepository {
         }
     }
 
-    async createRole(role: Role): Promise<Role> {
-        const query = 'INSERT INTO roles (name) VALUES ($1) RETURNING id, name';
-        const values = [role.name];
-        const result = await this.pool.query(query, values);
-        return new Role(result.rows[0].id, result.rows[0].name);
+    public async createRole(role: Role, client: PoolClient): Promise<Role> {
+        const text = 'INSERT INTO roles (name, description) VALUES ($1, $2) RETURNING id, name, description';
+        const query = {
+            text,
+            values: [role.name, role.description]
+        };
+        const result = await client.query<Role>(query);
+        return new Role(result.rows[0].id, result.rows[0].name, result.rows[0].description);
+    }
+
+    public async assignPermissionsToRole(role_id: string, permissions: RolePermissions[], client: PoolClient): Promise<void> {
+        const values: any[] = [];
+        const placeholders: string[] = [];
+
+        permissions.forEach((perm, index) => {
+            const offset = index * 6;
+            placeholders.push(
+                `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`
+            );
+            values.push(
+                parseInt(role_id),
+                perm.module_id,
+                perm.can_read,
+                perm.can_write,
+                perm.can_update,
+                perm.can_delete
+            );
+        });
+
+        const query = `
+            INSERT INTO role_permissions (
+                role_id,
+                module_id,
+                can_read,
+                can_write,
+                can_update,
+                can_delete
+            )
+            VALUES ${placeholders.join(', ')}
+            ON CONFLICT (role_id, module_id)
+            DO UPDATE SET
+                can_read = EXCLUDED.can_read,
+                can_write = EXCLUDED.can_write,
+                can_update = EXCLUDED.can_update,
+                can_delete = EXCLUDED.can_delete;
+        `;
+
+        await client.query(query, values);
     }
 }
