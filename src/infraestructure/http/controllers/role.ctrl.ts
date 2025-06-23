@@ -1,19 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
-import { APPLICATION_TYPES } from '../../../application/ioc.types';
 import { CreateRoleUseCase, GetRolesUseCase } from '../../../application/use-cases/role.use-case';
-import { HttpError } from '../../../domain/errors/http.error';
-import { HttpStatusCode } from '../../../domain/shared/http.status';
 import { CreateRoleDTO, GetRolesDTO } from '../../../application/dtos/role.dto';
 
 @injectable()
 export class RoleController {
     constructor(
-        @inject(APPLICATION_TYPES.CreateRoleUseCase) private createRoleUseCase: CreateRoleUseCase,
-        @inject(APPLICATION_TYPES.GetRolesUseCase) private getRolesUseCase: GetRolesUseCase
+        @inject(CreateRoleUseCase) private createRoleUseCase: CreateRoleUseCase,
+        @inject(GetRolesUseCase) private getRolesUseCase: GetRolesUseCase
     ) { }
 
-    public async getRoles(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public getRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const pageStr = req.query.page as string | undefined;
             const limitStr = req.query.limit as string | undefined;
@@ -33,7 +30,7 @@ export class RoleController {
         }
     }
 
-    public async createRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public createRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const dto: CreateRoleDTO = req.body;
             const [status, result] = await this.createRoleUseCase.execute(dto);
@@ -43,11 +40,11 @@ export class RoleController {
         }
     }
 
-    public async updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
     }
 
-    public async deleteRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public deleteRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
     }
 }

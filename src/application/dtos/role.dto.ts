@@ -10,6 +10,11 @@ export interface GetRolesDTO {
     search?: string;
 }
 
+export interface GetRolesResponseDTO {
+    roles: Role[];
+    total: number;
+}
+
 export interface AssignRoleToUserDTO {
     userId: string;
     roleName: string;

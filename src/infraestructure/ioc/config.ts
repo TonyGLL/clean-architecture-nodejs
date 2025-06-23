@@ -47,14 +47,14 @@ container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 
 //* Use Cases (Concrete classes)
+// AUTH
 container.bind<LoginUseCase>(LoginUseCase).toSelf();
 container.bind<RegisterUseCase>(RegisterUseCase).toSelf();
 container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
 container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
-
 // ROLES
-container.bind<GetRolesUseCase>(APPLICATION_TYPES.GetRolesUseCase).to(GetRolesUseCase);
-container.bind<CreateRoleUseCase>(APPLICATION_TYPES.CreateRoleUseCase).to(CreateRoleUseCase);
+container.bind<GetRolesUseCase>(GetRolesUseCase).toSelf();
+container.bind<CreateRoleUseCase>(CreateRoleUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthController>(AuthController).toSelf();

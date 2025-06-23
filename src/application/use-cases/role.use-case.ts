@@ -1,12 +1,9 @@
 import { inject, injectable } from 'inversify';
 import { DOMAIN_TYPES } from '../../domain/ioc.types';
 import { IRoleRepository } from '../../domain/repositories/role.repository';
-import { IUserRepository } from '../../domain/repositories/user.repository';
-import { IUserRoleRepository } from '../../domain/repositories/userRole.repository';
 import { Role } from '../../domain/entities/role';
-import { HttpError } from '../../domain/errors/http.error';
 import { HttpStatusCode } from '../../domain/shared/http.status';
-import { CreateRoleDTO, GetRolesDTO, RoleResponseDTO } from '../dtos/role.dto';
+import { CreateRoleDTO, GetRolesDTO, GetRolesResponseDTO, RoleResponseDTO } from '../dtos/role.dto';
 
 @injectable()
 export class GetRolesUseCase {
@@ -14,7 +11,7 @@ export class GetRolesUseCase {
         @inject(DOMAIN_TYPES.IRoleRepository) private roleRepository: IRoleRepository
     ) { }
 
-    public async execute(dto: GetRolesDTO): Promise<[number, Role[]]> {
+    public async execute(dto: GetRolesDTO): Promise<[number, GetRolesResponseDTO]> {
         const roles = await this.roleRepository.getRoles(dto);
         return [HttpStatusCode.OK, roles];
     }
