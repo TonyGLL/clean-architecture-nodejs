@@ -23,7 +23,7 @@ import { PostgresUserRoleRepository } from "../database/postgres/repositories/us
 
 //* Use Cases
 import { LoginUseCase, RegisterUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
-import { CreateRoleUseCase, GetRolesUseCase } from "../../application/use-cases/role.use-case";
+import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase } from "../../application/use-cases/role.use-case";
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';
@@ -54,6 +54,7 @@ container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
 container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
 // ROLES
 container.bind<GetRolesUseCase>(GetRolesUseCase).toSelf();
+container.bind<GetPermissionsByRoleUseCase>(GetPermissionsByRoleUseCase).toSelf();
 container.bind<CreateRoleUseCase>(CreateRoleUseCase).toSelf();
 
 //* Controllers (Concrete classes)

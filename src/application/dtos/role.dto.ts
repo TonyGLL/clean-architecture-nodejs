@@ -15,6 +15,23 @@ export interface GetRolesResponseDTO {
     total: number;
 }
 
+export interface GetPermissionsDTO {
+    id: string;
+}
+
+export interface GetPermissionsResponeDTO {
+    id: number;
+    name: string;
+    permissions: {
+        [moduleName: string]: {
+            can_write: boolean;
+            can_update: boolean;
+            can_read: boolean;
+            can_delete: boolean;
+        };
+    }
+}
+
 export interface AssignRoleToUserDTO {
     userId: string;
     roleName: string;

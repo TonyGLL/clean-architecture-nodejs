@@ -1,4 +1,4 @@
-import { query } from "express-validator";
+import { param, query } from "express-validator";
 
 export const GetRolesValidator = [
     //* Required
@@ -7,4 +7,8 @@ export const GetRolesValidator = [
 
     //* Optional
     query('search').trim()
+];
+
+export const GetPermissionsByRoleValidator = [
+    param('id').notEmpty().withMessage('Param `id` is invalid or missing')
 ];

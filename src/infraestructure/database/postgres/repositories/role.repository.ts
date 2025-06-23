@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import { Role } from '../../../../domain/entities/role';
 import { IRoleRepository } from '../../../../domain/repositories/role.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
-import { GetRolesDTO, GetRolesResponseDTO } from '../../../../application/dtos/role.dto';
+import { GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO } from '../../../../application/dtos/role.dto';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
 
@@ -84,6 +84,46 @@ export class PostegresRoleRepository implements IRoleRepository {
                 total: dataResult.rows.length ? parseInt(countResult.rows[0]?.total || '0', 10) : 0
             };
             return response;
+        } catch (error) {
+            throw new HttpError(
+                HttpStatusCode.INTERNAL_SERVER_ERROR,
+                'Error unknown'
+            );
+        }
+    }
+
+    public async getPermissionsByRole(id: string): Promise<GetPermissionsResponeDTO[]> {
+        try {
+            const text = `
+                SELECT
+                    r.id,
+                    r.name,
+                    COALESCE(
+                        jsonb_object_agg(
+                            m.name,
+                            jsonb_build_object(
+                                'can_write', rp.can_write,
+                                'can_update', rp.can_update,
+                                'can_read', rp.can_read,
+                                'can_delete', rp.can_delete
+                            )
+                        ) FILTER (WHERE m.name IS NOT NULL),
+                        '{}'::jsonb
+                    ) as permissions
+                FROM roles r
+                LEFT JOIN role_permissions rp ON r.id = rp.role_id
+                LEFT JOIN modules m ON rp.module_id = m.id
+                WHERE r.id = $1
+                GROUP BY r.id, r.name
+            `;
+            const query = {
+                text,
+                values: [id]
+            }
+            const result = await this.pool.query<GetPermissionsResponeDTO>(query);
+            if (!result.rows.length) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
+
+            return result.rows;
         } catch (error) {
             throw new HttpError(
                 HttpStatusCode.INTERNAL_SERVER_ERROR,
