@@ -73,13 +73,17 @@ export class UpdateRoleUseCase {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
-    public async execute(id: string, dto: any): Promise<[number, any]> {
+    public async execute(id: string, dto: CreateRoleDTO): Promise<[number, object]> {
         const client = await this.pool.connect();
 
         try {
             await client.query('BEGIN');
 
+            const role = new Role(id, dto.name, dto.description, dto.permissions);
 
+            await this.roleRepository.updateRole(id, role, client);
+
+            await this.roleRepository.updateRolePermissions(id, dto.permissions, client);
 
             await client.query('COMMIT');
 
@@ -87,6 +91,34 @@ export class UpdateRoleUseCase {
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('Error in UpdateRoleUseCase:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
+        }
+    }
+}
+
+@injectable()
+export class DeleteRoleUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IRoleRepository) private roleRepository: IRoleRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
+
+    public async execute(id: string): Promise<[number, object]> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            await this.roleRepository.deleteRole(id, client);
+
+            await client.query('COMMIT');
+
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in DeleteRoleUseCase:', error);
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();

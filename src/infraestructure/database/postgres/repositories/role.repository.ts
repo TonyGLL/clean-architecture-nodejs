@@ -197,10 +197,48 @@ export class PostegresRoleRepository implements IRoleRepository {
     }
 
     public async updateRolePermissions(role_id: string, permissions: RolePermissions[], client: PoolClient): Promise<void> {
-        throw new Error('Method not implemented.');
+        const values: any[] = [];
+        const valueTuples: string[] = [];
+
+        permissions.forEach((perm, index) => {
+            const offset = index * 6;
+            valueTuples.push(
+                `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`
+            );
+            values.push(
+                parseInt(role_id),
+                perm.module_id,
+                perm.can_read,
+                perm.can_write,
+                perm.can_update,
+                perm.can_delete
+            );
+        });
+
+        const query = `
+            UPDATE role_permissions AS rp
+            SET
+                can_read = v.can_read,
+                can_write = v.can_write,
+                can_update = v.can_update,
+                can_delete = v.can_delete
+            FROM (
+                VALUES ${valueTuples.join(', ')}
+            ) AS v(role_id, module_id, can_read, can_write, can_update, can_delete)
+            WHERE rp.role_id = v.role_id AND rp.module_id = v.module_id;
+        `;
+
+        await client.query(query, values);
     }
 
     public async deleteRole(role_id: string, client: PoolClient): Promise<void> {
-        throw new Error('Method not implemented.');
+        const text = `
+            DELETE FROM roles WHERE id = $1;
+        `;
+        const query = {
+            text,
+            values: [role_id]
+        }
+        await client.query(query);
     }
 }
