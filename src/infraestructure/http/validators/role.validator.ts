@@ -87,7 +87,36 @@ export const UpdateRoleValidator = [
         .notEmpty().withMessage('Param `id` cannot be empty')
         .bail()
         .isInt({ min: 1 }).withMessage('Param `id` must be a positive integer')
-        .toInt()
+        .toInt(),
+
+    //* Optional
+    body('name')
+        .isString().withMessage('Field `name` must be a string')
+        .bail()
+        .notEmpty().withMessage('Field `name` cannot be empty'),
+    body('description')
+        .isString().withMessage('Field `description` must be a string'),
+    body('permissions')
+        .isArray({ min: 1 }).withMessage('Field `permissions` must be a non-empty array'),
+    body('permissions.*.module_id')
+        .isInt().withMessage('Field `module_id` must be an integer')
+        .toInt(),
+    body('permissions.*.module_name')
+        .isString().withMessage('Field `module_name` must be a string')
+        .bail()
+        .notEmpty().withMessage('Field `module_name` cannot be empty'),
+    body('permissions.*.can_write')
+        .isBoolean().withMessage('Field `can_write` must be a boolean')
+        .toBoolean(),
+    body('permissions.*.can_update')
+        .isBoolean().withMessage('Field `can_update` must be a boolean')
+        .toBoolean(),
+    body('permissions.*.can_read')
+        .isBoolean().withMessage('Field `can_read` must be a boolean')
+        .toBoolean(),
+    body('permissions.*.can_delete')
+        .isBoolean().withMessage('Field `can_delete` must be a boolean')
+        .toBoolean(),
 ];
 
 export const DeleteRoleValidor = [
