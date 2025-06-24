@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
-import { CreateRoleUseCase, GetPermissionsByRoleUseCase, GetRolesUseCase } from '../../../application/use-cases/role.use-case';
+import { CreateRoleUseCase, GetPermissionsByRoleUseCase, GetRolesUseCase, UpdateRoleUseCase } from '../../../application/use-cases/role.use-case';
 import { CreateRoleDTO, GetRolesDTO } from '../../../application/dtos/role.dto';
 
 @injectable()
@@ -8,7 +8,8 @@ export class RoleController {
     constructor(
         @inject(CreateRoleUseCase) private createRoleUseCase: CreateRoleUseCase,
         @inject(GetPermissionsByRoleUseCase) private getPermissionsByRoleUseCase: GetPermissionsByRoleUseCase,
-        @inject(GetRolesUseCase) private getRolesUseCase: GetRolesUseCase
+        @inject(GetRolesUseCase) private getRolesUseCase: GetRolesUseCase,
+        @inject(UpdateRoleUseCase) private updateRoleUseCase: UpdateRoleUseCase
     ) { }
 
     public getRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -53,6 +54,9 @@ export class RoleController {
 
     public updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const { id } = req.params;
+            const [status, result] = await this.updateRoleUseCase.execute(id, req.body);
+            res.status(status).json(result);
         } catch (error) {
             next(error);
         }

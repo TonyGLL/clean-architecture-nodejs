@@ -184,4 +184,23 @@ export class PostegresRoleRepository implements IRoleRepository {
 
         await client.query(query, values);
     }
+
+    public async updateRole(role_id: string, role: Omit<Role, 'permissions'>, client: PoolClient): Promise<void> {
+        const text = `
+            UPDATE roles SET (name = $2, description = $3) WHERE id = $1;
+        `;
+        const query = {
+            text,
+            values: [role_id, role.name, role.description]
+        }
+        await client.query(query);
+    }
+
+    public async updateRolePermissions(role_id: string, permissions: RolePermissions[], client: PoolClient): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+
+    public async deleteRole(role_id: string, client: PoolClient): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
 }
