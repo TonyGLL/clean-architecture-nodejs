@@ -52,7 +52,10 @@ export class RoleController {
     }
 
     public updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-
+        try {
+        } catch (error) {
+            next(error);
+        }
     }
 
     public deleteRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

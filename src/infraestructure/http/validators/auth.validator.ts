@@ -2,29 +2,81 @@ import { body, param } from "express-validator";
 
 export const loginValidator = [
     //* Required
-    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail(),
-    body('password').notEmpty().isString().withMessage('Field `password` is invalid or missing')
+    body('email')
+        .exists().withMessage('Field `email` is required')
+        .bail()
+        .notEmpty().withMessage('Field `email` cannot be empty')
+        .bail().isEmail().withMessage('Field `email` must be a valid email')
+        .normalizeEmail(),
+    body('password')
+        .exists().withMessage('Field `password` is required')
+        .bail()
+        .notEmpty().withMessage('Field `password` cannot be empty')
+        .bail()
+        .isString().withMessage('Field `password` must be a string')
 ];
 
 export const registerValidator = [
     //* Required
-    body('name').notEmpty().isString().withMessage('Field `name` is invalid or missing'),
-    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail(),
-    body('password').notEmpty().isString().withMessage('Field `password` is invalid or missing'),
+    body('name')
+        .exists().withMessage('Field `name` is required')
+        .bail()
+        .notEmpty().withMessage('Field `name` cannot be empty')
+        .bail()
+        .isString().withMessage('Field `name` must be a string'),
+    body('email')
+        .exists().withMessage('Field `email` is required')
+        .bail()
+        .notEmpty().withMessage('Field `email` cannot be empty')
+        .bail()
+        .isEmail().withMessage('Field `email` must be a valid email')
+        .normalizeEmail(),
+    body('password')
+        .exists().withMessage('Field `password` is required')
+        .bail()
+        .notEmpty().withMessage('Field `password` cannot be empty')
+        .bail()
+        .isString().withMessage('Field `password` must be a string'),
 
     //* Optional
-    body('birth_date').isString().withMessage('Field `age` is invalid or missing'),
-    body('phone').isString().withMessage('Field `phone` is invalid or missing')
+    body('birth_date')
+        .optional()
+        .isString().withMessage('Field `birth_date` must be a string'),
+    body('phone')
+        .optional()
+        .isString().withMessage('Field `phone` must be a string')
 ];
 
 export const sendEmailValidator = [
     //* Required
-    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail()
+    body('email')
+        .exists().withMessage('Field `email` is required')
+        .bail()
+        .notEmpty().withMessage('Field `email` cannot be empty')
+        .bail()
+        .isEmail().withMessage('Field `email` must be a valid email')
+        .normalizeEmail()
 ];
 
 export const restorePasswordValidator = [
     //* Required
-    param('token').notEmpty().isString().withMessage('Param `token` is invalid or missing'),
-    body('email').notEmpty().isEmail().withMessage('Field `email` is invalid or missing').normalizeEmail(),
-    body('password').notEmpty().isString().withMessage('Field `password` is invalid or missing')
+    param('token')
+        .exists().withMessage('Param `token` is required')
+        .bail()
+        .notEmpty().withMessage('Param `token` cannot be empty')
+        .bail()
+        .isString().withMessage('Param `token` must be a string'),
+    body('email')
+        .exists().withMessage('Field `email` is required')
+        .bail()
+        .notEmpty().withMessage('Field `email` cannot be empty')
+        .bail()
+        .isEmail().withMessage('Field `email` must be a valid email')
+        .normalizeEmail(),
+    body('password')
+        .exists().withMessage('Field `password` is required')
+        .bail()
+        .notEmpty().withMessage('Field `password` cannot be empty')
+        .bail()
+        .isString().withMessage('Field `password` must be a string')
 ];
