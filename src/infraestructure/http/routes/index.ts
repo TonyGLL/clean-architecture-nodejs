@@ -1,15 +1,11 @@
 import { Router } from 'express';
-import authRouter from './auth.routes';
-import roleRoutes from './role.routes';
-import { authMiddleware } from '../middlewares/auth.middleware';
+import mainAuthRouter from './client.routes';
+import mainAdminRouter from './admin.routes';
 
 const mainRouter = Router();
 
 mainRouter
-    .use('/auth', authRouter)
-    // Auth Validation
-    .use('/', authMiddleware)
-    .use('/roles', roleRoutes)
-    ;
+    .use('/client', mainAuthRouter)
+    .use('/admin', mainAdminRouter);
 
 export default mainRouter;

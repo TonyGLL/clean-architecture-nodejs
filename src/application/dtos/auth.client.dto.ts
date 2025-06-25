@@ -1,11 +1,11 @@
-import { User } from "../../domain/entities/user";
+import { Client } from "../../domain/entities/client";
 
-export interface LoginUserDTO {
+export interface LoginClientDTO {
     email: string;
     password: string;
 }
 
-export interface RegisterUserDTO {
+export interface RegisterClientDTO {
     name: string;
     lastName: string;
     email: string;
@@ -20,7 +20,7 @@ export interface RestorePasswordDTO {
     password: string;
 }
 
-export type AuthResponseDTO = {
-    user: Omit<User, 'password'>;
+export type AuthClientResponseDTO = {
+    client: Omit<Client, 'password'>;
     token: string;
 }

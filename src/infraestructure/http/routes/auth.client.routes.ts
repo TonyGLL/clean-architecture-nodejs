@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { expressValidatorErrors } from "../middlewares/validator.middleware";
 import { loginValidator, registerValidator, sendEmailValidator, restorePasswordValidator } from "../validators/auth.validator";
 import { container } from "../../ioc/config";

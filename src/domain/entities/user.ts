@@ -2,27 +2,24 @@ import { Role } from './role';
 import { HttpStatusCode } from "../shared/http.status";
 import { HttpError } from "../errors/http.error";
 import { IHashingService } from "../services/hashing.service";
+import { Client } from './client';
 
-export class User {
+export class User extends Client {
+    public roles: Role[];
+
     constructor(
-        public readonly id: number | null,
-        public name: string,
-        public last_name: string,
-        public email: string,
-        public birth_date?: Date,
-        public phone?: string,
-        public password?: string,
-        public readonly created_at?: Date,
-        public readonly updated_at?: Date,
-        public roles?: Role[]
-    ) { }
-
-    public async setPassword(password: string, hashingService: IHashingService): Promise<void> {
-        this.password = await hashingService.hash(password);
-    }
-
-    public async comparePassword(plainPassword: string, hashingService: IHashingService): Promise<boolean> {
-        if (!this.password) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'User password is not set');
-        return await hashingService.compare(plainPassword, this.password);
+        id: number | null,
+        name: string,
+        last_name: string,
+        email: string,
+        birth_date?: Date,
+        phone?: string,
+        password?: string,
+        created_at?: Date,
+        updated_at?: Date,
+        roles: Role[] = [] // nueva propiedad
+    ) {
+        super(id, name, last_name, email, birth_date, phone, password, created_at, updated_at);
+        this.roles = roles;
     }
 }

@@ -1,4 +1,24 @@
 -- Tabla de usuarios
+CREATE TABLE clients (
+    id SERIAL PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    birth_date DATE CHECK (birth_date > '1900-01-01'),
+    phone VARCHAR(20) CHECK (phone ~ '^[0-9\+\(\)\s-]{8,20}$'),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabla de contraseñas
+CREATE TABLE client_passwords (
+    client_id INT PRIMARY KEY REFERENCES clients(id) ON DELETE CASCADE,
+    hash CHAR(60) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabla de usuarios
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     "name" VARCHAR(100) NOT NULL,

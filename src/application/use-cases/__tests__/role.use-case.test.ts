@@ -1,10 +1,10 @@
 import 'reflect-metadata'; // Required for InversifyJS
 import { CreateRoleUseCase, AssignRoleToUserUseCase, GetRolesForUserUseCase, RevokeRoleFromUserUseCase, CreateRoleDTO, AssignRoleToUserDTO } from '../role.use-case';
 import { IRoleRepository } from '../../../domain/repositories/role.repository';
-import { IUserRepository } from '../../../domain/repositories/user.repository';
+import { IUserRepository } from '../../../domain/repositories/auth.client.repository';
 import { IUserRoleRepository } from '../../../domain/repositories/userRole.repository';
 import { Role } from '../../../domain/entities/role';
-import { User } from '../../../domain/entities/user';
+import { User } from '../../../domain/entities/client';
 import { UserRole } from '../../../domain/entities/userRole';
 import { HttpError } from '../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../domain/shared/http.status';

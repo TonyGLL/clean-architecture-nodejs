@@ -7,10 +7,10 @@ import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
 //* Repos
-import { IUserRepository } from './../../domain/repositories/user.repository';
+import { IAuthClientRepository } from '../../domain/repositories/auth.client.repository';
 import { IRoleRepository } from "../../domain/repositories/role.repository";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
-import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
+import { PostgresAuthClientRepository } from '../database/postgres/repositories/auth.client.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -22,7 +22,7 @@ import { PostegresRoleRepository } from "../database/postgres/repositories/role.
 import { PostgresUserRoleRepository } from "../database/postgres/repositories/userRole.repository";
 
 //* Use Cases
-import { LoginUseCase, RegisterUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
+import { LoginClientUseCase, RegisterClientUseCase, SendEmailClientUseCase, RestorePasswordClientUseCase } from '../../application/use-cases/auth.client.use-case';
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 
 //* Controllers
@@ -36,7 +36,7 @@ const container = new Container();
 container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 
 //* Respositories (Inteface -> Implementation)
-container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
+container.bind<IAuthClientRepository>(DOMAIN_TYPES.IAuthClientRepository).to(PostgresAuthClientRepository);
 container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostegresRoleRepository);
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
 
@@ -48,10 +48,10 @@ container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 
 //* Use Cases (Concrete classes)
 // AUTH
-container.bind<LoginUseCase>(LoginUseCase).toSelf();
-container.bind<RegisterUseCase>(RegisterUseCase).toSelf();
-container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
-container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
+container.bind<LoginClientUseCase>(LoginClientUseCase).toSelf();
+container.bind<RegisterClientUseCase>(RegisterClientUseCase).toSelf();
+container.bind<SendEmailClientUseCase>(SendEmailClientUseCase).toSelf();
+container.bind<RestorePasswordClientUseCase>(RestorePasswordClientUseCase).toSelf();
 // ROLES
 container.bind<GetRolesUseCase>(GetRolesUseCase).toSelf();
 container.bind<GetPermissionsByRoleUseCase>(GetPermissionsByRoleUseCase).toSelf();
