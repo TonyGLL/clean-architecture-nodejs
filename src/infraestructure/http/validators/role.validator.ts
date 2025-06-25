@@ -135,7 +135,7 @@ export const UpdateRoleValidator = [
         .toBoolean()
 ];
 
-export const DeleteRoleValidor = [
+export const DeleteRoleValidator = [
     //* Required
     param('id')
         .exists().withMessage('Param `id` is required')
