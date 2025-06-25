@@ -1,17 +1,9 @@
-import { body, param, query } from "express-validator";
+import { body, query } from "express-validator";
+import { idParamValidator, pageLimitQueryValidator } from "./general.validator";
 
 export const GetRolesValidator = [
     //* Required
-    query('page')
-        .exists().withMessage('Query `page` is required')
-        .bail()
-        .notEmpty().withMessage('Query `page` cannot be empty')
-        .toInt(),
-    query('limit')
-        .exists().withMessage('Query `limit` is required')
-        .bail()
-        .notEmpty().withMessage('Query `limit` cannot be empty')
-        .toInt(),
+    ...pageLimitQueryValidator,
 
     //* Optional
     query('search')
@@ -21,13 +13,7 @@ export const GetRolesValidator = [
 
 export const GetPermissionsByRoleValidator = [
     //* Required
-    param('id')
-        .exists().withMessage('Param `id` is required')
-        .bail()
-        .notEmpty().withMessage('Param `id` cannot be empty')
-        .bail()
-        .isInt({ min: 1 }).withMessage('Param `id` must be a positive integer')
-        .toInt()
+    ...idParamValidator
 ];
 
 export const CreateRoleValidator = [
@@ -81,13 +67,7 @@ export const CreateRoleValidator = [
 
 export const UpdateRoleValidator = [
     //* Required
-    param('id')
-        .exists().withMessage('Param `id` is required')
-        .bail()
-        .notEmpty().withMessage('Param `id` cannot be empty')
-        .bail()
-        .isInt({ min: 1 }).withMessage('Param `id` must be a positive integer')
-        .toInt(),
+    ...idParamValidator,
     body('name')
         .exists().withMessage('Field `name` is required')
         .bail()
@@ -137,11 +117,5 @@ export const UpdateRoleValidator = [
 
 export const DeleteRoleValidator = [
     //* Required
-    param('id')
-        .exists().withMessage('Param `id` is required')
-        .bail()
-        .notEmpty().withMessage('Param `id` cannot be empty')
-        .bail()
-        .isInt({ min: 1 }).withMessage('Param `id` must be a positive integer')
-        .toInt()
+    ...idParamValidator
 ];
