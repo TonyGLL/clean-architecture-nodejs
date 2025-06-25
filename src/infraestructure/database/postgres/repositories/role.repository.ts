@@ -98,6 +98,7 @@ export class PostegresRoleRepository implements IRoleRepository {
                 SELECT
                     r.id,
                     r.name,
+                    r.description,
                     COALESCE(
                         (
                             SELECT json_agg(
@@ -187,7 +188,7 @@ export class PostegresRoleRepository implements IRoleRepository {
 
     public async updateRole(role_id: string, role: Omit<Role, 'permissions'>, client: PoolClient): Promise<void> {
         const text = `
-            UPDATE roles SET (name = $2, description = $3) WHERE id = $1;
+            UPDATE roles SET name = $2, description = $3 WHERE id = $1;
         `;
         const query = {
             text,
@@ -200,13 +201,18 @@ export class PostegresRoleRepository implements IRoleRepository {
         const values: any[] = [];
         const valueTuples: string[] = [];
 
-        permissions.forEach((perm, index) => {
+        const roleIdInt = parseInt(role_id);
+        if (isNaN(roleIdInt)) {
+            throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Invalid role_id: not a number');
+        }
+
+        permissions.forEach((perm: RolePermissions, index: number) => {
             const offset = index * 6;
             valueTuples.push(
-                `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`
+                `($${offset + 1}::int, $${offset + 2}::int, $${offset + 3}::bool, $${offset + 4}::bool, $${offset + 5}::bool, $${offset + 6}::bool)`
             );
             values.push(
-                parseInt(role_id),
+                roleIdInt,
                 perm.module_id,
                 perm.can_read,
                 perm.can_write,

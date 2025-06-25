@@ -32,6 +32,7 @@ export interface RolePermissions {
 export interface GetPermissionsResponeDTO {
     id: number;
     name: string;
+    description: string;
     permissions: RolePermissions[];
 }
 

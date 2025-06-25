@@ -46,7 +46,7 @@ export class PostgresUserRepository implements IUserRepository {
 
     public async updatePassword(userId: number, password: string): Promise<void> {
         const query = {
-            text: "UPDATE passwords SET (hash = $2) WHERE user_id = $1",
+            text: "UPDATE passwords SET hash = $2 WHERE user_id = $1",
             values: [userId, password]
         }
         await this.pool.query(query);
