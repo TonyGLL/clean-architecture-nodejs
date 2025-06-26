@@ -7,18 +7,22 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "test": "jest"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.10",
-    "@types/pg": "^8.15.4",
     "@types/nodemailer": "^6.4.17",
+    "@types/pg": "^8.15.4",
     "@types/uuid": "^10.0.0",
+    "jest": "^30.0.3",
     "nodemon": "^3.1.10",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
@@ -31,9 +35,9 @@
     "inversify": "^7.5.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "nodemailer": "^7.0.3",
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
-    "nodemailer": "^7.0.3",
     "uuid": "^11.1.0"
   }
 }
