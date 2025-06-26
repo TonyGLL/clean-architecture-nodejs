@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { GetUserUseCase, GetUsersUseCase, CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase } from '../user.use-case';
+import { GetUserDetailsUseCase, GetUsersUseCase, CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase } from '../user.use-case';
 import { IUserRepository } from '../../../domain/repositories/user.repository';
 import { User } from '../../../domain/entities/user';
 import { HttpError } from '../../../domain/errors/http.error';
@@ -22,7 +22,7 @@ describe('User Use Cases', () => {
     });
 
     describe('GetUserUseCase', () => {
-        const useCase = new GetUserUseCase(mockUserRepository);
+        const useCase = new GetUserDetailsUseCase(mockUserRepository);
         const mockUser = new User('1', 'John', 'Doe', 'john.doe@example.com', new Date(), 'password123');
 
         it('should return a user successfully', async () => {

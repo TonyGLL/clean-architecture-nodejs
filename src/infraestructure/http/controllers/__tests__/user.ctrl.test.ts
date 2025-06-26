@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { Request, Response } from 'express';
 import { UserController } from '../user.ctrl';
-import { GetUserUseCase, GetUsersUseCase, CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase } from '../../../../application/use-cases/user.use-case';
+import { GetUserDetailsUseCase, GetUsersUseCase, CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase } from '../../../../application/use-cases/user.use-case';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { CreateUserDTO, UpdateUserDTO } from '../../../../application/dtos/user.dto';
 
 // Mocks for Use Cases
-const mockGetUserUseCase: jest.Mocked<GetUserUseCase> = { execute: jest.fn() } as any;
+const mockGetUserDetailsUseCase: jest.Mocked<GetUserDetailsUseCase> = { execute: jest.fn() } as any;
 const mockGetUsersUseCase: jest.Mocked<GetUsersUseCase> = { execute: jest.fn() } as any;
 const mockCreateUserUseCase: jest.Mocked<CreateUserUseCase> = { execute: jest.fn() } as any;
 const mockUpdateUserUseCase: jest.Mocked<UpdateUserUseCase> = { execute: jest.fn() } as any;
@@ -32,7 +32,7 @@ describe('UserController', () => {
 
     beforeEach(() => {
         controller = new UserController(
-            mockGetUserUseCase,
+            mockGetUserDetailsUseCase,
             mockGetUsersUseCase,
             mockCreateUserUseCase,
             mockUpdateUserUseCase,
@@ -46,11 +46,11 @@ describe('UserController', () => {
             const req = mockRequest(null, { id: '1' });
             const res = mockResponse();
             const user = { id: '1', name: 'John Doe' };
-            mockGetUserUseCase.execute.mockResolvedValue([HttpStatusCode.OK, user]);
+            mockGetUserDetailsUseCase.execute.mockResolvedValue([HttpStatusCode.OK, user]);
 
             await controller.getUserById(req, res);
 
-            expect(mockGetUserUseCase.execute).toHaveBeenCalledWith('1');
+            expect(mockGetUserDetailsUseCase.execute).toHaveBeenCalledWith('1');
             expect(res.status).toHaveBeenCalledWith(HttpStatusCode.OK);
             expect(res.json).toHaveBeenCalledWith(user);
         });
@@ -58,7 +58,7 @@ describe('UserController', () => {
         it('should handle errors from use case', async () => {
             const req = mockRequest(null, { id: '1' });
             const res = mockResponse();
-            mockGetUserUseCase.execute.mockRejectedValue(new HttpError(HttpStatusCode.NOT_FOUND, 'User not found'));
+            mockGetUserDetailsUseCase.execute.mockRejectedValue(new HttpError(HttpStatusCode.NOT_FOUND, 'User not found'));
 
             await controller.getUserById(req, res);
 
