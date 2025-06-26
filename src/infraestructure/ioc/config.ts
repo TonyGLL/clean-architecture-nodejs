@@ -6,6 +6,11 @@ import { APPLICATION_TYPES } from '../../application/ioc.types';
 import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
+import { IUserRepository } from '../../domain/repositories/user.repository';
+import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
+import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase } from '../../application/use-cases/user.use-case';
+import { UserController } from '../http/controllers/user.ctrl';
+
 //* Repos
 import { IAuthClientRepository } from '../../domain/repositories/auth.client.repository';
 import { IRoleRepository } from "../../domain/repositories/role.repository";
@@ -39,6 +44,7 @@ container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 container.bind<IAuthClientRepository>(DOMAIN_TYPES.IAuthClientRepository).to(PostgresAuthClientRepository);
 container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostegresRoleRepository);
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
+container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -58,9 +64,17 @@ container.bind<GetPermissionsByRoleUseCase>(GetPermissionsByRoleUseCase).toSelf(
 container.bind<CreateRoleUseCase>(CreateRoleUseCase).toSelf();
 container.bind<UpdateRoleUseCase>(UpdateRoleUseCase).toSelf();
 container.bind<DeleteRoleUseCase>(DeleteRoleUseCase).toSelf();
+// USERS
+container.bind<GetUsersUseCase>(GetUsersUseCase).toSelf();
+container.bind<CreateUserUseCase>(CreateUserUseCase).toSelf();
+container.bind<UpdateUserUseCase>(UpdateUserUseCase).toSelf();
+container.bind<DeleteUserUseCase>(DeleteUserUseCase).toSelf();
+container.bind<ChangePasswordUseCase>(ChangePasswordUseCase).toSelf();
+container.bind<AssignRoleToUserUseCase>(AssignRoleToUserUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthController>(AuthController).toSelf();
 container.bind<RoleController>(RoleController).toSelf();
+container.bind<UserController>(UserController).toSelf();
 
 export { container };

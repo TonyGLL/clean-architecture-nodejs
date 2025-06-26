@@ -1,0 +1,88 @@
+import { injectable, inject } from 'inversify';
+import { Pool, PoolClient } from 'pg';
+import { User } from '../../../../domain/entities/user';
+import { IUserRepository } from '../../../../domain/repositories/user.repository';
+import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
+import { GetUsersDTO, GetUsersResponseDTO } from '../../../../application/dtos/user.dto';
+import { HttpError } from '../../../../domain/errors/http.error';
+import { HttpStatusCode } from '../../../../domain/shared/http.status';
+
+@injectable()
+export class PostgresUserRepository implements IUserRepository {
+    constructor(
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
+
+    public async getUsers(filters: GetUsersDTO): Promise<GetUsersResponseDTO> {
+        const { page = 0, limit = 10, search } = filters;
+        const offset = page * limit;
+        const params: (string | number)[] = [];
+        let whereClause = '';
+
+        if (search) {
+            whereClause = `WHERE name ILIKE $1 OR email ILIKE $1`;
+            params.push(`%${search}%`);
+        }
+
+        const dataQuery = {
+            text: `SELECT id, name, last_name, email, birth_date, phone, created_at, updated_at FROM users ${whereClause} ORDER BY name ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+            values: [...params, limit, offset]
+        };
+
+        const countQuery = {
+            text: `SELECT COUNT(id) as total FROM users ${whereClause}`,
+            values: params
+        };
+
+        const [dataResult, countResult] = await Promise.all([
+            this.pool.query<User>(dataQuery),
+            this.pool.query<{ total: string }>(countQuery)
+        ]);
+
+        return {
+            users: dataResult.rows,
+            total: parseInt(countResult.rows[0]?.total || '0', 10)
+        };
+    }
+
+    public async findById(id: number): Promise<User | null> {
+        const result = await this.pool.query<User>('SELECT * FROM users WHERE id = $1', [id]);
+        return result.rows[0] || null;
+    }
+
+    public async findByEmail(email: string): Promise<User | null> {
+        const result = await this.pool.query<User>('SELECT * FROM users WHERE email = $1', [email]);
+        return result.rows[0] || null;
+    }
+
+    public async create(user: User, client: PoolClient): Promise<User> {
+        const query = {
+            text: 'INSERT INTO users (name, last_name, email, birth_date, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, last_name, email, birth_date, phone',
+            values: [user.name, user.last_name, user.email, user.birth_date, user.phone]
+        };
+        const result = await client.query<User>(query);
+        return result.rows[0];
+    }
+
+    public async update(id: number, user: Partial<User>, client: PoolClient): Promise<void> {
+        const fields = Object.keys(user).map((key, i) => `${key} = $${i + 2}`).join(', ');
+        const values = Object.values(user);
+        const query = {
+            text: `UPDATE users SET ${fields} WHERE id = $1`,
+            values: [id, ...values]
+        };
+        await client.query(query);
+    }
+
+    public async delete(id: number, client: PoolClient): Promise<void> {
+        await client.query('DELETE FROM users WHERE id = $1', [id]);
+    }
+
+    public async updatePassword(userId: number, hash: string, client: PoolClient): Promise<void> {
+        const query = {
+            text: 'INSERT INTO passwords (user_id, hash) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET hash = $2, updated_at = NOW()',
+            values: [userId, hash]
+        };
+        await client.query(query);
+    }
+}
