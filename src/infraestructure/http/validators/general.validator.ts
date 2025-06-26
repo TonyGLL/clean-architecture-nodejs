@@ -13,13 +13,15 @@ export const idParamValidator = [
 
 export const pageLimitQueryValidator = [
     query('page')
-        .exists().withMessage('Query `page` is required')
+        .optional()
+        .isInt({ min: 0 }).withMessage('Page must be a non-negative integer')
         .bail()
         .notEmpty().withMessage('Query `page` cannot be empty')
         .toInt(),
     query('limit')
-        .exists().withMessage('Query `limit` is required')
+        .optional()
+        .isInt({ min: 1, max: 100 }).withMessage('Limit must be an integer between 1 and 100')
         .bail()
         .notEmpty().withMessage('Query `limit` cannot be empty')
-        .toInt(),
+        .toInt()
 ];
