@@ -6,16 +6,15 @@ import { APPLICATION_TYPES } from '../../application/ioc.types';
 import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
-import { IUserRepository } from '../../domain/repositories/user.repository';
-import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
-import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase } from '../../application/use-cases/user.use-case';
-import { UserController } from '../http/controllers/user.ctrl';
-
 //* Repos
 import { IAuthClientRepository } from '../../domain/repositories/auth.client.repository';
 import { IRoleRepository } from "../../domain/repositories/role.repository";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
 import { PostgresAuthClientRepository } from '../database/postgres/repositories/auth.client.repository';
+import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
+import { PostegresRoleRepository } from "../database/postgres/repositories/role.repository";
+import { PostgresUserRoleRepository } from "../database/postgres/repositories/userRole.repository";
+import { IUserRepository } from '../../domain/repositories/user.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -23,17 +22,17 @@ import { IJwtService } from '../../application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
 import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
-import { PostegresRoleRepository } from "../database/postgres/repositories/role.repository";
-import { PostgresUserRoleRepository } from "../database/postgres/repositories/userRole.repository";
+import { BcryptService } from '../driven/services/bcrypt.service';
 
 //* Use Cases
 import { LoginClientUseCase, RegisterClientUseCase, SendEmailClientUseCase, RestorePasswordClientUseCase } from '../../application/use-cases/auth.client.use-case';
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
+import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 
 //* Controllers
 import { AuthController } from './../http/controllers/auth.ctrl';
 import { RoleController } from "../http/controllers/role.ctrl";
-import { BcryptService } from '../driven/services/bcrypt.service';
+import { UserController } from '../http/controllers/user.ctrl';
 
 const container = new Container();
 
@@ -71,6 +70,7 @@ container.bind<UpdateUserUseCase>(UpdateUserUseCase).toSelf();
 container.bind<DeleteUserUseCase>(DeleteUserUseCase).toSelf();
 container.bind<ChangePasswordUseCase>(ChangePasswordUseCase).toSelf();
 container.bind<AssignRoleToUserUseCase>(AssignRoleToUserUseCase).toSelf();
+container.bind<GetUserDetailsUseCase>(GetUserDetailsUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthController>(AuthController).toSelf();

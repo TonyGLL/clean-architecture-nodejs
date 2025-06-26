@@ -1,3 +1,4 @@
+import { RolePermissions } from './role.dto';
 import { User } from '../../domain/entities/user';
 
 export interface GetUsersDTO {
@@ -9,6 +10,10 @@ export interface GetUsersDTO {
 export interface GetUsersResponseDTO {
     users: User[];
     total: number;
+}
+
+export interface GetUserDetailsResponseDTO extends User {
+    permissions: RolePermissions[];
 }
 
 export interface CreateUserDTO {

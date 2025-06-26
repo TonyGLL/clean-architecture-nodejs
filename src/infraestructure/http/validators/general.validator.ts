@@ -23,5 +23,5 @@ export const pageLimitQueryValidator = [
         .isInt({ min: 1, max: 100 }).withMessage('Limit must be an integer between 1 and 100')
         .bail()
         .notEmpty().withMessage('Query `limit` cannot be empty')
-        .toInt(),
+        .toInt()
 ];

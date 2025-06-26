@@ -8,7 +8,7 @@ import { HttpError } from '../../domain/errors/http.error';
 import { HttpStatusCode } from '../../domain/shared/http.status';
 import { User } from '../../domain/entities/user';
 import { INFRASTRUCTURE_TYPES } from '../../infraestructure/ioc/types';
-import { AssignRoleDTO, ChangePasswordDTO, CreateUserDTO, GetUsersDTO, GetUsersResponseDTO, UpdateUserDTO } from '../dtos/user.dto';
+import { AssignRoleDTO, ChangePasswordDTO, CreateUserDTO, GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO, UpdateUserDTO } from '../dtos/user.dto';
 import { UserRole } from '../../domain/entities/userRole';
 
 @injectable()
@@ -20,6 +20,21 @@ export class GetUsersUseCase {
     public async execute(dto: GetUsersDTO): Promise<[number, GetUsersResponseDTO]> {
         const users = await this.userRepository.getUsers(dto);
         return [HttpStatusCode.OK, users];
+    }
+}
+
+@injectable()
+export class GetUserDetailsUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository
+    ) { }
+
+    public async execute(id: number): Promise<[number, GetUserDetailsResponseDTO]> {
+        const userDetails = await this.userRepository.getUserDetailsById(id);
+        if (!userDetails) {
+            throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found');
+        }
+        return [HttpStatusCode.OK, userDetails];
     }
 }
 

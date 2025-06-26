@@ -3,9 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { User } from '../../../../domain/entities/user';
 import { IUserRepository } from '../../../../domain/repositories/user.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
-import { GetUsersDTO, GetUsersResponseDTO } from '../../../../application/dtos/user.dto';
-import { HttpError } from '../../../../domain/errors/http.error';
-import { HttpStatusCode } from '../../../../domain/shared/http.status';
+import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO } from '../../../../application/dtos/user.dto';
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {
@@ -43,6 +41,26 @@ export class PostgresUserRepository implements IUserRepository {
             users: dataResult.rows,
             total: parseInt(countResult.rows[0]?.total || '0', 10)
         };
+    }
+
+    public async getUserDetailsById(id: number): Promise<GetUserDetailsResponseDTO | null> {
+        const query = {
+            text: `
+                SELECT
+                    u.*,
+                    COALESCE(json_agg(DISTINCT r.*) FILTER (WHERE r.id IS NOT NULL), '[]') as roles,
+                    COALESCE(json_agg(DISTINCT p.*) FILTER (WHERE p.module_id IS NOT NULL), '[]') as permissions
+                FROM users u
+                LEFT JOIN user_roles ur ON u.id = ur.user_id
+                LEFT JOIN roles r ON ur.role_id = r.id
+                LEFT JOIN role_permissions p ON r.id = p.role_id
+                WHERE u.id = $1
+                GROUP BY u.id;
+            `,
+            values: [id]
+        };
+        const result = await this.pool.query<GetUserDetailsResponseDTO>(query);
+        return result.rows[0] || null;
     }
 
     public async findById(id: number): Promise<User | null> {

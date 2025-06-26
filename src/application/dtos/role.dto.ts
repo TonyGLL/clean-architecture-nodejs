@@ -7,8 +7,8 @@ export interface CreateRoleDTO {
 }
 
 export interface GetRolesDTO {
-    page: number;
-    limit: number;
+    page?: number;
+    limit?: number;
     search?: string;
 }
 
