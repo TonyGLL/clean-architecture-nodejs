@@ -6,11 +6,10 @@ This project is a RESTful API built with Node.js, Express.js, and TypeScript, fo
 
 ## Features
 
-*   **User Registration:** Allows new users to create an account.
-*   **User Login:** Authenticates existing users and provides JWT-based session tokens.
-*   **Secure Password Hashing:** Uses bcryptjs to hash passwords before storing them.
-*   **Password Reset:** Enables users to request a password reset via email and set a new password using a secure token.
-*   **JWT-based Authentication:** Secures API endpoints using JSON Web Tokens.
+*   **User Registration and Login:** Allows new users to create an account and authenticates existing users, providing JWT-based session tokens.
+*   **Secure Password Management:** Uses `bcryptjs` to hash passwords and enables users to reset their password via email with a secure token.
+*   **Role-Based Access Control (RBAC):** Secures API endpoints using JSON Web Tokens and role-based permissions.
+*   **User and Role Management:** Provides CRUD operations for managing users and roles.
 *   **Health Check:** A dedicated endpoint (`/health`) to monitor API status.
 
 ## Technologies Used
@@ -26,13 +25,15 @@ This project is a RESTful API built with Node.js, Express.js, and TypeScript, fo
     *   Dependency Injection (InversifyJS)
 *   **Authentication & Authorization:**
     *   JSON Web Tokens (JWT)
-    *   bcryptjs (Password Hashing)
+    *   `bcryptjs` (Password Hashing)
+*   **Validation:**
+    *   `express-validator`
 *   **Email:**
     *   Nodemailer
 *   **Development & Tooling:**
     *   Docker & Docker Compose
     *   Nodemon (for live reloading during development)
-    *   ts-node
+    *   `ts-node`
 *   **Security & Logging:**
     *   Helmet (Security Headers)
     *   Morgan (HTTP Request Logging)
@@ -43,18 +44,18 @@ This project is a RESTful API built with Node.js, Express.js, and TypeScript, fo
 The project adheres to Clean Architecture principles, dividing the codebase into distinct layers:
 
 *   **Domain:** Contains the core business logic, entities, and domain-specific interfaces. This layer is independent of any framework or infrastructure concerns.
-    *   `src/domain/entities/`: Business objects (e.g., `User`).
+    *   `src/domain/entities/`: Business objects (e.g., `User`, `Role`).
     *   `src/domain/repositories/`: Interfaces for data access.
     *   `src/domain/services/`: Domain-specific services.
 *   **Application:** Orchestrates the use cases of the application. It depends on the Domain layer but not on the Infrastructure layer.
-    *   `src/application/use-cases/`: Application-specific business rules (e.g., `AuthUseCase`).
+    *   `src/application/use-cases/`: Application-specific business rules (e.g., `AuthUseCase`, `UserUseCase`, `RoleUseCase`).
     *   `src/application/services/`: Application-level services (e.g., `JwtService`).
     *   `src/application/dtos/`: Data Transfer Objects used by use cases.
 *   **Infrastructure:** Implements the interfaces defined in the Application and Domain layers. This layer includes frameworks, databases, external service integrations, and UI components.
     *   `src/infraestructure/config/`: Environment configuration.
     *   `src/infraestructure/database/`: PostgreSQL connection and repository implementations.
     *   `src/infraestructure/driven/services/`: Implementations of external services (e.g., `MailService`).
-    *   `src/infraestructure/http/`: Express.js related code (controllers, routes, middlewares).
+    *   `src/infraestructure/http/`: Express.js related code (controllers, routes, middlewares, and validators).
     *   `src/infraestructure/ioc/`: InversifyJS dependency injection container setup.
 *   **Main:** The entry point of the application (`src/main/server.ts`), responsible for initializing and starting the server and setting up the Express application (`src/main/app.ts`).
 
@@ -155,16 +156,38 @@ The project includes `Dockerfile` and `docker-compose.yml` for a containerized s
 
 All API endpoints are prefixed with `/api/v1`.
 
-### Authentication
+### Authentication (Client)
 
-*   `POST /auth/register`: Register a new user.
+*   `POST /client/auth/register`: Register a new user.
     *   **Body:** `{ "name": "John", "lastName": "Doe", "email": "john.doe@example.com", "password": "securePassword123", "birth_date": "YYYY-MM-DD", "phone": "1234567890" }`
-*   `POST /auth/login`: Log in an existing user.
+*   `POST /client/auth/login`: Log in an existing user.
     *   **Body:** `{ "email": "john.doe@example.com", "password": "securePassword123" }`
-*   `POST /auth/send-email`: Request a password reset email.
+*   `POST /client/auth/send-email`: Request a password reset email.
     *   **Body:** `{ "email": "john.doe@example.com" }`
-*   `POST /auth/restore-password`: Restore password using a token from the reset email.
+*   `POST /client/auth/restore-password`: Restore password using a token from the reset email.
     *   **Body:** `{ "email": "john.doe@example.com", "token": "your_reset_token", "password": "newSecurePassword456" }`
+
+### Admin
+
+The following endpoints require authentication.
+
+#### User Management
+
+*   `GET /admin/users`: Get a list of users.
+*   `GET /admin/users/:id`: Get user details.
+*   `POST /admin/users`: Create a new user.
+*   `PUT /admin/users/:id`: Update a user.
+*   `DELETE /admin/users/:id`: Delete a user.
+*   `PATCH /admin/users/:id/password`: Change a user's password.
+*   `POST /admin/users/:id/roles`: Assign a role to a user.
+
+#### Role Management
+
+*   `GET /admin/roles`: Get a list of roles.
+*   `GET /admin/roles/:id`: Get permissions for a role.
+*   `POST /admin/roles`: Create a new role.
+*   `PUT /admin/roles/:id`: Update a role.
+*   `DELETE /admin/roles/:id`: Delete a role.
 
 ### Health Check
 
@@ -173,7 +196,11 @@ All API endpoints are prefixed with `/api/v1`.
 
 ## Running Tests
 
-(Information about running tests would go here if test scripts were defined in `package.json` or test files were present in the codebase. Currently, no explicit test setup is visible.)
+This project uses `jest` for testing. To run the tests, use the following command:
+
+```bash
+npm test
+```
 
 ## Contributing
 
