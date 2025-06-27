@@ -1,0 +1,7 @@
+%syntax-version=1.0.0
+%project=clean-architecture-nodejs
+%uri=
+
+initial_schema 2024-07-31T00:00:00Z Jules <jules@example.dev> # Sets up the initial database schema.
+#
+# Learn more about plan files: https://sqitch.org/docs/manual/sqitch-plan/

@@ -23,6 +23,7 @@ services:
     container_name: ca_nodejs
     ports:
       - '3000:3000'
+    command: sh -c "echo 'Waiting for DB to be ready...' && sleep 5 && echo 'Attempting to deploy database changes...' && sqitch deploy && echo 'Database changes applied. Starting application...' && node dist/main/server.js"
     environment:
       - CONFIG_FILE=dev.env
       - DB_SOURCE=postgresql://root:secret@postgres_ca_nodejs:5432/ca_nodejs?sslmode=disable

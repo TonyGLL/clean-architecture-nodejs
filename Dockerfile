@@ -14,6 +14,9 @@ RUN npm run build
 FROM node:lts-alpine
 WORKDIR /app
 
+# Install Sqitch and PostgreSQL client
+RUN apk add --no-cache perl postgresql-client sqitch
+
 # Variables de entorno
 ENV NODE_ENV=production
 ENV PORT=3000
