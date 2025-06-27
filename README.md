@@ -120,15 +120,61 @@ If you use the provided `docker-compose.yml`:
 *   The `app_dev` service in `docker-compose.yml` is configured to connect to this database via the `DB_SOURCE` environment variable.
 *   You will primarily need to ensure `JWT_SECRET` and email-related variables are set in your `.env` or `dev.env` file.
 
-### 4. Initialize Database Schema
+### 4. Initialize Database Schema (Using Sqitch)
 
-The project includes SQL scripts to initialize the database schema:
-*   `src/db/schema/init_schema_up.sql`: Creates the necessary tables.
-*   `src/db/schema/init_schema_down.sql`: Drops the tables (for cleanup).
+This project uses [Sqitch](https://sqitch.org/) for database change management. Sqitch allows for reliable and repeatable deployments of database schemas. The migration scripts are located in the `deploy/`, `revert/`, and `verify/` directories at the root of the project.
 
-You'll need to run `init_schema_up.sql` against your PostgreSQL database before starting the application for the first time.
-*   **If using Docker Compose:** Once the `db` service is running (`docker-compose up`), you can execute the script in the PostgreSQL container. You might need a tool like `psql` within the container or connect from your host machine to `localhost:5432` (if port mapping is default) using the credentials `root/secret` and database `ca_nodejs`.
-*   **If running PostgreSQL manually:** Use a PostgreSQL client like `psql` or a GUI tool.
+**Key Sqitch files:**
+*   `sqitch.plan`: Lists all the database changes in the order they should be applied.
+*   `sqitch.conf`: Project-specific Sqitch configuration.
+*   `deploy/`: Contains SQL scripts for deploying changes.
+*   `revert/`: Contains SQL scripts for reverting changes.
+*   `verify/`: Contains SQL scripts for verifying changes.
+
+To deploy the latest database schema:
+
+*   **If using Docker Compose (Recommended):**
+    The `app_dev` service in `docker-compose.yml` can be configured to run migrations or you can execute Sqitch commands directly within the running `app_dev` container.
+    1.  Ensure the database container is running: `docker-compose up -d db`
+    2.  Deploy migrations by running the `sqitch deploy` command inside the `app_dev` container. You might need to configure the database target in `sqitch.conf` or via environment variables (e.g., `SQITCH_TARGET=db:pg://root:secret@db:5432/ca_nodejs`).
+        ```bash
+        docker-compose exec app_dev sqitch deploy
+        # Or, if you have a specific target configured e.g. 'dev_db'
+        # docker-compose exec app_dev sqitch deploy dev_db
+        ```
+    You can check the status of migrations:
+        ```bash
+        docker-compose exec app_dev sqitch status
+        ```
+
+*   **If running PostgreSQL manually (and Sqitch locally):**
+    1.  Ensure Sqitch is installed locally (see [Sqitch Download](https://sqitch.org/download/)).
+    2.  Configure your database target in `sqitch.conf` or by setting the `SQITCH_TARGET` environment variable (e.g., `export SQITCH_TARGET=db:pg://your_db_user:your_db_password@localhost:5432/your_db_name`).
+    3.  Navigate to the project root and run:
+        ```bash
+        sqitch deploy
+        ```
+
+**Common Sqitch Commands:**
+*   `sqitch status [target]`: Shows the current deployment status.
+*   `sqitch deploy [target]`: Deploys pending changes.
+*   `sqitch revert [target]`: Reverts the last deployed change. To revert to a specific change: `sqitch revert [target] --to <change_name_or_tag>`.
+*   `sqitch verify [target]`: Verifies deployed changes.
+*   `sqitch log [target]`: Shows the history of deployed changes.
+
+**Adding New Migrations (e.g., for Stored Procedures):**
+When you need to add new database changes, such as creating stored procedures:
+1.  Add a new change to the plan:
+    ```bash
+    sqitch add my_new_stored_proc -n "Adds my_new_stored_proc."
+    # For changes that depend on others:
+    # sqitch add new_feature --requires existing_table -n "Adds new feature depending on existing_table."
+    ```
+2.  Edit the generated `deploy/my_new_stored_proc.sql` file with your SQL `CREATE PROCEDURE...` statement.
+3.  Edit `revert/my_new_stored_proc.sql` with `DROP PROCEDURE...`.
+4.  Edit `verify/my_new_stored_proc.sql` to check if the procedure was created (e.g., by querying `information_schema.routines`).
+5.  Commit the changes to `sqitch.plan` and the script files.
+6.  Run `sqitch deploy` to apply the new migration.
 
 ### 5. Run the Development Server (without Docker)
 
@@ -148,7 +194,7 @@ The project includes `Dockerfile` and `docker-compose.yml` for a containerized s
     docker-compose up --build -d # -d runs in detached mode
     ```
     This will start the Node.js application (`app_dev` service) and a PostgreSQL database (`db` service) pre-configured to work together. The application will be available on `http://localhost:3000`.
-4.  Remember to apply the database schema as mentioned in step 4.
+4.  Apply database migrations using Sqitch as described in step 4 ("Initialize Database Schema (Using Sqitch)"). Typically, you would run `docker-compose exec app_dev sqitch deploy`.
 5.  To see logs: `docker-compose logs -f app_dev db`
 6.  To stop: `docker-compose down`
 

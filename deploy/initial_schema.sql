@@ -1,4 +1,8 @@
--- Tabla de usuarios
+-- Deploy clean-architecture-nodejs:initial_schema to pg
+
+BEGIN;
+
+-- Tabla de clients
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
     "name" VARCHAR(100) NOT NULL,
@@ -10,7 +14,7 @@ CREATE TABLE clients (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de contraseñas
+-- Tabla de contraseñas de clients
 CREATE TABLE client_passwords (
     client_id INT PRIMARY KEY REFERENCES clients(id) ON DELETE CASCADE,
     hash CHAR(60) NOT NULL,
@@ -18,7 +22,7 @@ CREATE TABLE client_passwords (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de usuarios
+-- Tabla de users
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     "name" VARCHAR(100) NOT NULL,
@@ -30,7 +34,7 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de contraseñas
+-- Tabla de contraseñas de users
 CREATE TABLE passwords (
     user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     hash CHAR(60) NOT NULL,
@@ -56,7 +60,7 @@ CREATE TABLE modules (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-- Tabla de Permisos por Rol y Módulo
+-- Tabla de Permisos por Rol y Módulo
 -- Aquí se define qué puede hacer un Rol en un Módulo específico
 CREATE TABLE role_permissions (
     id SERIAL PRIMARY KEY,
@@ -78,3 +82,5 @@ CREATE TABLE user_roles (
     assigned_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, role_id) -- Clave primaria compuesta
 );
+
+COMMIT;
