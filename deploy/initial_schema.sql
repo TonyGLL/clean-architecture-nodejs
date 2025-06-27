@@ -10,6 +10,7 @@ CREATE TABLE clients (
     email VARCHAR(255) UNIQUE NOT NULL,
     birth_date DATE CHECK (birth_date > '1900-01-01'),
     phone VARCHAR(20) CHECK (phone ~ '^[0-9\+\(\)\s-]{8,20}$'),
+    deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -30,6 +31,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     birth_date DATE CHECK (birth_date > '1900-01-01'),
     phone VARCHAR(20) CHECK (phone ~ '^[0-9\+\(\)\s-]{8,20}$'),
+    deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -47,6 +49,7 @@ CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL, -- Ej: 'Administrator', 'Editor', 'Viewer'
     description TEXT,
+    deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
