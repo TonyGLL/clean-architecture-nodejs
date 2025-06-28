@@ -47,13 +47,42 @@ export class PostgresUserRepository implements IUserRepository {
         const query = {
             text: `
                 SELECT
-                    u.*,
-                    COALESCE(json_agg(DISTINCT r.*) FILTER (WHERE r.id IS NOT NULL), '[]') as roles,
-                    COALESCE(json_agg(DISTINCT p.*) FILTER (WHERE p.module_id IS NOT NULL), '[]') as permissions
+                    u.id,
+                    u.name,
+                    u.last_name,
+                    u.email,
+                    u.birth_date,
+                    u.phone,
+                    COALESCE(
+                        jsonb_agg(
+                            DISTINCT jsonb_build_object(
+                                'id', r.id,
+                                'name', r.name,
+                                'description', r.description,
+                                'permissions', (
+                                    SELECT jsonb_agg(
+                                        jsonb_build_object(
+                                            'id', p.id,
+                                            'module_name', m.name,
+                                            'module_description', m.description,
+                                            'module_id', p.module_id,
+                                            'can_read', p.can_read,
+                                            'can_write', p.can_write,
+                                            'can_update', p.can_update,
+                                            'can_delete', p.can_delete
+                                        )
+                                    )
+                                    FROM role_permissions p
+                                    INNER JOIN modules m ON p.module_id = m.id
+                                    WHERE p.role_id = r.id
+                                )
+                            )
+                        ) FILTER (WHERE r.id IS NOT NULL),
+                        '[]'
+                    ) AS roles
                 FROM users u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
                 LEFT JOIN roles r ON ur.role_id = r.id
-                LEFT JOIN role_permissions p ON r.id = p.role_id
                 WHERE u.id = $1 AND u.deleted IS FALSE
                 GROUP BY u.id;
             `,
@@ -69,9 +98,45 @@ export class PostgresUserRepository implements IUserRepository {
     }
 
     public async findByEmail(email: string): Promise<User | null> {
-        const result = await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1 AND u.deleted IS FALSE', [email]);
-        const { id, name, last_name, birth_date, phone, password } = result.rows[0];
-        return new User(id, name, last_name, email, birth_date, phone, password);
+        const result = await this.pool.query<User>(`
+                SELECT 
+                    u.*,
+                    p.hash as password,
+                    COALESCE(
+                            jsonb_agg(
+                                DISTINCT jsonb_build_object(
+                                    'id', r.id,
+                                    'name', r.name,
+                                    'description', r.description,
+                                    'permissions', (
+                                        SELECT jsonb_agg(
+                                            jsonb_build_object(
+                                                'id', p.id,
+                                                'module_name', m.name,
+                                                'module_id', p.module_id,
+                                                'can_read', p.can_read,
+                                                'can_write', p.can_write,
+                                                'can_update', p.can_update,
+                                                'can_delete', p.can_delete
+                                            )
+                                        )
+                                        FROM role_permissions p
+                                        INNER JOIN modules m ON p.module_id = m.id
+                                        WHERE p.role_id = r.id
+                                    )
+                                )
+                            ) FILTER (WHERE r.id IS NOT NULL),
+                            '[]'
+                        ) AS roles
+                    FROM users u 
+                    INNER JOIN passwords p ON p.user_id = u.id
+                    LEFT JOIN user_roles ur ON u.id = ur.user_id
+                    LEFT JOIN roles r ON ur.role_id = r.id
+                    WHERE u.email = $1 AND u.deleted IS FALSE
+                    GROUP BY u.id, p.hash;
+            `, [email]);
+        const { id, name, last_name, birth_date, phone, password, roles } = result.rows[0];
+        return new User(id, name, last_name, email, birth_date, phone, password, undefined, undefined, roles);
     }
 
     public async create(user: User, client: PoolClient): Promise<User> {

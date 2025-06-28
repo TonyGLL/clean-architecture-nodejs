@@ -14,6 +14,7 @@ import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 import { ServiceType } from "../dtos/auth.admin.dto";
 import { User } from "../../domain/entities/user";
 import { IUserRepository } from "../../domain/repositories/user.repository";
+import { Role } from "../../domain/entities/role";
 
 @injectable()
 export class LoginUseCase {
@@ -42,7 +43,10 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        const token = this.jwtService.generateToken({ id: user.id }, '1h', type);
+        const tokenObject: { id: number | null; roles?: Role[] } = { id: user.id };
+        if (type === 'admin' && user instanceof User) tokenObject['roles'] = user.roles; // Assuming User has a role property
+
+        const token = this.jwtService.generateToken(tokenObject, '1h', type);
 
         delete user.password;
 
