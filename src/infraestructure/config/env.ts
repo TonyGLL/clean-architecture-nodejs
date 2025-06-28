@@ -1,6 +1,7 @@
 export const config = {
     PORT: process.env.PORT,
-    JWT_SECRET: process.env.JWT_SECRET as string,
+    JWT_SECRET_CLIENT: process.env.JWT_SECRET_CLIENT as string,
+    JWT_SECRET_ADMIN: process.env.JWT_SECRET_ADMIN as string,
     PSQL_DB: process.env.PSQL_DB as string,
     PSQL_USER: process.env.PSQL_USER as string,
     PSQL_PASSWORD: process.env.PSQL_PASSWORD as string,

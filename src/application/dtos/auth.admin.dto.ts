@@ -1,1 +1,1 @@
-export type LoginType = 'client' | 'admin';
+export type ServiceType = 'client' | 'admin';

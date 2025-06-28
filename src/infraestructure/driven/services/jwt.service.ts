@@ -5,22 +5,22 @@ import { sign, verify } from "jsonwebtoken";
 import { StringValue } from 'ms';
 import { HttpError } from "../../../domain/errors/http.error";
 import { HttpStatusCode } from "../../../domain/shared/http.status";
+import { ServiceType } from "../../../application/dtos/auth.admin.dto";
 
 @injectable()
 export class JwtService implements IJwtService {
-    private readonly secret = config.JWT_SECRET;
+    private readonly secret_client = config.JWT_SECRET_CLIENT;
+    private readonly secret_admin = config.JWT_SECRET_ADMIN;
 
-    constructor() {
-        if (!this.secret) throw new Error('Secret missing');
+    constructor() { }
+
+    public generateToken(payload: object, expiresIn: StringValue, type: ServiceType): string {
+        return sign(payload, type === 'admin' ? this.secret_admin : this.secret_client, { expiresIn });
     }
 
-    public generateToken(payload: object, expiresIn: StringValue): string {
-        return sign(payload, this.secret, { expiresIn });
-    }
-
-    public validateToken(token: string): any {
+    public validateToken(token: string, type: ServiceType): any {
         try {
-            const decoded = verify(token, this.secret);
+            const decoded = verify(token, type === 'admin' ? this.secret_admin : this.secret_client);
             return decoded;
         } catch (error: any) {
             // Log error for server-side debugging: console.error("JWT Validation Error:", error.message);

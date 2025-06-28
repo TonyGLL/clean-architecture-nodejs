@@ -4,6 +4,7 @@ import { APPLICATION_TYPES } from '../../../application/ioc.types';
 import { IJwtService } from '../../../application/services/jwt.service';
 import { HttpError } from '../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../domain/shared/http.status';
+import { ServiceType } from '../../../application/dtos/auth.admin.dto';
 
 // Extend Express Request type to include 'user'
 declare global {
@@ -29,7 +30,10 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     try {
         const jwtService = container.get<IJwtService>(APPLICATION_TYPES.IJwtService);
-        const decoded = jwtService.validateToken(token); // This should return the payload if valid, or throw if not
+        const serviceType = req.baseUrl.split('/')[3] as ServiceType; // Assuming the service type is part of the URL path, e.g., /api/admin/...
+        console.log(serviceType);
+
+        const decoded = jwtService.validateToken(token, serviceType); // This should return the payload if valid, or throw if not
         req.user = decoded; // Attach decoded payload to request
         next();
     } catch (error) {

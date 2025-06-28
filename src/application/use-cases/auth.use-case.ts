@@ -12,7 +12,7 @@ import { Client } from "../../domain/entities/client";
 import { IMailService } from "../../domain/services/mail.service";
 import { Pool } from "pg";
 import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
-import { LoginType } from "../dtos/auth.admin.dto";
+import { ServiceType } from "../dtos/auth.admin.dto";
 import { User } from "../../domain/entities/user";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 
@@ -25,7 +25,7 @@ export class LoginUseCase {
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
-    public async execute(dto: LoginClientDTO, type: LoginType): Promise<[number, AuthClientResponseDTO | object]> {
+    public async execute(dto: LoginClientDTO, type: ServiceType): Promise<[number, AuthClientResponseDTO | object]> {
         let user: Client | User | null = null;
         switch (type) {
             case 'admin':
@@ -43,7 +43,7 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        const token = this.jwtService.generateToken({ id: user.id }, '1h');
+        const token = this.jwtService.generateToken({ id: user.id }, '1h', type);
 
         delete user.password;
 
@@ -80,7 +80,7 @@ export class RegisterClientUseCase {
 
             await client.query('COMMIT');
 
-            const token = this.jwtService.generateToken({ id: userClientSaved.id }, '1h');
+            const token = this.jwtService.generateToken({ id: userClientSaved.id }, '1h', 'admin');
 
             const newUser = new Client(userClientSaved.id, userClientSaved.name, userClientSaved.last_name, userClientSaved.email, userClientSaved.birth_date, userClientSaved.phone);
             if (!userClientSaved.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Saved Client ID missing');
@@ -104,11 +104,11 @@ export class SendEmailUseCase {
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
-    public async execute(email: string, type: LoginType): Promise<[number, object]> {
+    public async execute(email: string, type: ServiceType): Promise<[number, object]> {
         const existUser = await this.authClientRepository.findByEmail(email);
         if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        const token = this.jwtService.generateToken({ id: existUser.id }, '2m');
+        const token = this.jwtService.generateToken({ id: existUser.id }, '2m', type);
 
         await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
 
@@ -124,11 +124,11 @@ export class RestorePasswordUseCase {
         @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
     ) { }
 
-    public async execute(dto: RestorePasswordDTO, type: LoginType): Promise<[number, object]> {
+    public async execute(dto: RestorePasswordDTO, type: ServiceType): Promise<[number, object]> {
         const existUser = await this.authClientRepository.findByEmail(dto.email);
         if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        this.jwtService.validateToken(dto.token);
+        this.jwtService.validateToken(dto.token, type);
 
         const password = await this.hashingService.hash(dto.password);
 

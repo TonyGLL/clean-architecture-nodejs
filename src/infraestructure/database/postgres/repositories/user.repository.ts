@@ -64,13 +64,13 @@ export class PostgresUserRepository implements IUserRepository {
     }
 
     public async findById(id: number): Promise<User | null> {
-        const result = await this.pool.query<User>('SELECT * FROM users u WHERE u.id = $1 AND u.delete IS FALSE', [id]);
+        const result = await this.pool.query<User>('SELECT * FROM users u WHERE u.id = $1 AND u.deleted IS FALSE', [id]);
         return result.rows[0] || null;
     }
 
     public async findByEmail(email: string): Promise<User | null> {
-        const [result] = (await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1 AND u.delete IS FALSE', [email])).rows;
-        const { id, name, last_name, birth_date, phone, password } = result;
+        const result = await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1 AND u.deleted IS FALSE', [email]);
+        const { id, name, last_name, birth_date, phone, password } = result.rows[0];
         return new User(id, name, last_name, email, birth_date, phone, password);
     }
 
