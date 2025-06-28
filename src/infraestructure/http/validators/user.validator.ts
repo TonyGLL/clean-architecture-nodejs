@@ -11,7 +11,7 @@ export const CreateUserValidator = [
     body('lastName').isString().notEmpty().withMessage('Last name is required'),
     body('email').isEmail().withMessage('Must be a valid email'),
     body('password').isString().isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-    body('birthDate').optional().isISO8601().toDate().withMessage('Must be a valid date'),
+    body('birth_date').optional().isISO8601().toDate().withMessage('Must be a valid date'),
     body('phone').optional().isString().withMessage('Phone must be a string')
 ];
 
@@ -19,7 +19,7 @@ export const UpdateUserValidator = [
     param('id').isInt({ min: 1 }).withMessage('ID must be a positive integer'),
     body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
     body('lastName').optional().isString().notEmpty().withMessage('Last name must be a non-empty string'),
-    body('birthDate').optional().isISO8601().toDate().withMessage('Must be a valid date'),
+    body('birth_date').optional().isISO8601().toDate().withMessage('Must be a valid date'),
     body('phone').optional().isString().withMessage('Phone must be a string')
 ];
 

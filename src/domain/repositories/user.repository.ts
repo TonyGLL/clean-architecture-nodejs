@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO } from '../../application/dtos/user.dto';
+import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO, UpdateUserDTO } from '../../application/dtos/user.dto';
 import { User } from '../entities/user';
 
 export interface IUserRepository {
@@ -8,7 +8,7 @@ export interface IUserRepository {
     findById(id: number): Promise<User | null>;
     findByEmail(email: string): Promise<User | null>;
     create(user: User, client: PoolClient): Promise<User>;
-    update(id: number, user: Partial<User>, client: PoolClient): Promise<void>;
+    update(id: number, user: Partial<UpdateUserDTO>, client: PoolClient): Promise<void>;
     delete(id: number, client: PoolClient): Promise<void>;
     updatePassword(userId: number, hash: string, client: PoolClient): Promise<void>;
 }

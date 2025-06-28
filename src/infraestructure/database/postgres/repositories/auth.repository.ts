@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
-import { IAuthClientRepository } from "../../../../domain/repositories/auth.client.repository";
+import { IAuthRepository } from "../../../../domain/repositories/auth.repository";
 import { Client } from "../../../../domain/entities/client";
 import { Pool, PoolClient } from "pg";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
 
 @injectable()
-export class PostgresAuthClientRepository implements IAuthClientRepository {
+export class PostgresAuthRepository implements IAuthRepository {
     constructor(
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }

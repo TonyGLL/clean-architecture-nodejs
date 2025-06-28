@@ -61,7 +61,7 @@ export class CreateUserUseCase {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const userEntity = new User(null, dto.name, dto.lastName, dto.email, dto.birthDate, dto.phone);
+            const userEntity = new User(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
             const newUser = await this.userRepository.create(userEntity, client);
             if (!newUser.id) {
                 throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Error creating user');
@@ -85,7 +85,7 @@ export class UpdateUserUseCase {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
-    public async execute(id: number, dto: UpdateUserDTO): Promise<[number, object]> {
+    public async execute(id: number, dto: Partial<UpdateUserDTO>): Promise<[number, object]> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');

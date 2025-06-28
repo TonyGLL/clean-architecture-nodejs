@@ -1,19 +1,19 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { LoginClientUseCase, RegisterClientUseCase, SendEmailClientUseCase, RestorePasswordClientUseCase } from "../../../application/use-cases/auth.client.use-case";
+import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordUseCase } from "../../../application/use-cases/auth.use-case";
 
 @injectable()
-export class AuthController {
+export class AuthClientsController {
     constructor(
-        @inject(LoginClientUseCase) private loginClientUseCase: LoginClientUseCase,
+        @inject(LoginUseCase) private loginUseCase: LoginUseCase,
         @inject(RegisterClientUseCase) private registerClientUseCase: RegisterClientUseCase,
-        @inject(SendEmailClientUseCase) private sendEmailClientUseCase: SendEmailClientUseCase,
-        @inject(RestorePasswordClientUseCase) private restorePasswordClientUseCase: RestorePasswordClientUseCase,
+        @inject(SendEmailUseCase) private sendEmailUseCase: SendEmailUseCase,
+        @inject(RestorePasswordUseCase) private restorePasswordUseCase: RestorePasswordUseCase,
     ) { }
 
     public login = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const [status, data] = await this.loginClientUseCase.execute(req.body);
+            const [status, data] = await this.loginUseCase.execute(req.body, 'client');
             res.status(status).json(data);
         } catch (error) {
             next(error);
@@ -32,7 +32,7 @@ export class AuthController {
     public sendEmail = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email } = req.body;
-            const [status, data] = await this.sendEmailClientUseCase.execute(email);
+            const [status, data] = await this.sendEmailUseCase.execute(email, 'client');
             res.status(status).json(data);
         } catch (error) {
             next(error);
@@ -43,7 +43,7 @@ export class AuthController {
         try {
             const { email, password } = req.body;
             const { token } = req.params;
-            const [status, data] = await this.restorePasswordClientUseCase.execute({ email, password, token });
+            const [status, data] = await this.restorePasswordUseCase.execute({ email, password, token }, 'client');
             res.status(status).json(data);
         } catch (error) {
             next(error);

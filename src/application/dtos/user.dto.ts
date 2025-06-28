@@ -20,7 +20,7 @@ export interface CreateUserDTO {
     name: string;
     lastName: string;
     email: string;
-    birthDate?: Date;
+    birth_date?: Date;
     phone?: string;
     password?: string;
 }
@@ -28,7 +28,7 @@ export interface CreateUserDTO {
 export interface UpdateUserDTO {
     name?: string;
     lastName?: string;
-    birthDate?: string;
+    birth_date?: string;
     phone?: string;
 }
 

@@ -84,7 +84,7 @@ describe('UserController', () => {
 
     describe('createUser', () => {
         it('should call CreateUserUseCase and return the created user', async () => {
-            const userDto: CreateUserDTO = { name: 'John', lastName: 'Doe', email: 'j.doe@example.com', password: '123', birthDate: new Date() };
+            const userDto: CreateUserDTO = { name: 'John', lastName: 'Doe', email: 'j.doe@example.com', password: '123', birth_date: new Date() };
             const req = mockRequest(userDto);
             const res = mockResponse();
             const createdUser = { id: '1', ...userDto };

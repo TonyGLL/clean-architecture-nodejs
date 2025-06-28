@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { User } from '../../../../domain/entities/user';
 import { IUserRepository } from '../../../../domain/repositories/user.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
-import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO } from '../../../../application/dtos/user.dto';
+import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO, UpdateUserDTO } from '../../../../application/dtos/user.dto';
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {
@@ -15,10 +15,10 @@ export class PostgresUserRepository implements IUserRepository {
         const { page = 0, limit = 10, search } = filters;
         const offset = page * limit;
         const params: (string | number)[] = [];
-        let whereClause = '';
+        let whereClause = 'WHERE deleted IS FALSE';
 
         if (search) {
-            whereClause = `WHERE name ILIKE $1 OR email ILIKE $1`;
+            whereClause = ` and name ILIKE $1 OR email ILIKE $1`;
             params.push(`%${search}%`);
         }
 
@@ -54,7 +54,7 @@ export class PostgresUserRepository implements IUserRepository {
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
                 LEFT JOIN roles r ON ur.role_id = r.id
                 LEFT JOIN role_permissions p ON r.id = p.role_id
-                WHERE u.id = $1
+                WHERE u.id = $1 and u.deleted IS FALSE
                 GROUP BY u.id;
             `,
             values: [id]
@@ -69,8 +69,9 @@ export class PostgresUserRepository implements IUserRepository {
     }
 
     public async findByEmail(email: string): Promise<User | null> {
-        const result = await this.pool.query<User>('SELECT * FROM users WHERE email = $1', [email]);
-        return result.rows[0] || null;
+        const [result] = (await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1', [email])).rows;
+        const { id, name, last_name, birth_date, phone, password } = result;
+        return new User(id, name, last_name, email, birth_date, phone, password);
     }
 
     public async create(user: User, client: PoolClient): Promise<User> {
@@ -82,18 +83,18 @@ export class PostgresUserRepository implements IUserRepository {
         return result.rows[0];
     }
 
-    public async update(id: number, user: Partial<User>, client: PoolClient): Promise<void> {
+    public async update(id: number, user: Partial<UpdateUserDTO>, client: PoolClient): Promise<void> {
         const fields = Object.keys(user).map((key, i) => `${key} = $${i + 2}`).join(', ');
         const values = Object.values(user);
         const query = {
-            text: `UPDATE users SET ${fields} WHERE id = $1`,
+            text: `UPDATE users SET ${fields} WHERE id = $1 and deleted IS FALSE`,
             values: [id, ...values]
         };
         await client.query(query);
     }
 
     public async delete(id: number, client: PoolClient): Promise<void> {
-        await client.query('DELETE FROM users WHERE id = $1', [id]);
+        await client.query('UPDATE users SET deleted = TRUE WHERE id = $1 and deleted IS FALSE', [id]);
     }
 
     public async updatePassword(userId: number, hash: string, client: PoolClient): Promise<void> {

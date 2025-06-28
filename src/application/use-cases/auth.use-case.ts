@@ -2,7 +2,7 @@ import { inject, injectable } from "inversify";
 import { AuthClientResponseDTO, LoginClientDTO, RegisterClientDTO, RestorePasswordDTO } from "../dtos/auth.client.dto";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { APPLICATION_TYPES } from "../ioc.types";
-import { IAuthClientRepository } from "../../domain/repositories/auth.client.repository";
+import { IAuthRepository } from "../../domain/repositories/auth.repository";
 import { IHashingService } from "../../domain/services/hashing.service";
 import { IJwtService } from "../services/jwt.service";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
@@ -12,34 +12,49 @@ import { Client } from "../../domain/entities/client";
 import { IMailService } from "../../domain/services/mail.service";
 import { Pool } from "pg";
 import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
+import { LoginType } from "../dtos/auth.admin.dto";
+import { User } from "../../domain/entities/user";
+import { IUserRepository } from "../../domain/repositories/user.repository";
 
 @injectable()
-export class LoginClientUseCase {
+export class LoginUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IAuthClientRepository) private authClientRepository: IAuthClientRepository,
+        @inject(DOMAIN_TYPES.IAuthRepository) private authRepository: IAuthRepository,
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
-    public async execute(dto: LoginClientDTO): Promise<[number, AuthClientResponseDTO | object]> {
-        const client = await this.authClientRepository.findByEmail(dto.email);
-        if (!client || !client.password) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
+    public async execute(dto: LoginClientDTO, type: LoginType): Promise<[number, AuthClientResponseDTO | object]> {
+        let user: Client | User | null = null;
+        switch (type) {
+            case 'admin':
+                user = await this.userRepository.findByEmail(dto.email);
+                break;
+            case 'client':
+                user = await this.authRepository.findByEmail(dto.email);
+                break;
+            default:
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Invalid login type');
+        }
 
-        const isPasswordValid = await this.hasingService.compare(dto.password, client.password);
+        if (!user || !user.password) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
+
+        const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        const token = this.jwtService.generateToken({ id: client.id }, '1h');
+        const token = this.jwtService.generateToken({ id: user.id }, '1h');
 
-        delete client.password;
+        delete user.password;
 
-        return [HttpStatusCode.OK, { client, token }];
+        return [HttpStatusCode.OK, { user, token }];
     }
 }
 
 @injectable()
 export class RegisterClientUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IAuthClientRepository) private authClientRepository: IAuthClientRepository,
+        @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository,
@@ -82,14 +97,14 @@ export class RegisterClientUseCase {
 }
 
 @injectable()
-export class SendEmailClientUseCase {
+export class SendEmailUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IAuthClientRepository) private authClientRepository: IAuthClientRepository,
+        @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
     ) { }
 
-    public async execute(email: string): Promise<[number, object]> {
+    public async execute(email: string, type: LoginType): Promise<[number, object]> {
         const existUser = await this.authClientRepository.findByEmail(email);
         if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
@@ -102,14 +117,14 @@ export class SendEmailClientUseCase {
 }
 
 @injectable()
-export class RestorePasswordClientUseCase {
+export class RestorePasswordUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IAuthClientRepository) private authClientRepository: IAuthClientRepository,
+        @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
     ) { }
 
-    public async execute(dto: RestorePasswordDTO): Promise<[number, object]> {
+    public async execute(dto: RestorePasswordDTO, type: LoginType): Promise<[number, object]> {
         const existUser = await this.authClientRepository.findByEmail(dto.email);
         if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 

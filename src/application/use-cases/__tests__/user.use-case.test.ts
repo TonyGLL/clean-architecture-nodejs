@@ -68,9 +68,9 @@ describe('User Use Cases', () => {
             lastName: 'User',
             email: 'test@example.com',
             password: 'password123',
-            birthDate: new Date('1990-01-01'),
+            birth_date: new Date('1990-01-01'),
         };
-        const createdUser = new User('1', dto.name, dto.lastName, dto.email, dto.birthDate, dto.password);
+        const createdUser = new User('1', dto.name, dto.lastName, dto.email, dto.birth_date, dto.password);
 
         it('should create a user successfully', async () => {
             mockUserRepository.findByEmail.mockResolvedValue(null);

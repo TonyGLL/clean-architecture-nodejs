@@ -10,7 +10,7 @@ router
     .get('/', GetUsersValidator, controller.getUsers)
     .get('/:id', UserIdValidator, controller.getUserDetails)
     .post('/', CreateUserValidator, controller.createUser)
-    .put('/:id', UpdateUserValidator, controller.updateUser)
+    .patch('/:id', UpdateUserValidator, controller.updateUser)
     .delete('/:id', UserIdValidator, controller.deleteUser)
     .patch('/:id/password', ChangePasswordValidator, controller.changePassword)
     .post('/:id/roles', AssignRoleValidator, controller.assignRole);

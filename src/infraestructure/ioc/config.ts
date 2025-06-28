@@ -7,14 +7,16 @@ import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
 //* Repos
-import { IAuthClientRepository } from '../../domain/repositories/auth.client.repository';
+import { IAuthRepository } from '../../domain/repositories/auth.repository';
 import { IRoleRepository } from "../../domain/repositories/role.repository";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
-import { PostgresAuthClientRepository } from '../database/postgres/repositories/auth.client.repository';
+import { PostgresAuthRepository } from '../database/postgres/repositories/auth.repository';
 import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
 import { PostegresRoleRepository } from "../database/postgres/repositories/role.repository";
 import { PostgresUserRoleRepository } from "../database/postgres/repositories/userRole.repository";
 import { IUserRepository } from '../../domain/repositories/user.repository';
+import { PostegresModulesRepository } from '../database/postgres/repositories/modules.repository';
+import { IModulesRepository } from '../../domain/repositories/modules.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -25,14 +27,17 @@ import { NodeMailerService } from '../driven/services/node-mailer.service';
 import { BcryptService } from '../driven/services/bcrypt.service';
 
 //* Use Cases
-import { LoginClientUseCase, RegisterClientUseCase, SendEmailClientUseCase, RestorePasswordClientUseCase } from '../../application/use-cases/auth.client.use-case';
+import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
+import { GetAllModulesUseCase } from '../../application/use-cases/modules.use-case';
 
 //* Controllers
-import { AuthController } from './../http/controllers/auth.ctrl';
+import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
 import { RoleController } from "../http/controllers/role.ctrl";
 import { UserController } from '../http/controllers/user.ctrl';
+import { ModulesController } from '../http/controllers/modules.ctrl';
+import { AuthAdminController } from '../http/controllers/auth.admin.ctrl';
 
 const container = new Container();
 
@@ -40,10 +45,11 @@ const container = new Container();
 container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 
 //* Respositories (Inteface -> Implementation)
-container.bind<IAuthClientRepository>(DOMAIN_TYPES.IAuthClientRepository).to(PostgresAuthClientRepository);
+container.bind<IAuthRepository>(DOMAIN_TYPES.IAuthRepository).to(PostgresAuthRepository);
 container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostegresRoleRepository);
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
 container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
+container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostegresModulesRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -53,10 +59,10 @@ container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 
 //* Use Cases (Concrete classes)
 // AUTH
-container.bind<LoginClientUseCase>(LoginClientUseCase).toSelf();
+container.bind<LoginUseCase>(LoginUseCase).toSelf();
 container.bind<RegisterClientUseCase>(RegisterClientUseCase).toSelf();
-container.bind<SendEmailClientUseCase>(SendEmailClientUseCase).toSelf();
-container.bind<RestorePasswordClientUseCase>(RestorePasswordClientUseCase).toSelf();
+container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
+container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
 // ROLES
 container.bind<GetRolesUseCase>(GetRolesUseCase).toSelf();
 container.bind<GetPermissionsByRoleUseCase>(GetPermissionsByRoleUseCase).toSelf();
@@ -71,10 +77,14 @@ container.bind<DeleteUserUseCase>(DeleteUserUseCase).toSelf();
 container.bind<ChangePasswordUseCase>(ChangePasswordUseCase).toSelf();
 container.bind<AssignRoleToUserUseCase>(AssignRoleToUserUseCase).toSelf();
 container.bind<GetUserDetailsUseCase>(GetUserDetailsUseCase).toSelf();
+// Modules
+container.bind<GetAllModulesUseCase>(GetAllModulesUseCase).toSelf();
 
 //* Controllers (Concrete classes)
-container.bind<AuthController>(AuthController).toSelf();
+container.bind<AuthClientsController>(AuthClientsController).toSelf();
+container.bind<AuthAdminController>(AuthAdminController).toSelf();
 container.bind<RoleController>(RoleController).toSelf();
 container.bind<UserController>(UserController).toSelf();
+container.bind<ModulesController>(ModulesController).toSelf();
 
 export { container };

@@ -1,7 +1,7 @@
 import 'reflect-metadata'; // Required for InversifyJS
 import { CreateRoleUseCase, AssignRoleToUserUseCase, GetRolesForUserUseCase, RevokeRoleFromUserUseCase, CreateRoleDTO, AssignRoleToUserDTO } from '../role.use-case';
 import { IRoleRepository } from '../../../domain/repositories/role.repository';
-import { IUserRepository } from '../../../domain/repositories/auth.client.repository';
+import { IUserRepository } from '../../../domain/repositories/auth.repository';
 import { IUserRoleRepository } from '../../../domain/repositories/userRole.repository';
 import { Role } from '../../../domain/entities/role';
 import { User } from '../../../domain/entities/client';
