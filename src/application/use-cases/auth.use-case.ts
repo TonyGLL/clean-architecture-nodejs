@@ -5,7 +5,6 @@ import { APPLICATION_TYPES } from "../ioc.types";
 import { IAuthRepository } from "../../domain/repositories/auth.repository";
 import { IHashingService } from "../../domain/services/hashing.service";
 import { IJwtService } from "../services/jwt.service";
-import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { Client } from "../../domain/entities/client";
@@ -57,7 +56,6 @@ export class RegisterClientUseCase {
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
-        @inject(DOMAIN_TYPES.IUserRoleRepository) private userRoleRepository: IUserRoleRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
