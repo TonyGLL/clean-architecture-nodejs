@@ -30,7 +30,7 @@ import { BcryptService } from '../driven/services/bcrypt.service';
 import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
-import { GetAllModulesUseCase } from '../../application/use-cases/modules.use-case';
+import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -79,6 +79,10 @@ container.bind<AssignRoleToUserUseCase>(AssignRoleToUserUseCase).toSelf();
 container.bind<GetUserDetailsUseCase>(GetUserDetailsUseCase).toSelf();
 // Modules
 container.bind<GetAllModulesUseCase>(GetAllModulesUseCase).toSelf();
+container.bind<GetModuleByIdUseCase>(GetModuleByIdUseCase).toSelf();
+container.bind<CreateModuleUseCase>(CreateModuleUseCase).toSelf();
+container.bind<UpdateModuleUseCase>(UpdateModuleUseCase).toSelf();
+container.bind<DeleteModuleUseCase>(DeleteModuleUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
