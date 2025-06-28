@@ -6,7 +6,6 @@ import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO, RolePermissions } from '../../../../application/dtos/role.dto';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
-import e from 'express';
 
 @injectable()
 export class PostegresRoleRepository implements IRoleRepository {
@@ -18,10 +17,10 @@ export class PostegresRoleRepository implements IRoleRepository {
         const { page = 0, limit = 10, search = null } = filters;
 
         try {
-            const result = await this.pool.query('SELECT * FROM get_roles($1, $2, $3)', [page, limit, search]);
+            const [result] = (await this.pool.query('SELECT * FROM get_roles($1, $2, $3)', [page, limit, search])).rows;
             const response: GetRolesResponseDTO = {
-                roles: result.rows,
-                total: result.rows.length ? parseInt(result.rows[0]?.total || '0', 10) : 0
+                roles: result.roles,
+                total: result.roles.length ? parseInt(result.total || '0', 10) : 0
             };
             return response;
         } catch (error) {

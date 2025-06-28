@@ -1,19 +1,19 @@
+-- DROP FUNCTION public.get_roles(int4, int4, text);
 
 CREATE OR REPLACE FUNCTION public.get_roles(page_in integer DEFAULT 0, limit_in integer DEFAULT 10, search_in text DEFAULT NULL::text)
- RETURNS TABLE(id integer, name character varying, description text, created_at timestamp with time zone, updated_at timestamp with time zone, total bigint)
+ RETURNS TABLE(roles json, total bigint)
  LANGUAGE plpgsql
 AS $function$
 DECLARE
     offset_in INT := page_in * limit_in;
     search_condition TEXT := '';
-    query TEXT;
 BEGIN
     -- Validaciones
     IF page_in < 0 OR limit_in <= 0 OR limit_in > 100 THEN
         RAISE EXCEPTION 'Invalid pagination parameters';
     END IF;
 
-    -- Condición de búsqueda
+    -- Construir condición búsqueda
     IF search_in IS NOT NULL THEN
         IF search_in ~ '^\d+$' THEN
             search_condition := format(
@@ -29,23 +29,26 @@ BEGIN
         END IF;
     END IF;
 
-    -- Construir query
-    query := format($fmt$
+    RETURN QUERY EXECUTE format($fmt$
+        WITH roles_data AS (
+            SELECT
+                id,
+                name,
+                description,
+                created_at,
+                updated_at
+            FROM roles
+            %s
+            ORDER BY name ASC
+            LIMIT %s OFFSET %s
+        ),
+        total_count AS (
+            SELECT COUNT(*) AS total FROM roles %s
+        )
         SELECT
-            id,
-            name,
-            description,
-            created_at,
-            updated_at,
-            COUNT(*) OVER() AS total
-        FROM roles
-        %s
-        ORDER BY name ASC
-        LIMIT %s OFFSET %s
-    $fmt$, search_condition, limit_in, offset_in);
-
-    -- Ejecutar query
-    RETURN QUERY EXECUTE query;
+            (SELECT json_agg(row_to_json(r)) FROM roles_data r) AS roles,
+            (SELECT total FROM total_count) AS total;
+    $fmt$, search_condition, limit_in, offset_in, search_condition);
 END;
 $function$
 ;
