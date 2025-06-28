@@ -12,7 +12,7 @@ export class PostgresAuthRepository implements IAuthRepository {
 
     public async findByEmail(email: string): Promise<Client | null> {
         const query = {
-            text: 'SELECT c.*, p.hash as password FROM clients c INNER JOIN client_passwords p ON p.client_id = c.id WHERE c.email = $1',
+            text: 'SELECT c.*, p.hash as password FROM clients c INNER JOIN client_passwords p ON p.client_id = c.id WHERE c.email = $1 AND c.deleted IS FALSE',
             values: [email]
         }
         const res = await this.pool.query(query);
@@ -44,7 +44,7 @@ export class PostgresAuthRepository implements IAuthRepository {
 
     public async updatePassword(clientId: number, password: string): Promise<void> {
         const query = {
-            text: "UPDATE passwords SET hash = $2 WHERE client_id = $1",
+            text: "UPDATE passwords SET hash = $2 WHERE client_id = $1 AND deleted IS FALSE",
             values: [clientId, password]
         }
         await this.pool.query(query);

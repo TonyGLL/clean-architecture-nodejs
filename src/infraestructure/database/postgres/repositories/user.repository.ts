@@ -18,7 +18,7 @@ export class PostgresUserRepository implements IUserRepository {
         let whereClause = 'WHERE deleted IS FALSE';
 
         if (search) {
-            whereClause = ` and name ILIKE $1 OR email ILIKE $1`;
+            whereClause = ` AND name ILIKE $1 OR email ILIKE $1`;
             params.push(`%${search}%`);
         }
 
@@ -54,7 +54,7 @@ export class PostgresUserRepository implements IUserRepository {
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
                 LEFT JOIN roles r ON ur.role_id = r.id
                 LEFT JOIN role_permissions p ON r.id = p.role_id
-                WHERE u.id = $1 and u.deleted IS FALSE
+                WHERE u.id = $1 AND u.deleted IS FALSE
                 GROUP BY u.id;
             `,
             values: [id]
@@ -64,12 +64,12 @@ export class PostgresUserRepository implements IUserRepository {
     }
 
     public async findById(id: number): Promise<User | null> {
-        const result = await this.pool.query<User>('SELECT * FROM users WHERE id = $1', [id]);
+        const result = await this.pool.query<User>('SELECT * FROM users u WHERE u.id = $1 AND u.delete IS FALSE', [id]);
         return result.rows[0] || null;
     }
 
     public async findByEmail(email: string): Promise<User | null> {
-        const [result] = (await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1', [email])).rows;
+        const [result] = (await this.pool.query<User>('SELECT u.*, p.hash as password FROM users u INNER JOIN passwords p ON p.user_id = u.id WHERE u.email = $1 AND u.delete IS FALSE', [email])).rows;
         const { id, name, last_name, birth_date, phone, password } = result;
         return new User(id, name, last_name, email, birth_date, phone, password);
     }
@@ -87,14 +87,14 @@ export class PostgresUserRepository implements IUserRepository {
         const fields = Object.keys(user).map((key, i) => `${key} = $${i + 2}`).join(', ');
         const values = Object.values(user);
         const query = {
-            text: `UPDATE users SET ${fields} WHERE id = $1 and deleted IS FALSE`,
+            text: `UPDATE users SET ${fields} WHERE id = $1 AND deleted IS FALSE`,
             values: [id, ...values]
         };
         await client.query(query);
     }
 
     public async delete(id: number, client: PoolClient): Promise<void> {
-        await client.query('UPDATE users SET deleted = TRUE WHERE id = $1 and deleted IS FALSE', [id]);
+        await client.query('UPDATE users SET deleted = TRUE WHERE id = $1 AND deleted IS FALSE', [id]);
     }
 
     public async updatePassword(userId: number, hash: string, client: PoolClient): Promise<void> {
