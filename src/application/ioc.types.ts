@@ -1,3 +1,25 @@
 export const APPLICATION_TYPES = {
-    IJwtService: Symbol.for('IJwtService')
+    IJwtService: Symbol.for('IJwtService'),
+    GetPermissionsByRoleUseCase: Symbol.for('GetPermissionsByRoleUseCase'),
+    // Add other use cases here as needed, for example:
+    // CreateRoleUseCase: Symbol.for('CreateRoleUseCase'),
+    // GetRolesUseCase: Symbol.for('GetRolesUseCase'),
+    // UpdateRoleUseCase: Symbol.for('UpdateRoleUseCase'),
+    // DeleteRoleUseCase: Symbol.for('DeleteRoleUseCase'),
+    // LoginUseCase: Symbol.for('LoginUseCase'),
+    // RegisterClientUseCase: Symbol.for('RegisterClientUseCase'),
+    // SendEmailUseCase: Symbol.for('SendEmailUseCase'),
+    // RestorePasswordUseCase: Symbol.for('RestorePasswordUseCase'),
+    // CreateUserUseCase: Symbol.for('CreateUserUseCase'),
+    // GetUsersUseCase: Symbol.for('GetUsersUseCase'),
+    // GetUserDetailsUseCase: Symbol.for('GetUserDetailsUseCase'),
+    // UpdateUserUseCase: Symbol.for('UpdateUserUseCase'),
+    // DeleteUserUseCase: Symbol.for('DeleteUserUseCase'),
+    // ChangePasswordUseCase: Symbol.for('ChangePasswordUseCase'),
+    // AssignRoleToUserUseCase: Symbol.for('AssignRoleToUserUseCase'),
+    // GetAllModulesUseCase: Symbol.for('GetAllModulesUseCase'),
+    // GetModuleByIdUseCase: Symbol.for('GetModuleByIdUseCase'),
+    // CreateModuleUseCase: Symbol.for('CreateModuleUseCase'),
+    // UpdateModuleUseCase: Symbol.for('UpdateModuleUseCase'),
+    // DeleteModuleUseCase: Symbol.for('DeleteModuleUseCase'),
 };

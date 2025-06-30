@@ -65,7 +65,7 @@ container.bind<SendEmailUseCase>(SendEmailUseCase).toSelf();
 container.bind<RestorePasswordUseCase>(RestorePasswordUseCase).toSelf();
 // ROLES
 container.bind<GetRolesUseCase>(GetRolesUseCase).toSelf();
-container.bind<GetPermissionsByRoleUseCase>(GetPermissionsByRoleUseCase).toSelf();
+container.bind<GetPermissionsByRoleUseCase>(APPLICATION_TYPES.GetPermissionsByRoleUseCase).to(GetPermissionsByRoleUseCase);
 container.bind<CreateRoleUseCase>(CreateRoleUseCase).toSelf();
 container.bind<UpdateRoleUseCase>(UpdateRoleUseCase).toSelf();
 container.bind<DeleteRoleUseCase>(DeleteRoleUseCase).toSelf();
