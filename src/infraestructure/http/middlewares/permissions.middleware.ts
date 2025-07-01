@@ -54,19 +54,33 @@ export const permissionsMiddleware = async (req: Request, _: Response, next: Nex
         const module = await modulesRepository.getModuleByName(moduleName);
         if (!module || !module.id) throw new HttpError(HttpStatusCode.NOT_FOUND, `Module ${moduleName} not found`);
 
-        // 5. Obtener los permisos específicos del rol del usuario para el módulo solicitado.
-        // Nota: Se está tomando el primer rol del array `user.roles[0]`. Esto podría ser ajustado si un usuario puede tener múltiples roles activos a la vez.
+        // 5. Verificar los permisos para todos los roles del usuario de forma concurrente.
         const roleRepository = container.get<IRoleRepository>(DOMAIN_TYPES.IRoleRepository);
-        const permissions = await roleRepository.getPermissionByRoleAndModule({ roleId: user.roles[0], moduleId: Number.parseInt(module.id) });
-        if (!permissions) throw new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`);
 
-        // 6. Verificar si el usuario tiene el permiso requerido para la acción que intenta realizar.
-        if (permissions[requiredPermission]) {
-            // Si tiene el permiso, se le permite continuar con la siguiente función en la cadena de middlewares.
+        // Crear una lista de promesas. Cada promesa se resuelve si el rol tiene el permiso y se rechaza si no lo tiene.
+        const permissionChecks = user.roles.map(roleId => {
+            return new Promise<void>((resolve, reject) => {
+                roleRepository.getPermissionByRoleAndModule({ roleId, moduleId: Number.parseInt(module.id!) })
+                    .then(permissions => {
+                        if (permissions && permissions[requiredPermission]) {
+                            resolve(); // Permiso encontrado, la promesa se cumple.
+                        } else {
+                            reject(); // Permiso no encontrado o nulo, la promesa se rechaza.
+                        }
+                    })
+                    .catch(reject); // Propagar errores de la consulta.
+            });
+        });
+
+        try {
+            // Promise.all() se resolverá tan pronto como todas las promesas de verificación de permisos se cumpla.
+            await Promise.all(permissionChecks);
             next();
-        } else {
-            // Si no tiene el permiso, se lanza un error de "Forbidden".
-            throw new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`);
+        } catch (error) {
+            // Si Promise.all() se rechaza, significa que NINGUNA de las promesas se cumplió.
+            // Es decir, al menos 1 rol no tenía el permiso requerido.
+            // El error de Promise.all es un AggregateError, pero no necesitamos sus detalles aquí.
+            next(new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`));
         }
 
     } catch (error) {
