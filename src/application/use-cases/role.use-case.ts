@@ -27,7 +27,7 @@ export class GetPermissionsByRoleUseCase {
     ) { }
 
     public async execute(id: string): Promise<[number, GetPermissionsResponeDTO[]]> {
-        const roles = await this.roleRepository.getPermissionsByRole(id);
+        const roles = await this.roleRepository.getPermissionsByRole(Number.parseInt(id));
         return [HttpStatusCode.OK, roles];
     }
 }

@@ -43,8 +43,8 @@ export class LoginUseCase {
         const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
         if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
 
-        const tokenObject: { id: number | null; roles?: Role[] } = { id: user.id };
-        if (type === 'admin' && user instanceof User) tokenObject['roles'] = user.roles; // Assuming User has a role property
+        const tokenObject: { id: number | null; roles?: number[] } = { id: user.id };
+        if (type === 'admin' && user instanceof User) tokenObject['roles'] = user.roles.map((role: Role) => Number.parseInt(role.id!)); // Assuming User has a role property
 
         const token = this.jwtService.generateToken(tokenObject, '1h', type);
 

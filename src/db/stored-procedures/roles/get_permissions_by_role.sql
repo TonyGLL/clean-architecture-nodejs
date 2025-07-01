@@ -1,13 +1,9 @@
+-- DROP FUNCTION public.get_permissions_by_role(int4);
 
-CREATE OR REPLACE FUNCTION get_permissions_by_role(
-    p_role_id INT
-)
-RETURNS TABLE (
-    id INT,
-    name VARCHAR,
-    description VARCHAR,
-    permissions JSON
-) AS $$
+CREATE OR REPLACE FUNCTION public.get_permissions_by_role(p_role_id integer)
+ RETURNS TABLE(id integer, name character varying, description text, permissions json)
+ LANGUAGE plpgsql
+AS $function$
 BEGIN
     RETURN QUERY
     SELECT
@@ -35,4 +31,5 @@ BEGIN
     FROM roles r
     WHERE r.id = p_role_id;
 END;
-$$ LANGUAGE plpgsql;
+$function$
+;
