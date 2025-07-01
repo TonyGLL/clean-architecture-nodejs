@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { Role } from '../../../../domain/entities/role';
 import { IRoleRepository } from '../../../../domain/repositories/role.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
-import { GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO, RolePermissions } from '../../../../application/dtos/role.dto';
+import { GetPermissionByRoleAndModuleDTO, GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseDTO, RolePermissions } from '../../../../application/dtos/role.dto';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
 
@@ -28,7 +28,7 @@ export class PostegresRoleRepository implements IRoleRepository {
         }
     }
 
-    public async getPermissionsByRole(id: string): Promise<GetPermissionsResponeDTO[]> {
+    public async getPermissionsByRole(id: number): Promise<GetPermissionsResponeDTO[]> {
         try {
             const result = await this.pool.query<GetPermissionsResponeDTO>('SELECT * FROM get_permissions_by_role($1)', [id]);
             if (!result.rows.length) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
@@ -58,5 +58,16 @@ export class PostegresRoleRepository implements IRoleRepository {
 
     public async deleteRole(role_id: string, client: PoolClient): Promise<void> {
         await client.query('SELECT delete_role($1)', [role_id]);
+    }
+
+    public async getPermissionByRoleAndModule(req: GetPermissionByRoleAndModuleDTO): Promise<RolePermissions> {
+        try {
+            const result = await this.pool.query('SELECT * FROM get_permission_by_role_and_module($1, $2)', [req.roleId, req.moduleId]);
+            if (!result.rows.length) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Not found');
+
+            return result.rows[0];
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.BAD_REQUEST, error instanceof Error ? error.message : 'Unknown error');
+        }
     }
 }

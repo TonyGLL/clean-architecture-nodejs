@@ -50,3 +50,8 @@ export interface UserRoleResponseDTO {
     userId: string;
     roleId: string;
 }
+
+export interface GetPermissionByRoleAndModuleDTO {
+    moduleId: number;
+    roleId: number;
+}
