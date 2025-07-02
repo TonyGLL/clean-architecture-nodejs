@@ -4,6 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
+import { productsJob } from "../cron/products";
 
 class App {
     public express: Application;
@@ -13,6 +14,13 @@ class App {
         this.middlewares();
         this.routes();
         this.express.use(errorHandler);
+        this.startCronJobs();
+    }
+
+    public startCronJobs(): void {
+        // Iniciar cron jobs cuando la aplicación esté lista
+        productsJob.start();
+        console.log('Cron jobs started');
     }
 
     private middlewares(): void {
@@ -24,7 +32,12 @@ class App {
     }
 
     private routes(): void {
-        this.express.use('/health', (_: Request, res: Response) => { res.status(200).json({ ok: true }) });
+        this.express.use('/health', (_: Request, res: Response) => {
+            res.status(200).json({
+                ok: true,
+                cronJobStatus: productsJob.isActive ? 'running' : 'stopped'
+            })
+        });
         this.express.use('/api/v1', mainRouter);
     }
 }
