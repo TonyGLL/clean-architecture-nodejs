@@ -6,5 +6,6 @@ export const DOMAIN_TYPES = {
     IMailService: Symbol.for('IMailService'),
     IRoleRepository: Symbol.for('IRoleRepository'),
     IUserRoleRepository: Symbol.for('IUserRoleRepository'),
-    IModulesRepository: Symbol.for('IModulesRepository')
+    IModulesRepository: Symbol.for('IModulesRepository'),
+    IProductsRepository: Symbol.for('IProductsRepository')
 };

@@ -17,6 +17,8 @@ import { PostgresUserRoleRepository } from "../database/postgres/repositories/us
 import { IUserRepository } from '../../domain/repositories/user.repository';
 import { PostegresModulesRepository } from '../database/postgres/repositories/modules.repository';
 import { IModulesRepository } from '../../domain/repositories/modules.repository';
+import { IProductsRepository } from '../../domain/repositories/products.repository';
+import { PostegresProductsRepository } from '../database/postgres/repositories/products.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -31,6 +33,7 @@ import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordU
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
+import { UpsertProductsWithCategoriesUseCase } from '../../application/use-cases/products.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -50,6 +53,7 @@ container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostegresRoleRe
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
 container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
 container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostegresModulesRepository);
+container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(PostegresProductsRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -83,6 +87,9 @@ container.bind<GetModuleByIdUseCase>(GetModuleByIdUseCase).toSelf();
 container.bind<CreateModuleUseCase>(CreateModuleUseCase).toSelf();
 container.bind<UpdateModuleUseCase>(UpdateModuleUseCase).toSelf();
 container.bind<DeleteModuleUseCase>(DeleteModuleUseCase).toSelf();
+// Products
+container.bind<UpsertProductsWithCategoriesUseCase>(UpsertProductsWithCategoriesUseCase).toSelf();
+
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
