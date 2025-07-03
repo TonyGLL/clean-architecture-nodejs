@@ -43,7 +43,7 @@ export const fetchExternalData = async () => {
 
 // Configuración del cron job para ejecutarse cada día a medianoche
 export const productsJob = new CronJob(
-    '* * * * *', // Ejecutar diariamente a medianoche (00:00)
+    '0 0 * * *', // Ejecutar diariamente a medianoche (00:00)
     () => fetchExternalData(),
     null, // onComplete
     false, // No iniciar automáticamente

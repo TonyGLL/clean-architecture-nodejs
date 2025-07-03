@@ -33,7 +33,7 @@ import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordU
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
-import { UpsertProductsWithCategoriesUseCase } from '../../application/use-cases/products.use-case';
+import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -41,6 +41,7 @@ import { RoleController } from "../http/controllers/role.ctrl";
 import { UserController } from '../http/controllers/user.ctrl';
 import { ModulesController } from '../http/controllers/modules.ctrl';
 import { AuthAdminController } from '../http/controllers/auth.admin.ctrl';
+import { ProductsController } from '../http/controllers/products.ctrl';
 
 const container = new Container();
 
@@ -89,7 +90,9 @@ container.bind<UpdateModuleUseCase>(UpdateModuleUseCase).toSelf();
 container.bind<DeleteModuleUseCase>(DeleteModuleUseCase).toSelf();
 // Products
 container.bind<UpsertProductsWithCategoriesUseCase>(UpsertProductsWithCategoriesUseCase).toSelf();
-
+container.bind<SearchProductsUseCase>(SearchProductsUseCase).toSelf();
+container.bind<GetProductsByCategoryUseCase>(GetProductsByCategoryUseCase).toSelf();
+container.bind<GetProductDetailsUseCase>(GetProductDetailsUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -97,5 +100,6 @@ container.bind<AuthAdminController>(AuthAdminController).toSelf();
 container.bind<RoleController>(RoleController).toSelf();
 container.bind<UserController>(UserController).toSelf();
 container.bind<ModulesController>(ModulesController).toSelf();
+container.bind<ProductsController>(ProductsController).toSelf();
 
 export { container };
