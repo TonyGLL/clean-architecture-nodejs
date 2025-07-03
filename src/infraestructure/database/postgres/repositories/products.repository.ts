@@ -11,7 +11,6 @@ export class PostegresProductsRepository implements IProductsRepository {
     ) { }
 
     public async upsertProductsWithCategories(products: Product[]): Promise<void> {
-        console.log(products);
-        await this.pool.query('SELECT * FROM upsert_products_with_categories($1)', [products]);
+        await this.pool.query('SELECT * FROM upsert_products_with_categories($1)', [JSON.stringify(products)]);
     }
 }
