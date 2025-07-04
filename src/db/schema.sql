@@ -212,3 +212,6 @@ CREATE TABLE stripe_events (
     processed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE cart_items
+ADD CONSTRAINT unique_cart_product UNIQUE (cart_id, product_id);
