@@ -1,9 +1,11 @@
 import { PoolClient } from "pg";
 import { Cart } from "../entities/cart";
-import { Product } from "../entities/product";
+import { AddProductToCartDTOPayload } from "../../application/dtos/cart.dto";
 
 export interface ICartRepository {
     createCartFromLogin(clientId: number, clientPool: PoolClient): Promise<void>;
     getCartDetails(clientId: number): Promise<Cart>;
-    addProductToCart(product: Product): Promise<boolean>;
+    addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean>;
+    deleteProductFromCart(clientId: number, productId: number): Promise<void>;
+    clearCart(clientId: number): Promise<void>;
 }

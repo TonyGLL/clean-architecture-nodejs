@@ -3,7 +3,7 @@ import { PoolClient } from "pg";
 import { ICartRepository } from "../../../../domain/repositories/cart.repository";
 import { Cart } from "../../../../domain/entities/cart";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
-import { Product } from "../../../../domain/entities/product";
+import { AddProductToCartDTOPayload } from "../../../../application/dtos/cart.dto";
 
 @injectable()
 export class PostgresCartRepository implements ICartRepository {
@@ -11,8 +11,23 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
-    public async addProductToCart(product: Product): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    public async addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean> {
+        const text = `
+                INSERT INTO cart_items (cart_id, product_id, quantity, unit_price)
+                VALUES (
+                    (SELECT id FROM shopping_carts WHERE client_id = $1 AND status = 'active'),
+                    $2, $3, $4
+                )
+                ON CONFLICT (cart_id, product_id) DO UPDATE
+                SET quantity = cart_items.quantity + EXCLUDED.quantity,
+                    unit_price = EXCLUDED.unit_price;
+            `;
+        const query = {
+            text,
+            values: [product.clientId, product.productId, product.quantity, product.unitPrice]
+        };
+        await this.pool.query(query);
+        return true;
     }
 
     public async getCartDetails(clientId: number): Promise<Cart> {
@@ -25,8 +40,7 @@ export class PostgresCartRepository implements ICartRepository {
                 COALESCE(
                     json_agg(
                         json_build_object(
-                            'id', ci.id,
-                            'product_id', ci.product_id,
+                            'id', ci.product_id,
                             'quantity', ci.quantity,
                             'unit_price', ci.unit_price,
                             'added_at', ci.added_at,
@@ -38,10 +52,6 @@ export class PostgresCartRepository implements ICartRepository {
                             'stock', p.stock,
                             'sku', p.sku,
                             'image', p.image,
-                            'active', p.active,
-                            'deleted', p.deleted,
-                            'product_created_at', p.created_at,
-                            'product_updated_at', p.updated_at,
 
                             -- Datos de la categoría
                             'category_id', c.id,
@@ -65,7 +75,13 @@ export class PostgresCartRepository implements ICartRepository {
         };
         const result = await this.pool.query(query);
         const { cart_id, client_id, cart_created_at, items, status } = result.rows[0];
-        return new Cart(cart_id, client_id, status, cart_created_at, items || []);
+        const cart = new Cart(cart_id, client_id, status, cart_created_at, items || []);
+        if (items.length) {
+            cart.calculateSubTotal(items);
+            cart.calculateTaxes();
+            cart.calculateTotal();
+        }
+        return cart;
     }
 
     public async createCartFromLogin(clientId: number, client: PoolClient): Promise<void> {
@@ -85,5 +101,30 @@ export class PostgresCartRepository implements ICartRepository {
             values: [clientId]
         };
         await client.query(query);
+    }
+
+    public async deleteProductFromCart(clientId: number, productId: number): Promise<void> {
+        const text = `
+            DELETE FROM cart_items
+            WHERE cart_id = (SELECT id FROM shopping_carts WHERE client_id = $1 AND status = 'active')
+            AND product_id = $2;
+        `;
+        const query = {
+            text,
+            values: [clientId, productId]
+        };
+        await this.pool.query(query);
+    }
+
+    public async clearCart(clientId: number): Promise<void> {
+        const text = `
+            DELETE FROM cart_items
+            WHERE cart_id = (SELECT id FROM shopping_carts WHERE client_id = $1 AND status = 'active');
+        `;
+        const query = {
+            text,
+            values: [clientId]
+        };
+        await this.pool.query(query);
     }
 }
