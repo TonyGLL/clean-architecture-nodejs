@@ -7,5 +7,6 @@ export const DOMAIN_TYPES = {
     IRoleRepository: Symbol.for('IRoleRepository'),
     IUserRoleRepository: Symbol.for('IUserRoleRepository'),
     IModulesRepository: Symbol.for('IModulesRepository'),
-    IProductsRepository: Symbol.for('IProductsRepository')
+    IProductsRepository: Symbol.for('IProductsRepository'),
+    ICartRepository: Symbol.for('ICartRepository'),
 };

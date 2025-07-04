@@ -7,7 +7,7 @@ import { HttpError } from "../../../../domain/errors/http.error";
 import { HttpStatusCode } from "../../../../domain/shared/http.status";
 
 @injectable()
-export class PostegresProductsRepository implements IProductsRepository {
+export class PostgresProductsRepository implements IProductsRepository {
     constructor(
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
