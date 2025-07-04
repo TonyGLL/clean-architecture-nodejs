@@ -6,7 +6,7 @@ import { GetAllModulesResponseDTO } from "../../../../application/dtos/modules.d
 import { Module } from "../../../../domain/entities/module";
 
 @injectable()
-export class PostegresModulesRepository implements IModulesRepository {
+export class PostgresModulesRepository implements IModulesRepository {
     constructor(
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }

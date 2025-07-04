@@ -15,42 +15,65 @@ import { ServiceType } from "../dtos/auth.admin.dto";
 import { User } from "../../domain/entities/user";
 import { IUserRepository } from "../../domain/repositories/user.repository";
 import { Role } from "../../domain/entities/role";
+import { ICartRepository } from "../../domain/repositories/cart.repository";
 
 @injectable()
 export class LoginUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IAuthRepository) private authRepository: IAuthRepository,
         @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IHashingService) private hasingService: IHashingService,
-        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: LoginClientDTO, type: ServiceType): Promise<[number, AuthClientResponseDTO | object]> {
-        let user: Client | User | null = null;
-        switch (type) {
-            case 'admin':
-                user = await this.userRepository.findByEmail(dto.email);
-                break;
-            case 'client':
-                user = await this.authRepository.findByEmail(dto.email);
-                break;
-            default:
-                throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Invalid login type');
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            let user: Client | User | null = null;
+            switch (type) {
+                case 'admin':
+                    user = await this.userRepository.findByEmail(dto.email);
+                    break;
+                case 'client':
+                    user = await this.authRepository.findByEmail(dto.email, client);
+                    break;
+                default:
+                    throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Invalid login type');
+            }
+
+            if (!user || !user.password) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
+
+            const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
+            if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
+
+            const tokenObject: { id: number | null; roles?: number[] } = { id: user.id };
+            if (type === 'admin' && user instanceof User) tokenObject['roles'] = user.roles.map((role: Role) => Number.parseInt(role.id!)); // Assuming User has a role property
+
+            const token = this.jwtService.generateToken(tokenObject, '1h', type);
+
+            delete user.password;
+
+            const response: { user: User | Client; token: string; cartId?: number } = { user, token };
+
+            if (type === 'client' && user instanceof Client && user.id) {
+                await this.cartRepository.createCartFromLogin(user.id, client);
+            }
+
+            await client.query('COMMIT');
+
+            return [HttpStatusCode.OK, response];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in Login:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
         }
-
-        if (!user || !user.password) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
-
-        const isPasswordValid = await this.hasingService.compare(dto.password, user.password);
-        if (!isPasswordValid) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Bad credentials');
-
-        const tokenObject: { id: number | null; roles?: number[] } = { id: user.id };
-        if (type === 'admin' && user instanceof User) tokenObject['roles'] = user.roles.map((role: Role) => Number.parseInt(role.id!)); // Assuming User has a role property
-
-        const token = this.jwtService.generateToken(tokenObject, '1h', type);
-
-        delete user.password;
-
-        return [HttpStatusCode.OK, { user, token }];
     }
 }
 
@@ -69,7 +92,7 @@ export class RegisterClientUseCase {
         try {
             await client.query('BEGIN');
 
-            const existClient = await this.authClientRepository.findByEmail(dto.email);
+            const existClient = await this.authClientRepository.findByEmail(dto.email, client);
             if (existClient) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Client already exist.');
 
             const userClient = new Client(null, dto.name, dto.lastName, dto.email, dto.birth_date, dto.phone);
@@ -103,18 +126,33 @@ export class SendEmailUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
-        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService
+        @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(email: string, type: ServiceType): Promise<[number, object]> {
-        const existUser = await this.authClientRepository.findByEmail(email);
-        if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
+        const client = await this.pool.connect();
 
-        const token = this.jwtService.generateToken({ id: existUser.id }, '2m', type);
+        try {
+            await client.query('BEGIN');
 
-        await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
+            const existUser = await this.authClientRepository.findByEmail(email, client);
+            if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
+            const token = this.jwtService.generateToken({ id: existUser.id }, '2m', type);
+
+            await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
+
+            await client.query('COMMIT');
+
+            return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in SendEmail:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
+        }
     }
 }
 
@@ -124,18 +162,33 @@ export class RestorePasswordUseCase {
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: RestorePasswordDTO, type: ServiceType): Promise<[number, object]> {
-        const existUser = await this.authClientRepository.findByEmail(dto.email);
-        if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
+        const client = await this.pool.connect();
 
-        this.jwtService.validateToken(dto.token, type);
+        try {
+            await client.query('BEGIN');
 
-        const password = await this.hashingService.hash(dto.password);
+            const existUser = await this.authClientRepository.findByEmail(dto.email, client);
+            if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-        await this.authClientRepository.updatePassword(existUser.id, password);
+            this.jwtService.validateToken(dto.token, type);
 
-        return [HttpStatusCode.NO_CONTENT, {}];
+            const password = await this.hashingService.hash(dto.password);
+
+            await this.authClientRepository.updatePassword(existUser.id, password);
+
+            await client.query('COMMIT');
+
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error in RestorePasswordUseCase:', error);
+            throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
+        } finally {
+            client.release();
+        }
     }
 }

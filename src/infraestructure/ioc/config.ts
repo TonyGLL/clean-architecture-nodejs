@@ -12,13 +12,15 @@ import { IRoleRepository } from "../../domain/repositories/role.repository";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
 import { PostgresAuthRepository } from '../database/postgres/repositories/auth.repository';
 import { PostgresUserRepository } from '../database/postgres/repositories/user.repository';
-import { PostegresRoleRepository } from "../database/postgres/repositories/role.repository";
+import { PostgresRoleRepository } from "../database/postgres/repositories/role.repository";
 import { PostgresUserRoleRepository } from "../database/postgres/repositories/userRole.repository";
 import { IUserRepository } from '../../domain/repositories/user.repository';
-import { PostegresModulesRepository } from '../database/postgres/repositories/modules.repository';
+import { PostgresModulesRepository } from '../database/postgres/repositories/modules.repository';
 import { IModulesRepository } from '../../domain/repositories/modules.repository';
 import { IProductsRepository } from '../../domain/repositories/products.repository';
-import { PostegresProductsRepository } from '../database/postgres/repositories/products.repository';
+import { PostgresProductsRepository } from '../database/postgres/repositories/products.repository';
+import { ICartRepository } from '../../domain/repositories/cart.repository';
+import { PostgresCartRepository } from '../database/postgres/repositories/cart.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -34,6 +36,7 @@ import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, Delete
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
+import { GetCartUseCase } from '../../application/use-cases/cart.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -42,6 +45,7 @@ import { UserController } from '../http/controllers/user.ctrl';
 import { ModulesController } from '../http/controllers/modules.ctrl';
 import { AuthAdminController } from '../http/controllers/auth.admin.ctrl';
 import { ProductsController } from '../http/controllers/products.ctrl';
+import { CartController } from '../http/controllers/cart.ctrl';
 
 const container = new Container();
 
@@ -50,11 +54,12 @@ container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 
 //* Respositories (Inteface -> Implementation)
 container.bind<IAuthRepository>(DOMAIN_TYPES.IAuthRepository).to(PostgresAuthRepository);
-container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostegresRoleRepository);
+container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostgresRoleRepository);
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
 container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRepository);
-container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostegresModulesRepository);
-container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(PostegresProductsRepository);
+container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostgresModulesRepository);
+container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(PostgresProductsRepository);
+container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -93,6 +98,8 @@ container.bind<UpsertProductsWithCategoriesUseCase>(UpsertProductsWithCategories
 container.bind<SearchProductsUseCase>(SearchProductsUseCase).toSelf();
 container.bind<GetProductsByCategoryUseCase>(GetProductsByCategoryUseCase).toSelf();
 container.bind<GetProductDetailsUseCase>(GetProductDetailsUseCase).toSelf();
+// Cart
+container.bind<GetCartUseCase>(GetCartUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -101,5 +108,6 @@ container.bind<RoleController>(RoleController).toSelf();
 container.bind<UserController>(UserController).toSelf();
 container.bind<ModulesController>(ModulesController).toSelf();
 container.bind<ProductsController>(ProductsController).toSelf();
+container.bind<CartController>(CartController).toSelf();
 
 export { container };
