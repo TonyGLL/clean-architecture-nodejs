@@ -59,6 +59,7 @@ export class PostgresProductsRepository implements IProductsRepository {
         const text = `
             SELECT
                 p.*,
+                p.price::float,
                 c.id AS category_id,
                 c.name AS category_name,
                 c.description AS category_description

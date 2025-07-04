@@ -36,7 +36,7 @@ import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, Delete
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
-import { GetCartUseCase } from '../../application/use-cases/cart.use-case';
+import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase } from '../../application/use-cases/cart.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -100,6 +100,9 @@ container.bind<GetProductsByCategoryUseCase>(GetProductsByCategoryUseCase).toSel
 container.bind<GetProductDetailsUseCase>(GetProductDetailsUseCase).toSelf();
 // Cart
 container.bind<GetCartUseCase>(GetCartUseCase).toSelf();
+container.bind<AddProductToCartUseCase>(AddProductToCartUseCase).toSelf();
+container.bind<DeleteProductFromCartUseCase>(DeleteProductFromCartUseCase).toSelf();
+container.bind<ClearCartUseCase>(ClearCartUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
