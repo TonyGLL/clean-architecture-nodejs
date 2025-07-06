@@ -3,27 +3,19 @@ import { config } from '../../../infraestructure/config/env'; // Adjusted path
 import { injectable } from 'inversify';
 import { HttpError } from '../../../domain/errors/http.error'; // Adjusted path
 import { HttpStatusCode } from '../../../domain/shared/http.status'; // Adjusted path
-import {
-    AttachPaymentMethodParams,
-    ConfirmPaymentIntentParams,
-    CreateCustomerParams,
-    CreatePaymentIntentParams,
-    CreateSetupIntentParams,
-    IPaymentService,
-    ListPaymentMethodsParams
-} from '../../../domain/services/payment.service'; // Adjusted path
+import { AttachPaymentMethodParams, ConfirmPaymentIntentParams, CreateCustomerParams, CreatePaymentIntentParams, CreateSetupIntentParams, IPaymentService, ListPaymentMethodsParams } from '../../../domain/services/payment.service'; // Adjusted path
 
 @injectable()
-export class StripePaymentGatewayService implements IPaymentService {
+export class StripePaymentService implements IPaymentService {
     private stripe: Stripe;
 
     constructor() {
         this.stripe = new Stripe(config.STRIPE_SECRET_KEY, {
-            apiVersion: '2024-04-10',
+            apiVersion: '2025-06-30.basil'
         });
     }
 
-    async createCustomer(params: CreateCustomerParams): Promise<Stripe.Customer> {
+    public async createCustomer(params: CreateCustomerParams): Promise<Stripe.Customer> {
         try {
             const customer = await this.stripe.customers.create({
                 email: params.email,
@@ -36,7 +28,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async createPaymentIntent(params: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
+    public async createPaymentIntent(params: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
         try {
             const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
                 amount: params.amount, // Already in cents as per interface expectation
@@ -63,7 +55,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Stripe.PaymentIntent> {
+    public async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Stripe.PaymentIntent> {
         try {
             const confirmParams: Stripe.PaymentIntentConfirmParams = {};
             if (params?.paymentMethodId) {
@@ -80,7 +72,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    public async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
         try {
             const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
             return paymentIntent;
@@ -89,7 +81,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<Stripe.PaymentMethod> {
+    public async attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<Stripe.PaymentMethod> {
         try {
             const paymentMethod = await this.stripe.paymentMethods.attach(params.paymentMethodId, {
                 customer: params.customerId,
@@ -100,7 +92,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<Stripe.ApiList<Stripe.PaymentMethod>> {
+    public async listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<Stripe.ApiList<Stripe.PaymentMethod>> {
         try {
             const paymentMethods = await this.stripe.paymentMethods.list({
                 customer: params.customerId,
@@ -112,7 +104,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
+    public async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
         try {
             // Ensure the payment method is not set as default invoice payment method for a customer before detaching
             // This might require fetching the customer and checking invoice_settings.default_payment_method
@@ -124,7 +116,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async createSetupIntent(params: CreateSetupIntentParams): Promise<Stripe.SetupIntent> {
+    public async createSetupIntent(params: CreateSetupIntentParams): Promise<Stripe.SetupIntent> {
         try {
             const setupIntent = await this.stripe.setupIntents.create({
                 customer: params.customerId,
@@ -138,7 +130,7 @@ export class StripePaymentGatewayService implements IPaymentService {
         }
     }
 
-    async constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Promise<Stripe.Event> {
+    public async constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Promise<Stripe.Event> {
         try {
             return this.stripe.webhooks.constructEvent(payload, sig, secret);
         } catch (err: any) { // StripeError is more specific if available, but 'any' is fine
