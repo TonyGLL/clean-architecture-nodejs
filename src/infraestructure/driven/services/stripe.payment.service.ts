@@ -1,9 +1,14 @@
 import Stripe from 'stripe';
-import { config } from '../../../infraestructure/config/env'; // Adjusted path
+import { config } from '../../../infraestructure/config/env';
 import { injectable } from 'inversify';
-import { HttpError } from '../../../domain/errors/http.error'; // Adjusted path
-import { HttpStatusCode } from '../../../domain/shared/http.status'; // Adjusted path
-import { AttachPaymentMethodParams, ConfirmPaymentIntentParams, CreateCustomerParams, CreatePaymentIntentParams, CreateSetupIntentParams, IPaymentService, ListPaymentMethodsParams } from '../../../domain/services/payment.service'; // Adjusted path
+import { HttpError } from '../../../domain/errors/http.error';
+import { HttpStatusCode } from '../../../domain/shared/http.status';
+import {
+    IPaymentService,
+    CreateCustomerParams, CreatePaymentIntentParams, ConfirmPaymentIntentParams,
+    AttachPaymentMethodParams, ListPaymentMethodsParams, CreateSetupIntentParams,
+    PaymentCustomer, PaymentIntent, PaymentMethod, SetupIntent, PaymentEvent
+} from '../../../domain/services/payment.service';
 
 @injectable()
 export class StripePaymentService implements IPaymentService {
@@ -15,125 +20,117 @@ export class StripePaymentService implements IPaymentService {
         });
     }
 
-    public async createCustomer(params: CreateCustomerParams): Promise<Stripe.Customer> {
+    // --- Mappers --- //
+    private toPaymentCustomer(customer: Stripe.Customer): PaymentCustomer {
+        return { id: customer.id, email: customer.email, name: customer.name! };
+    }
+
+    private toPaymentMethod(pm: Stripe.PaymentMethod): PaymentMethod {
+        return {
+            id: pm.id,
+            card: pm.card ? { ...pm.card } : undefined
+        };
+    }
+
+    private toPaymentIntent(intent: Stripe.PaymentIntent): PaymentIntent {
+        const paymentIntent: PaymentIntent = {
+            id: intent.id,
+            status: intent.status,
+            client_secret: intent.client_secret,
+            amount: intent.amount,
+            currency: intent.currency,
+            customer: null,
+            shipping: null,
+            metadata: intent.metadata
+        }
+        return paymentIntent;
+    }
+
+    private toSetupIntent(intent: Stripe.SetupIntent): SetupIntent {
+        const setupIntent: SetupIntent = {
+            id: intent.id,
+            status: intent.status,
+            client_secret: intent.client_secret
+        };
+        return setupIntent;
+    }
+    // No need to map PaymentIntent, SetupIntent, or Event as the domain interfaces match the structure.
+
+    public async createCustomer(params: CreateCustomerParams): Promise<PaymentCustomer> {
         try {
-            const customer = await this.stripe.customers.create({
-                email: params.email,
-                name: params.name,
-                metadata: params.metadata
-            });
-            return customer;
+            const customer = await this.stripe.customers.create(params);
+            return this.toPaymentCustomer(customer);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe customer creation failed: ${error.message}`);
         }
     }
 
-    public async createPaymentIntent(params: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
+    public async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntent> {
         try {
-            const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-                amount: params.amount, // Already in cents as per interface expectation
-                currency: params.currency,
-                metadata: params.metadata,
-                description: params.description,
-                return_url: params.returnUrl,
-                setup_future_usage: params.setupFutureUsage
-            };
-            if (params.customerId) {
-                paymentIntentParams.customer = params.customerId;
-            }
-            if (params.paymentMethodId) {
-                paymentIntentParams.payment_method = params.paymentMethodId;
-            }
-            if (params.confirm !== undefined) { // Check for undefined as confirm can be false
-                paymentIntentParams.confirm = params.confirm;
-            }
-
-            const paymentIntent = await this.stripe.paymentIntents.create(paymentIntentParams);
-            return paymentIntent;
+            const response = await this.stripe.paymentIntents.create(params);
+            return this.toPaymentIntent(response);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe payment intent creation failed: ${error.message}`);
         }
     }
 
-    public async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Stripe.PaymentIntent> {
+    public async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<PaymentIntent> {
         try {
-            const confirmParams: Stripe.PaymentIntentConfirmParams = {};
-            if (params?.paymentMethodId) {
-                confirmParams.payment_method = params.paymentMethodId;
-            }
-            if (params?.returnUrl) {
-                confirmParams.return_url = params.returnUrl;
-            }
-
-            const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId, confirmParams);
-            return paymentIntent;
+            const response = await this.stripe.paymentIntents.confirm(paymentIntentId);
+            return this.toPaymentIntent(response);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe payment intent confirmation failed: ${error.message}`);
         }
     }
 
-    public async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    public async retrievePaymentIntent(paymentIntentId: string): Promise<PaymentIntent> {
         try {
-            const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
-            return paymentIntent;
+            const response = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+            return this.toPaymentIntent(response);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe retrieve payment intent failed: ${error.message}`);
         }
     }
 
-    public async attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<Stripe.PaymentMethod> {
+    public async attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<PaymentMethod> {
         try {
-            const paymentMethod = await this.stripe.paymentMethods.attach(params.paymentMethodId, {
-                customer: params.customerId,
-            });
-            return paymentMethod;
+            const pm = await this.stripe.paymentMethods.attach(params.paymentMethodId, { customer: params.customerId });
+            return this.toPaymentMethod(pm);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe attach payment method failed: ${error.message}`);
         }
     }
 
-    public async listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<Stripe.ApiList<Stripe.PaymentMethod>> {
+    public async listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<PaymentMethod[]> {
         try {
-            const paymentMethods = await this.stripe.paymentMethods.list({
-                customer: params.customerId,
-                type: params.type || 'card', // Default to card if not specified
-            });
-            return paymentMethods;
+            const pms = await this.stripe.paymentMethods.list({ customer: params.customerId, type: params.type || 'card' });
+            return pms.data.map(this.toPaymentMethod);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe list payment methods failed: ${error.message}`);
         }
     }
 
-    public async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
+    public async detachPaymentMethod(paymentMethodId: string): Promise<PaymentMethod> {
         try {
-            // Ensure the payment method is not set as default invoice payment method for a customer before detaching
-            // This might require fetching the customer and checking invoice_settings.default_payment_method
-            // For simplicity, direct detach is shown here.
-            const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
-            return paymentMethod;
+            const pm = await this.stripe.paymentMethods.detach(paymentMethodId);
+            return this.toPaymentMethod(pm);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe detach payment method failed: ${error.message}`);
         }
     }
 
-    public async createSetupIntent(params: CreateSetupIntentParams): Promise<Stripe.SetupIntent> {
+    public async createSetupIntent(params: CreateSetupIntentParams): Promise<SetupIntent> {
         try {
-            const setupIntent = await this.stripe.setupIntents.create({
-                customer: params.customerId,
-                payment_method_types: ['card'], // Or make this configurable via params
-                usage: 'off_session',
-                metadata: params.metadata
-            });
-            return setupIntent;
+            return await this.stripe.setupIntents.create({ ...params, usage: 'off_session' });
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe setup intent creation failed: ${error.message}`);
         }
     }
 
-    public async constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Promise<Stripe.Event> {
+    public async constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Promise<PaymentEvent> {
         try {
             return this.stripe.webhooks.constructEvent(payload, sig, secret);
-        } catch (err: any) { // StripeError is more specific if available, but 'any' is fine
+        } catch (err: any) {
             throw new HttpError(HttpStatusCode.BAD_REQUEST, `Webhook Error: ${err.message}`);
         }
     }

@@ -6,7 +6,7 @@ export const PaymentMethodValidator = [
 ];
 
 export const DeletePaymentMethodValidator = [
-    body('paymentMethodId').isString().withMessage('Payment Method ID must be a string.'),
+    param('paymentMethodId').isString().withMessage('Payment Method ID must be a string.'),
 ];
 
 export const CreatePaymentIntentValidator = [

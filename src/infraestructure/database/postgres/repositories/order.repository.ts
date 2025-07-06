@@ -44,24 +44,28 @@ export class PostgresOrderRepository implements IOrderRepository {
             const orderItems: OrderItem[] = [];
 
             for (const cartItem of params.cart.items) {
-                // Ensure cartItem has necessary properties (product_id, quantity, unit_price)
-                // The Product entity in cart.items might need to be mapped from CartItemDTO if it's not already a Product instance
-                // For this example, assuming cartItem has product_id, quantity, and unit_price (price at time of cart addition)
+                // The cartItem is expected to have product details including quantity in cart.
+                const productPrice = cartItem.price;
+                const itemSubtotal = 1 * productPrice;
 
-                const productPrice = cartItem.price; // price from Product entity which is CartItemDTO actually
-                const itemSubtotal = 5 * productPrice;
+                // Decrease product stock and check for availability
+                const stockUpdateResult = await client.query(
+                    'UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1 RETURNING id',
+                    [1, cartItem.id]
+                );
+
+                if (stockUpdateResult.rowCount === 0) {
+                    // If rowCount is 0, it means the WHERE condition (stock >= quantity) failed.
+                    throw new HttpError(HttpStatusCode.CONFLICT, `Insufficient stock for product: ${cartItem.name} (ID: ${cartItem.id})`);
+                }
 
                 const orderItemResult = await client.query(
                     `INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
                      VALUES ($1, $2, $3, $4, $5)
                      RETURNING id, order_id, product_id, quantity, unit_price, subtotal`,
-                    [newOrder.id, cartItem.id, 5, productPrice, itemSubtotal]
+                    [newOrder.id, cartItem.id, 1, productPrice, itemSubtotal]
                 );
                 orderItems.push(orderItemResult.rows[0] as OrderItem);
-
-                // Optionally, decrease product stock (important for inventory management)
-                // await client.query('UPDATE products SET stock = stock - $1 WHERE id = $2', [cartItem.quantity, cartItem.product_id]);
-                // Add error handling for insufficient stock if not checked before payment
             }
 
             await client.query('COMMIT');

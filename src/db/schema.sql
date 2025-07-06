@@ -221,3 +221,6 @@ CREATE TABLE stripe_events (
 
 ALTER TABLE cart_items
 ADD CONSTRAINT unique_cart_product UNIQUE (cart_id, product_id);
+
+ALTER TABLE clients
+ADD COLUMN stripe_customer_id VARCHAR(255) UNIQUE;
