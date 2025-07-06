@@ -11,6 +11,19 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    updateCartStatus(cartId: number, status: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    findCartByPaymentIntent(paymentIntentId: string): Promise<Cart | null> {
+        throw new Error("Method not implemented.");
+    }
+    getOrCreateActiveCartByClientId(clientId: number): Promise<Cart> {
+        throw new Error("Method not implemented.");
+    }
+
     public async addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean> {
         const text = `
                 INSERT INTO cart_items (cart_id, product_id, quantity, unit_price)

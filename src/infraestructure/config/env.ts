@@ -14,4 +14,8 @@ export const config = {
     SMTP_USER: process.env.SMTP_USER as string,
     SMTP_PASS: process.env.SMTP_PASS as string,
     EMAIL_FROM: process.env.EMAIL_FROM as string,
+
+    // Stripe configuration
+    STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY as string,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string
 }

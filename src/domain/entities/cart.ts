@@ -11,7 +11,8 @@ export class Cart {
         public subTotal: number = 0,
         public taxes: number = 0,
         public shipping: number = 40,
-        public total: number = 0
+        public total: number = 0,
+        public activePaymentIntentId?: string | null // Added to store associated PI
     ) { }
 
     public calculateSubTotal(items: CartItemDTO[]): void {
