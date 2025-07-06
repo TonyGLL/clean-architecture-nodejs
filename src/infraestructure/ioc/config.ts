@@ -21,6 +21,10 @@ import { IProductsRepository } from '../../domain/repositories/products.reposito
 import { PostgresProductsRepository } from '../database/postgres/repositories/products.repository';
 import { ICartRepository } from '../../domain/repositories/cart.repository';
 import { PostgresCartRepository } from '../database/postgres/repositories/cart.repository';
+import { IPaymentRepository } from '../../domain/repositories/payment.repository';
+import { PostgresPaymentRepository } from '../database/postgres/repositories/payment.repository';
+import { IOrderRepository } from '../../domain/repositories/order.repository'; // Added
+import { PostgresOrderRepository } from '../database/postgres/repositories/order.repository'; // Added
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -29,6 +33,8 @@ import { JwtService } from '../driven/services/jwt.service';
 import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
 import { BcryptService } from '../driven/services/bcrypt.service';
+import { IPaymentGatewayService } from '../../domain/services/payment.gateway.service'; // Added
+import { StripePaymentGatewayService } from '../driven/services/stripe.payment.gateway.service'; // Added
 
 //* Use Cases
 import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
@@ -37,6 +43,8 @@ import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCas
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase } from '../../application/use-cases/cart.use-case';
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/payment.use-case';
+import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case'; // Added
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -46,6 +54,8 @@ import { ModulesController } from '../http/controllers/modules.ctrl';
 import { AuthAdminController } from '../http/controllers/auth.admin.ctrl';
 import { ProductsController } from '../http/controllers/products.ctrl';
 import { CartController } from '../http/controllers/cart.ctrl';
+import { PaymentController } from '../http/controllers/payment.ctrl';
+import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl'; // Added
 
 const container = new Container();
 
@@ -60,12 +70,15 @@ container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRep
 container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostgresModulesRepository);
 container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(PostgresProductsRepository);
 container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRepository);
+container.bind<IPaymentRepository>(DOMAIN_TYPES.IPaymentRepository).to(PostgresPaymentRepository);
+container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository); // Added
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
+container.bind<IPaymentGatewayService>(DOMAIN_TYPES.IPaymentGatewayService).to(StripePaymentGatewayService); // Added
 
 //* Use Cases (Concrete classes)
 // AUTH
@@ -103,6 +116,18 @@ container.bind<GetCartUseCase>(GetCartUseCase).toSelf();
 container.bind<AddProductToCartUseCase>(AddProductToCartUseCase).toSelf();
 container.bind<DeleteProductFromCartUseCase>(DeleteProductFromCartUseCase).toSelf();
 container.bind<ClearCartUseCase>(ClearCartUseCase).toSelf();
+// Payment
+container.bind<AddPaymentMethodUseCase>(AddPaymentMethodUseCase).toSelf(); // Added
+container.bind<GetClientPaymentMethodsUseCase>(GetClientPaymentMethodsUseCase).toSelf();
+container.bind<DeletePaymentMethodUseCase>(DeletePaymentMethodUseCase).toSelf();
+container.bind<CreatePaymentIntentUseCase>(CreatePaymentIntentUseCase).toSelf();
+container.bind<ConfirmPaymentUseCase>(ConfirmPaymentUseCase).toSelf();
+// Order
+container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf(); // Added
+container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf(); // Added
+container.bind<GetClientOrdersUseCase>(GetClientOrdersUseCase).toSelf(); // Added
+container.bind<UpdateOrderStatusUseCase>(UpdateOrderStatusUseCase).toSelf(); // Added
+
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -112,5 +137,7 @@ container.bind<UserController>(UserController).toSelf();
 container.bind<ModulesController>(ModulesController).toSelf();
 container.bind<ProductsController>(ProductsController).toSelf();
 container.bind<CartController>(CartController).toSelf();
+container.bind<PaymentController>(PaymentController).toSelf();
+container.bind<StripeWebhookController>(StripeWebhookController).toSelf(); // Added
 
 export { container };

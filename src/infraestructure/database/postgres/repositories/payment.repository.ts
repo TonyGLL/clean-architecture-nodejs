@@ -1,0 +1,158 @@
+import { Pool } from 'pg';
+import { inject, injectable } from 'inversify';
+import { IPaymentRepository } from '../../../../domain/repositories/payment.repository';
+import { Payment } from '../../../../domain/entities/payment';
+import { PaymentMethod } from '../../../../domain/entities/paymentMethod';
+import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
+
+@injectable()
+export class PostgresPaymentRepository implements IPaymentRepository {
+    private pool: Pool;
+
+    constructor(@inject(INFRASTRUCTURE_TYPES.PostgresPool) pool: Pool) {
+        this.pool = pool;
+    }
+
+    async findClientById(clientId: number): Promise<{ id: number; stripe_customer_id: string | null; email: string; name: string; } | null> {
+        const result = await this.pool.query(
+            'SELECT id, stripe_customer_id, email, name FROM clients WHERE id = $1 AND deleted = FALSE',
+            [clientId]
+        );
+        if (result.rows.length === 0) {
+            return null;
+        }
+        const client = result.rows[0];
+        return {
+            id: client.id,
+            stripe_customer_id: client.stripe_customer_id,
+            email: client.email,
+            name: client.name
+        };
+    }
+
+    async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string): Promise<void> {
+        await this.pool.query(
+            'UPDATE clients SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
+            [stripeCustomerId, clientId]
+        );
+    }
+
+    async addPaymentMethod(
+        clientId: number,
+        stripePaymentMethodId: string,
+        cardBrand: string | null,
+        cardLast4: string | null,
+        cardExpMonth: number | null,
+        cardExpYear: number | null,
+        isDefault: boolean
+    ): Promise<PaymentMethod> {
+        if (isDefault) {
+            // Set other payment methods for this client to not be default
+            await this.pool.query(
+                'UPDATE payment_methods SET is_default = FALSE WHERE client_id = $1',
+                [clientId]
+            );
+        }
+        const result = await this.pool.query(
+            `INSERT INTO payment_methods (client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+             RETURNING id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at`,
+            [clientId, stripePaymentMethodId, cardBrand, cardLast4, cardExpMonth, cardExpYear, isDefault]
+        );
+        return result.rows[0] as PaymentMethod;
+    }
+
+    async getClientPaymentMethods(clientId: number): Promise<PaymentMethod[]> {
+        const result = await this.pool.query(
+            'SELECT id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE client_id = $1 ORDER BY created_at DESC',
+            [clientId]
+        );
+        return result.rows as PaymentMethod[];
+    }
+
+    async findPaymentMethodByStripeId(stripePaymentMethodId: string): Promise<PaymentMethod | null> {
+        const result = await this.pool.query(
+            'SELECT id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE stripe_payment_method_id = $1',
+            [stripePaymentMethodId]
+        );
+        return result.rows.length > 0 ? result.rows[0] as PaymentMethod : null;
+    }
+
+    async deletePaymentMethod(paymentMethodId: number): Promise<void> {
+        // Instead of deleting, you might want to mark as deleted or disassociate from client if Stripe API doesn't delete it
+        // For now, direct deletion:
+        await this.pool.query('DELETE FROM payment_methods WHERE id = $1', [paymentMethodId]);
+    }
+
+    async setDefaultPaymentMethod(clientId: number, paymentMethodId: number): Promise<void> {
+        // First, set all other methods for this client to not be default
+        await this.pool.query(
+            'UPDATE payment_methods SET is_default = FALSE WHERE client_id = $1 AND id != $2',
+            [clientId, paymentMethodId]
+        );
+        // Then, set the specified method as default
+        await this.pool.query(
+            'UPDATE payment_methods SET is_default = TRUE, updated_at = NOW() WHERE id = $1 AND client_id = $2',
+            [paymentMethodId, clientId]
+        );
+    }
+
+    async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Payment> {
+        const {
+            orderId, cartId, clientId, amount, currency, status,
+            stripePaymentIntentId, stripeChargeId, paymentMethodDetails,
+            receiptUrl, paymentDate
+        } = payment;
+
+        const result = await this.pool.query(
+            `INSERT INTO payments (order_id, cart_id, client_id, amount, currency, status, stripe_payment_intent_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+             RETURNING id, order_id, cart_id, client_id, amount, currency, status, stripe_payment_intent_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at`,
+            [orderId, cartId, clientId, amount, currency, status, stripePaymentIntentId, stripeChargeId, paymentMethodDetails, receiptUrl, paymentDate]
+        );
+        return result.rows[0] as Payment;
+    }
+
+    async updatePaymentStatus(
+        paymentIntentId: string,
+        status: string,
+        chargeId?: string,
+        receiptUrl?: string,
+        paymentDate?: Date,
+        paymentMethodDetails?: any
+    ): Promise<Payment | null> {
+        const existingPayment = await this.findPaymentByIntentId(paymentIntentId);
+        if (!existingPayment) return null;
+
+        const updates = {
+            status,
+            stripe_charge_id: chargeId ?? existingPayment.stripeChargeId,
+            receipt_url: receiptUrl ?? existingPayment.receiptUrl,
+            payment_date: paymentDate ?? existingPayment.paymentDate,
+            payment_method_details: paymentMethodDetails ?? existingPayment.paymentMethodDetails,
+            updated_at: new Date()
+        };
+
+        const query = `
+            UPDATE payments
+            SET status = $1, stripe_charge_id = $2, receipt_url = $3, payment_date = $4, payment_method_details = $5, updated_at = $6
+            WHERE stripe_payment_intent_id = $7
+            RETURNING id, order_id, cart_id, client_id, amount, currency, status, stripe_payment_intent_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at
+        `;
+        const values = [
+            updates.status, updates.stripe_charge_id, updates.receipt_url, updates.payment_date,
+            updates.payment_method_details, updates.updated_at, paymentIntentId
+        ];
+
+        const result = await this.pool.query(query, values);
+        return result.rows.length > 0 ? result.rows[0] as Payment : null;
+    }
+
+    async findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null> {
+        const result = await this.pool.query(
+            'SELECT * FROM payments WHERE stripe_payment_intent_id = $1',
+            [paymentIntentId]
+        );
+        return result.rows.length > 0 ? result.rows[0] as Payment : null;
+    }
+}
