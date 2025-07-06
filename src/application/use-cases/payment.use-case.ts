@@ -7,12 +7,12 @@ import { HttpStatusCode } from "../../domain/shared/http.status";
 import { PaymentMethod } from "../../domain/entities/paymentMethod";
 import Stripe from "stripe";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
-import { Payment } from "../../domain/entities/payment";
+import { AttachPaymentMethodParams, CreateCustomerParams, CreatePaymentIntentParams, IPaymentService } from "../../domain/services/payment.service";
 
 @injectable()
 export class AddPaymentMethodUseCase {
     constructor(
-        private stripeService: StripeService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
     ) { }
 
@@ -23,26 +23,39 @@ export class AddPaymentMethodUseCase {
         }
 
         if (!client.stripe_customer_id) {
-            const stripeCustomer = await this.stripeService.createCustomer(client.email, client.name);
+            const customerParams: CreateCustomerParams = {
+                email: client.email,
+                name: client.name,
+                metadata: {
+                    client_id: client.id.toString(),
+                    // Add any other metadata you want to store
+                }
+            };
+
+            const stripeCustomer = await this.paymentService.createCustomer(customerParams);
             await this.paymentRepository.updateClientStripeCustomerId(client.id, stripeCustomer.id);
             client.stripe_customer_id = stripeCustomer.id;
         }
 
         try {
-            const stripePaymentMethod = await this.stripeService.attachPaymentMethodToCustomer(client.stripe_customer_id, dto.stripePaymentMethodId);
+            const paymentMethodParams: AttachPaymentMethodParams = {
+                customerId: client.stripe_customer_id,
+                paymentMethodId: dto.stripePaymentMethodId,
+            };
+            const stripePaymentMethod = await this.paymentService.attachPaymentMethodToCustomer(paymentMethodParams);
 
             const existingMethod = await this.paymentRepository.findPaymentMethodByStripeId(stripePaymentMethod.id);
             if (existingMethod) {
                 // Potentially update it or just return it if it's already linked to this client
-                 if (existingMethod.clientId !== dto.clientId) {
+                if (existingMethod.clientId !== dto.clientId) {
                     // This case should ideally not happen if Stripe PM is correctly attached.
                     throw new HttpError(HttpStatusCode.CONFLICT, "Stripe Payment Method is already associated with another client.");
                 }
-                 // If it exists and belongs to this client, maybe just ensure its default status is updated.
-                 if (dto.isDefault) {
+                // If it exists and belongs to this client, maybe just ensure its default status is updated.
+                if (dto.isDefault) {
                     await this.paymentRepository.setDefaultPaymentMethod(dto.clientId, existingMethod.id);
                     existingMethod.isDefault = true;
-                 }
+                }
                 return [HttpStatusCode.OK, existingMethod];
             }
 
@@ -60,7 +73,7 @@ export class AddPaymentMethodUseCase {
             if (error instanceof HttpError) throw error;
             // Check for Stripe specific errors if needed
             if (error.type === 'StripeCardError') {
-                 throw new HttpError(HttpStatusCode.BAD_REQUEST, `Stripe error: ${error.message}`);
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, `Stripe error: ${error.message}`);
             }
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to add payment method: ${error.message}`);
         }
@@ -82,7 +95,7 @@ export class GetClientPaymentMethodsUseCase {
 @injectable()
 export class DeletePaymentMethodUseCase {
     constructor(
-        private stripeService: StripeService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
     ) { }
 
@@ -94,7 +107,7 @@ export class DeletePaymentMethodUseCase {
 
         try {
             // Detach from Stripe customer first. If successful, then remove from local DB.
-            await this.stripeService.detachPaymentMethod(dto.paymentMethodId);
+            await this.paymentService.detachPaymentMethod(dto.paymentMethodId);
             await this.paymentRepository.deletePaymentMethod(paymentMethod.id);
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error: any) {
@@ -107,7 +120,7 @@ export class DeletePaymentMethodUseCase {
 @injectable()
 export class CreatePaymentIntentUseCase {
     constructor(
-        private stripeService: StripeService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository // To get cart details
     ) { }
@@ -131,7 +144,15 @@ export class CreatePaymentIntentUseCase {
 
         let stripeCustomerId = client.stripe_customer_id;
         if (!stripeCustomerId) {
-            const stripeCustomer = await this.stripeService.createCustomer(client.email, client.name);
+            const customerParams: CreateCustomerParams = {
+                email: client.email,
+                name: client.name,
+                metadata: {
+                    client_id: client.id.toString(),
+                    // Add any other metadata you want to store
+                }
+            };
+            const stripeCustomer = await this.paymentService.createCustomer(customerParams);
             await this.paymentRepository.updateClientStripeCustomerId(client.id, stripeCustomer.id);
             stripeCustomerId = stripeCustomer.id;
         }
@@ -140,37 +161,38 @@ export class CreatePaymentIntentUseCase {
         let stripePaymentIntent: Stripe.PaymentIntent;
 
         try {
-             // First, check if a payment record for this cart already exists and is in a pending state.
+            // First, check if a payment record for this cart already exists and is in a pending state.
             let existingPayment = await this.paymentRepository.findPaymentByIntentId(cart.activePaymentIntentId || ''); // Assuming cart might store an active PI
             // Or query by cartId if that makes more sense for your logic:
             // let existingPayment = await this.paymentRepository.findPaymentByCartIdAndStatus(dto.cartId, 'pending');
 
             if (existingPayment && existingPayment.stripePaymentIntentId && (existingPayment.status === 'pending' || existingPayment.status === 'requires_action')) {
                 // Retrieve the existing PaymentIntent from Stripe to check its status
-                stripePaymentIntent = await this.stripeService.retrievePaymentIntent(existingPayment.stripePaymentIntentId);
+                stripePaymentIntent = await this.paymentService.retrievePaymentIntent(existingPayment.stripePaymentIntentId);
                 if (stripePaymentIntent.status === 'requires_payment_method' || stripePaymentIntent.status === 'requires_confirmation' || stripePaymentIntent.status === 'requires_action') {
                     // If PI is still processable, return its client_secret
-                     return [HttpStatusCode.OK, {
+                    return [HttpStatusCode.OK, {
                         clientSecret: stripePaymentIntent.client_secret,
                         paymentIntentId: stripePaymentIntent.id,
                         requiresAction: stripePaymentIntent.status === 'requires_action',
                         status: stripePaymentIntent.status
                     }];
                 } else if (stripePaymentIntent.status === 'succeeded') {
-                     throw new HttpError(HttpStatusCode.CONFLICT, "Payment for this cart has already succeeded.");
+                    throw new HttpError(HttpStatusCode.CONFLICT, "Payment for this cart has already succeeded.");
                 }
                 // If PI is in a state like 'canceled', a new one should be created.
             }
 
-
-            stripePaymentIntent = await this.stripeService.createPaymentIntent(
-                dto.amount,
-                dto.currency,
-                stripeCustomerId,
-                dto.paymentMethodId, // if provided, Stripe will attempt to use it
-                dto.confirm, // if true and PM provided, Stripe will attempt to confirm
-                metadata
-            );
+            const createPaymentIntentParams: CreatePaymentIntentParams = {
+                amount: dto.amount, // Amount in cents
+                currency: dto.currency,
+                customerId: stripeCustomerId,
+                paymentMethodId: dto.paymentMethodId, // Optional, if provided will be used
+                confirm: dto.confirm || false, // If true and PM provided, Stripe will attempt to confirm immediately
+                metadata: metadata,
+                description: `Payment for cart ${dto.cartId}`
+            };
+            stripePaymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentParams);
 
             // Save the initial payment intent record to your database
             await this.paymentRepository.createPaymentRecord({
@@ -200,7 +222,7 @@ export class CreatePaymentIntentUseCase {
                 status: stripePaymentIntent.status
             }];
         } catch (error: any) {
-             if (error instanceof HttpError) throw error;
+            if (error instanceof HttpError) throw error;
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to create payment intent: ${error.message}`);
         }
     }
@@ -209,7 +231,7 @@ export class CreatePaymentIntentUseCase {
 @injectable()
 export class ConfirmPaymentUseCase {
     constructor(
-        private stripeService: StripeService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository // To update local payment record
     ) { }
 
@@ -230,12 +252,12 @@ export class ConfirmPaymentUseCase {
         }
 
         try {
-            let stripePaymentIntent: Stripe.PaymentIntent;
-            if(localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method' && dto.paymentMethodId)) {
-                 stripePaymentIntent = await this.stripeService.confirmPaymentIntent(dto.paymentIntentId, dto.paymentMethodId);
+            let stripePaymentIntent: any;
+            if (localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method' && dto.paymentMethodId)) {
+                stripePaymentIntent = await this.paymentService.confirmPaymentIntent(dto.paymentIntentId, { paymentMethodId: dto.paymentMethodId });
             } else {
                 // Just retrieve to check status, maybe it was confirmed by webhook
-                stripePaymentIntent = await this.stripeService.retrievePaymentIntent(dto.paymentIntentId);
+                stripePaymentIntent = await this.paymentService.retrievePaymentIntent(dto.paymentIntentId);
             }
 
 
@@ -263,8 +285,8 @@ export class ConfirmPaymentUseCase {
             }];
         } catch (error: any) {
             if (error.type === 'StripeCardError') {
-                 await this.paymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed'); // Update local status
-                 throw new HttpError(HttpStatusCode.BAD_REQUEST, `Stripe card error: ${error.message}`);
+                await this.paymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed'); // Update local status
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, `Stripe card error: ${error.message}`);
             }
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to confirm payment: ${error.message}`);
         }

@@ -1,19 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import {
-    AddPaymentMethodUseCase,
-    ConfirmPaymentUseCase,
-    CreatePaymentIntentUseCase,
-    DeletePaymentMethodUseCase,
-    GetClientPaymentMethodsUseCase
-} from "../../../application/use-cases/payment.use-case";
-import {
-    AddPaymentMethodDTO,
-    ConfirmPaymentDTO,
-    CreatePaymentIntentDTO,
-    DeletePaymentMethodDTO
-} from "../../../application/dtos/payment.dto";
-import { AuthenticatedRequest } from "../middlewares/auth.middleware"; // Assuming you have this for req.user
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
+import { AddPaymentMethodDTO, ConfirmPaymentDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
 export class PaymentController {
@@ -23,9 +11,9 @@ export class PaymentController {
         @inject(DeletePaymentMethodUseCase) private deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
         @inject(CreatePaymentIntentUseCase) private createPaymentIntentUseCase: CreatePaymentIntentUseCase,
         @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase
-    ) {}
+    ) { }
 
-    public addPaymentMethod = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    public addPaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id; // Assuming user ID is on req.user from auth middleware
             const { stripePaymentMethodId, isDefault } = req.body;
@@ -38,7 +26,7 @@ export class PaymentController {
         }
     }
 
-    public getClientPaymentMethods = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    public getClientPaymentMethods = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
             const [status, data] = await this.getClientPaymentMethodsUseCase.execute({ clientId });
@@ -48,7 +36,7 @@ export class PaymentController {
         }
     }
 
-    public deletePaymentMethod = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    public deletePaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
             const { paymentMethodId } = req.params; // Stripe Payment Method ID (pm_xxx)
@@ -61,7 +49,7 @@ export class PaymentController {
         }
     }
 
-    public createPaymentIntent = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    public createPaymentIntent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
             const { cartId, amount, currency, paymentMethodId, saveCard, confirm, metadata } = req.body;
@@ -83,7 +71,7 @@ export class PaymentController {
         }
     }
 
-    public confirmPayment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    public confirmPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
             const { paymentIntentId } = req.params;

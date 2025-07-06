@@ -5,11 +5,10 @@ import { Order, OrderItem } from '../../../../domain/entities/order';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
-import { Product } from '../../../../domain/entities/product'; // For mapping product details
 
 @injectable()
 export class PostgresOrderRepository implements IOrderRepository {
-    constructor(@inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool) {}
+    constructor(@inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool) { }
 
     private generateOrderNumber(): string {
         // Simple order number generator, consider a more robust solution for production
@@ -50,13 +49,13 @@ export class PostgresOrderRepository implements IOrderRepository {
                 // For this example, assuming cartItem has product_id, quantity, and unit_price (price at time of cart addition)
 
                 const productPrice = cartItem.price; // price from Product entity which is CartItemDTO actually
-                const itemSubtotal = cartItem.quantity * productPrice;
+                const itemSubtotal = 5 * productPrice;
 
                 const orderItemResult = await client.query(
                     `INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
                      VALUES ($1, $2, $3, $4, $5)
                      RETURNING id, order_id, product_id, quantity, unit_price, subtotal`,
-                    [newOrder.id, cartItem.id, cartItem.quantity, productPrice, itemSubtotal]
+                    [newOrder.id, cartItem.id, 5, productPrice, itemSubtotal]
                 );
                 orderItems.push(orderItemResult.rows[0] as OrderItem);
 
@@ -86,7 +85,7 @@ export class PostgresOrderRepository implements IOrderRepository {
             // Log error for debugging
             console.error("Error creating order:", error);
             if (error.code === '23503') { // foreign_key_violation
-                 throw new HttpError(HttpStatusCode.BAD_REQUEST, `Invalid reference: ${error.detail || error.message}`);
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, `Invalid reference: ${error.detail || error.message}`);
             }
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error creating order: ${error.message}`);
         } finally {
@@ -137,11 +136,11 @@ export class PostgresOrderRepository implements IOrderRepository {
             const orders: Order[] = [];
             for (const orderData of ordersResult.rows) {
                 const itemsResult = await client.query(
-                     `SELECT oi.*, p.name as product_name, p.image as product_image
+                    `SELECT oi.*, p.name as product_name, p.image as product_image
                       FROM order_items oi
                       JOIN products p ON oi.product_id = p.id
                       WHERE oi.order_id = $1`,
-                     [orderData.id]
+                    [orderData.id]
                 );
                 const orderItems = itemsResult.rows.map(item => new OrderItem(
                     item.id, item.order_id, item.product_id, item.quantity, parseFloat(item.unit_price), parseFloat(item.subtotal),
@@ -174,7 +173,7 @@ export class PostgresOrderRepository implements IOrderRepository {
             // For simplicity, returning the updated order data without re-fetching items.
             // A full Order object reconstruction might be needed depending on use case.
             const orderData = result.rows[0];
-             return await this.findOrderById(orderData.id); // Re-fetch to include items
+            return await this.findOrderById(orderData.id); // Re-fetch to include items
         } catch (error: any) {
             if (error instanceof HttpError) throw error;
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error updating order status: ${error.message}`);

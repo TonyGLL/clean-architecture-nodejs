@@ -3,7 +3,7 @@ import { Cart } from "../entities/cart";
 import { AddProductToCartDTOPayload } from "../../application/dtos/cart.dto";
 
 export interface ICartRepository {
-    createCartFromLogin(clientId: number, clientPool?: PoolClient): Promise<number>; // Return cartId
+    createCartFromLogin(clientId: number, clientPool?: PoolClient): Promise<void>; // Return cartId
     getCartDetails(clientId: number, cartId?: number): Promise<Cart | null>;
     addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean>;
     deleteProductFromCart(clientId: number, productId: number): Promise<void>;

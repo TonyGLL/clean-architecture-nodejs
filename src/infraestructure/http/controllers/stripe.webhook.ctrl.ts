@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
-import { config } from "../../config/env";
 import { IPaymentService } from "../../../domain/services/payment.service";
 import { DOMAIN_TYPES } from "../../../domain/ioc.types";
 import { IPaymentRepository } from "../../../domain/repositories/payment.repository";
@@ -9,19 +8,20 @@ import { IOrderRepository } from "../../../domain/repositories/order.repository"
 import { ICartRepository } from "../../../domain/repositories/cart.repository";
 import { HttpStatusCode } from "../../../domain/shared/http.status";
 import { CreateOrderUseCase } from "../../../application/use-cases/order.use-case"; // To create order on successful payment if not already created
+import { config } from "../../config/env";
 
 @injectable()
 export class StripeWebhookController {
     private webhookSecret: string;
 
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentGatewayService: IPaymentService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository, // Optional: if order creation is finalized here
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(CreateOrderUseCase) private createOrderUseCase: CreateOrderUseCase // Injected for creating order
     ) {
-        this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!; // Ensure this is set in your .env
+        this.webhookSecret = config.STRIPE_PUBLIC_KEY; // Ensure this is set in your .env
         if (!this.webhookSecret) {
             console.warn("STRIPE_WEBHOOK_SECRET is not set. Webhook processing will fail signature verification.");
             // In a real app, you might want to throw an error or prevent startup if the secret is missing.
@@ -43,7 +43,7 @@ export class StripeWebhookController {
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send(`Webhook Error: Server configuration error`);
                 return;
             }
-            event = await this.paymentGatewayService.constructWebhookEvent(req.body, sig, this.webhookSecret);
+            event = await this.paymentService.constructWebhookEvent(req.body, sig, this.webhookSecret);
         } catch (err: any) {
             console.error(`Webhook signature verification failed: ${err.message}`);
             res.status(HttpStatusCode.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
@@ -59,12 +59,12 @@ export class StripeWebhookController {
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
-                await this.handlePaymentIntentSucceeded(paymentIntentSucceeded);
+                //await this.handlePaymentIntentSucceeded(paymentIntentSucceeded);
                 break;
             case 'payment_intent.payment_failed':
                 const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent failed: ${paymentIntentFailed.id}`);
-                await this.handlePaymentIntentFailed(paymentIntentFailed);
+                //await this.handlePaymentIntentFailed(paymentIntentFailed);
                 break;
             case 'charge.succeeded': // Often handled via payment_intent.succeeded, but can be listened to.
                 const chargeSucceeded = event.data.object as Stripe.Charge;
@@ -76,7 +76,7 @@ export class StripeWebhookController {
                         chargeSucceeded.payment_intent as string,
                         'succeeded', // or map Stripe charge status
                         chargeSucceeded.id,
-                        chargeSucceeded.receipt_url,
+                        chargeSucceeded.receipt_url!,
                         new Date(chargeSucceeded.created * 1000),
                         chargeSucceeded.payment_method_details || undefined
                     );
@@ -96,8 +96,8 @@ export class StripeWebhookController {
         res.status(HttpStatusCode.OK).json({ received: true });
     }
 
-    private async handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
-        const charge = intent.charges?.data[0];
+    /* private async handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
+        const charge = intent?.charges?.data[0];
         const updatedPayment = await this.paymentRepository.updatePaymentStatus(
             intent.id,
             intent.status, // 'succeeded'
@@ -173,7 +173,7 @@ export class StripeWebhookController {
             // await this.cartRepository.updateCartPaymentIntent(cart.id, null);
         }
         console.log(`Payment intent ${intent.id} failed. Status updated.`);
-    }
+    } */
 
     // private async logStripeEvent(eventId: string, eventType: string, payload: any) {
     //     try {
