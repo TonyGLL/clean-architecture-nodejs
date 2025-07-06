@@ -1,6 +1,7 @@
 -- Tabla de clients
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
+    stripe_customer_id VARCHAR(255) UNIQUE, -- Added Stripe Customer ID
     "name" VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -137,7 +138,9 @@ CREATE TABLE shopping_carts (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned'))
+    updated_at TIMESTAMPTZ DEFAULT NOW(), -- Added updated_at
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')), -- Added 'pending_payment'
+    active_payment_intent_id VARCHAR(255) UNIQUE -- Added to link cart to a Stripe Payment Intent
 );
 
 -- Cart items table
@@ -178,25 +181,28 @@ CREATE TABLE order_items (
 CREATE TABLE payment_methods (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    stripe_payment_method_id VARCHAR(255) NOT NULL,
-    card_brand VARCHAR(50) NOT NULL,
-    card_last4 VARCHAR(4) NOT NULL,
-    card_exp_month INT NOT NULL,
-    card_exp_year INT NOT NULL,
+    stripe_payment_method_id VARCHAR(255) UNIQUE NOT NULL, -- Made unique
+    card_brand VARCHAR(50), -- Nullable as not all payment methods are cards
+    card_last4 VARCHAR(4), -- Nullable
+    card_exp_month INT, -- Nullable
+    card_exp_year INT, -- Nullable
     is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW() -- Added updated_at
 );
 
 -- Payments table
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
-    order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    order_id INT UNIQUE REFERENCES orders(id) ON DELETE CASCADE, -- Made unique as one order should have one primary payment
     cart_id INT NOT NULL REFERENCES shopping_carts(id) ON DELETE CASCADE,
+    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE, -- Added client_id for easier querying
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-    payment_method VARCHAR(50) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
-    stripe_payment_intent_id VARCHAR(255),
-    stripe_charge_id VARCHAR(255),
+    currency VARCHAR(3) NOT NULL DEFAULT 'mxn', -- Added currency
+    payment_method_details JSONB, -- To store details like card brand, last4 for non-saved methods if needed
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'requires_action', 'canceled', 'refunded')), -- Updated statuses
+    stripe_payment_intent_id VARCHAR(255) UNIQUE, -- Made unique
+    stripe_charge_id VARCHAR(255) UNIQUE, -- Made unique
     receipt_url TEXT,
     payment_date TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
