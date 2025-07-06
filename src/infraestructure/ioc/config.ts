@@ -33,7 +33,7 @@ import { JwtService } from '../driven/services/jwt.service';
 import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
 import { BcryptService } from '../driven/services/bcrypt.service';
-import { IPaymentGatewayService } from '../../domain/services/payment.gateway.service'; // Added
+import { IPaymentService } from '../../domain/services/payment.service'; // Added
 import { StripePaymentGatewayService } from '../driven/services/stripe.payment.gateway.service'; // Added
 
 //* Use Cases
@@ -78,7 +78,7 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
-container.bind<IPaymentGatewayService>(DOMAIN_TYPES.IPaymentGatewayService).to(StripePaymentGatewayService); // Added
+container.bind<IPaymentService>(DOMAIN_TYPES.IPaymentService).to(StripePaymentGatewayService); // Added
 
 //* Use Cases (Concrete classes)
 // AUTH

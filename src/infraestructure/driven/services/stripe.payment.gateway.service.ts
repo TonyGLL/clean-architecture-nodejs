@@ -9,12 +9,12 @@ import {
     CreateCustomerParams,
     CreatePaymentIntentParams,
     CreateSetupIntentParams,
-    IPaymentGatewayService,
+    IPaymentService,
     ListPaymentMethodsParams
-} from '../../../domain/services/payment.gateway.service'; // Adjusted path
+} from '../../../domain/services/payment.service'; // Adjusted path
 
 @injectable()
-export class StripePaymentGatewayService implements IPaymentGatewayService {
+export class StripePaymentGatewayService implements IPaymentService {
     private stripe: Stripe;
 
     constructor() {

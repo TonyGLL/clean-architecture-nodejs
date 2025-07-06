@@ -1,7 +1,4 @@
-import Stripe from 'stripe'; // Keep Stripe types for method signatures if they are specific and exposed
-
-// Define more generic DTOs if you plan to support multiple gateways
-// For now, using Stripe's types for simplicity, but this is where abstraction would happen.
+import Stripe from 'stripe';
 
 export interface CreateCustomerParams {
     email: string;
@@ -41,23 +38,14 @@ export interface CreateSetupIntentParams {
     metadata?: Record<string, any>;
 }
 
-
-export interface IPaymentGatewayService {
+export interface IPaymentService {
     createCustomer(params: CreateCustomerParams): Promise<Stripe.Customer>; // Return type could be a generic Customer object
-
     createPaymentIntent(params: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent>; // Return generic PaymentIntent
-
     confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Stripe.PaymentIntent>;
-
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent>;
-
     attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<Stripe.PaymentMethod>; // Return generic PaymentMethod
-
     listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<Stripe.ApiList<Stripe.PaymentMethod>>; // Return list of generic PaymentMethod
-
     detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod>;
-
     createSetupIntent(params: CreateSetupIntentParams): Promise<Stripe.SetupIntent>; // Return generic SetupIntent
-
     constructWebhookEvent(payload: string | Buffer, signature: string | string[] | Buffer, secret: string): Promise<Stripe.Event>; // Return generic Event
 }

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import { config } from "../../config/env";
-import { IPaymentGatewayService } from "../../../domain/services/payment.gateway.service";
+import { IPaymentService } from "../../../domain/services/payment.service";
 import { DOMAIN_TYPES } from "../../../domain/ioc.types";
 import { IPaymentRepository } from "../../../domain/repositories/payment.repository";
 import { IOrderRepository } from "../../../domain/repositories/order.repository";
@@ -15,7 +15,7 @@ export class StripeWebhookController {
     private webhookSecret: string;
 
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentGatewayService) private paymentGatewayService: IPaymentGatewayService,
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentGatewayService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository, // Optional: if order creation is finalized here
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
@@ -72,7 +72,7 @@ export class StripeWebhookController {
                 // You might update payment record with charge details if not already done via PI success.
                 const paymentForCharge = await this.paymentRepository.findPaymentByIntentId(chargeSucceeded.payment_intent as string);
                 if (paymentForCharge && paymentForCharge.status !== 'succeeded') {
-                     await this.paymentRepository.updatePaymentStatus(
+                    await this.paymentRepository.updatePaymentStatus(
                         chargeSucceeded.payment_intent as string,
                         'succeeded', // or map Stripe charge status
                         chargeSucceeded.id,
@@ -172,7 +172,7 @@ export class StripeWebhookController {
             // Consider clearing the active_payment_intent_id from the cart
             // await this.cartRepository.updateCartPaymentIntent(cart.id, null);
         }
-         console.log(`Payment intent ${intent.id} failed. Status updated.`);
+        console.log(`Payment intent ${intent.id} failed. Status updated.`);
     }
 
     // private async logStripeEvent(eventId: string, eventType: string, payload: any) {
