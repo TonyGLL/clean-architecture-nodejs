@@ -19,28 +19,65 @@ export interface PaymentMethod {
 
 export interface PaymentIntent {
     id: string;
-    status: string; // e.g., 'requires_payment_method', 'succeeded', 'requires_action'
-    client_secret: string | null;
+    object: 'payment_intent';
     amount: number;
-    currency: string;
-    customer: string | PaymentCustomer | null;
-    charges?: {
-        data: {
-            id: string;
-            receipt_url: string | null;
-            created: number;
-            payment_method_details: any;
-        }[];
+    amount_capturable: number;
+    amount_details: {
+        tip: Record<string, unknown>;
     };
-    shipping: {
-        address?: {
-            line1: string;
-            city: string;
-            postal_code: string;
-            country: string;
-        } | null
-    } | null;
-    metadata: { [key: string]: any };
+    amount_received: number;
+    application: null;
+    application_fee_amount: null;
+    automatic_payment_methods: {
+        allow_redirects: 'always';
+        enabled: boolean;
+    };
+    canceled_at: null;
+    cancellation_reason: null;
+    capture_method: 'automatic_async';
+    client_secret: string;
+    confirmation_method: 'automatic';
+    created: number;
+    currency: string;
+    customer: string;
+    description: string;
+    last_payment_error: null;
+    latest_charge: null;
+    livemode: boolean;
+    metadata: {
+        cart_id: string;
+        client_id: string;
+    };
+    next_action: null;
+    on_behalf_of: null;
+    payment_method: null;
+    payment_method_configuration_details: {
+        id: string;
+        parent: null;
+    };
+    payment_method_options: {
+        card: {
+            installments: unknown;
+            mandate_options: null;
+            network: null;
+            request_three_d_secure: 'automatic';
+        };
+        link: {
+            persistent_token: null;
+        };
+    };
+    payment_method_types: ['card', 'link'];
+    processing: null;
+    receipt_email: null;
+    review: null;
+    setup_future_usage: null;
+    shipping: null;
+    source: null;
+    statement_descriptor: null;
+    statement_descriptor_suffix: null;
+    status: string;
+    transfer_data: null;
+    transfer_group: null;
 }
 
 export interface SetupIntent {
@@ -69,8 +106,8 @@ export interface CreateCustomerParams {
 export interface CreatePaymentIntentParams {
     amount: number; // Smallest currency unit (e.g., cents)
     currency: string;
-    customerId?: string;
-    paymentMethodId?: string;
+    customer?: string;
+    payment_method?: string;
     confirm?: boolean;
     metadata?: Record<string, any>;
     description?: string;
@@ -103,9 +140,9 @@ export interface CreateSetupIntentParams {
 
 export interface IPaymentService {
     createCustomer(params: CreateCustomerParams): Promise<PaymentCustomer>;
-    createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntent>;
-    confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<PaymentIntent>;
-    retrievePaymentIntent(paymentIntentId: string): Promise<PaymentIntent>;
+    createPaymentIntent(params: CreatePaymentIntentParams): Promise<Partial<PaymentIntent>>;
+    confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Partial<PaymentIntent>>;
+    retrievePaymentIntent(paymentIntentId: string): Promise<Partial<PaymentIntent>>;
     attachPaymentMethodToCustomer(params: AttachPaymentMethodParams): Promise<PaymentMethod>;
     listCustomerPaymentMethods(params: ListPaymentMethodsParams): Promise<PaymentMethod[]>;
     detachPaymentMethod(paymentMethodId: string): Promise<PaymentMethod>;

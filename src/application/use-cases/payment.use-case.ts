@@ -115,11 +115,8 @@ export class CreatePaymentIntentUseCase {
         const client = await this.paymentRepository.findClientById(dto.clientId);
         if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
-        const cart = await this.cartRepository.getCartDetails(dto.clientId, dto.cartId);
+        const cart = await this.cartRepository.getCartDetails(dto.clientId);
         if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
-        if (cart.total !== dto.amount) {
-            throw new HttpError(HttpStatusCode.BAD_REQUEST, "Cart total does not match the payment amount.");
-        }
 
         let customerId = client.stripe_customer_id;
         if (!customerId) {
@@ -128,37 +125,37 @@ export class CreatePaymentIntentUseCase {
             customerId = customer.id;
         }
 
-        let paymentIntent: PaymentIntent;
+        let paymentIntent: Partial<PaymentIntent>;
 
         try {
             const existingPayment = await this.paymentRepository.findPaymentByIntentId(cart.activePaymentIntentId || '');
             if (existingPayment?.stripePaymentIntentId && (existingPayment.status === 'pending' || existingPayment.status === 'requires_action')) {
                 paymentIntent = await this.paymentService.retrievePaymentIntent(existingPayment.stripePaymentIntentId);
-                if (['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(paymentIntent.status)) {
-                    return [HttpStatusCode.OK, { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status }];
+                if (['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(paymentIntent.status!)) {
+                    return [HttpStatusCode.OK, { clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
                 } else if (paymentIntent.status === 'succeeded') {
                     throw new HttpError(HttpStatusCode.CONFLICT, "Payment for this cart has already succeeded.");
                 }
             }
 
             const createPaymentIntentParams: CreatePaymentIntentParams = {
-                amount: dto.amount,
+                amount: Math.round(cart.total * 100),
                 currency: dto.currency,
-                customerId: customerId,
-                paymentMethodId: dto.paymentMethodId,
+                customer: customerId,
+                payment_method: dto.paymentMethodId,
                 confirm: dto.confirm || false,
-                metadata: { ...dto.metadata, cart_id: dto.cartId.toString(), client_id: dto.clientId.toString() },
-                description: `Payment for cart ${dto.cartId}`
+                metadata: { ...dto.metadata, cart_id: cart.id.toString(), client_id: dto.clientId.toString() },
+                description: `Payment for cart ${cart.id}`
             };
             paymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentParams);
 
             await this.paymentRepository.createPaymentRecord({
-                cartId: dto.cartId,
+                cartId: cart.id,
                 clientId: dto.clientId,
-                amount: dto.amount,
+                amount: cart.total,
                 currency: dto.currency,
-                status: paymentIntent.status,
-                stripePaymentIntentId: paymentIntent.id,
+                status: paymentIntent.status!,
+                stripePaymentIntentId: paymentIntent.id!,
                 stripeChargeId: null,
                 paymentMethodDetails: null, // Will be populated by webhook
                 receiptUrl: null,
@@ -166,9 +163,9 @@ export class CreatePaymentIntentUseCase {
                 orderId: null,
             });
 
-            await this.cartRepository.updateCartPaymentIntent(dto.cartId, paymentIntent.id);
+            //await this.cartRepository.updateCartPaymentIntent(cart.id, paymentIntent.id);
 
-            return [HttpStatusCode.CREATED, { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status }];
+            return [HttpStatusCode.CREATED, { clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
         } catch (error: any) {
             if (error instanceof HttpError) throw error;
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to create payment intent: ${error.message}`);
@@ -194,31 +191,31 @@ export class ConfirmPaymentUseCase {
         }
 
         try {
-            let paymentIntent: PaymentIntent;
+            let paymentIntent: Partial<PaymentIntent>;
             if (localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method' && dto.paymentMethodId)) {
                 paymentIntent = await this.paymentService.confirmPaymentIntent(dto.paymentIntentId, { paymentMethodId: dto.paymentMethodId });
             } else {
                 paymentIntent = await this.paymentService.retrievePaymentIntent(dto.paymentIntentId);
             }
 
-            const charge = paymentIntent.charges?.data[0];
+            //const charge = paymentIntent.charges?.data[0];
 
             await this.paymentRepository.updatePaymentStatus(
+                paymentIntent.id!,
+                paymentIntent.status!,
                 paymentIntent.id,
-                paymentIntent.status,
-                charge?.id,
-                charge?.receipt_url!,
-                paymentIntent.status === 'succeeded' ? new Date(charge?.created! * 1000) : undefined,
-                charge?.payment_method_details
+                paymentIntent.receipt_email!,
+                paymentIntent.status === 'succeeded' ? new Date(paymentIntent.created! * 1000) : undefined,
+                paymentIntent.payment_method_configuration_details?.id || null
             );
 
             return [HttpStatusCode.OK, {
-                paymentIntentId: paymentIntent.id,
-                status: paymentIntent.status,
+                paymentIntentId: paymentIntent.id!,
+                status: paymentIntent.status!,
                 requiresAction: paymentIntent.status === 'requires_action',
                 clientSecret: paymentIntent.client_secret,
-                chargeId: charge?.id,
-                receiptUrl: charge?.receipt_url!
+                chargeId: paymentIntent.id,
+                receiptUrl: paymentIntent.receipt_email!,
             }];
         } catch (error: any) {
             if (error instanceof HttpError) throw error;

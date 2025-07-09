@@ -18,7 +18,7 @@ export class StripeWebhookController {
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(CreateOrderUseCase) private createOrderUseCase: CreateOrderUseCase
     ) {
-        this.webhookSecret = config.STRIPE_SECRET_KEY;
+        this.webhookSecret = config.STRIPE_WEBHOOK_SECRET;
         if (!this.webhookSecret) {
             console.warn("STRIPE_WEBHOOK_SECRET is not set. Webhook processing will fail signature verification.");
         }
@@ -47,6 +47,11 @@ export class StripeWebhookController {
         }
 
         switch (event.type) {
+            case 'payment_intent.created':
+                const paymentIntentCreated = event.data.object as PaymentIntent;
+                console.log(`PaymentIntent Created: ${paymentIntentCreated.id}`);
+                await this.handlePaymentIntentSucceeded(paymentIntentCreated);
+                break;
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object as PaymentIntent;
                 console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
@@ -65,19 +70,11 @@ export class StripeWebhookController {
     }
 
     private async handlePaymentIntentSucceeded(intent: PaymentIntent) {
-        const charge = intent.charges?.data[0];
-        if (!charge) {
-            console.error(`No charge found for successful payment intent ${intent.id}`);
-            return;
-        }
-
+        console.log(intent)
         const updatedPayment = await this.paymentRepository.updatePaymentStatus(
             intent.id,
             intent.status,
-            charge.id,
-            charge.receipt_url!,
-            new Date(charge.created * 1000),
-            charge.payment_method_details
+            intent.id
         );
 
         if (updatedPayment) {
@@ -99,9 +96,7 @@ export class StripeWebhookController {
                     clientId: clientId,
                     cartId: cartId,
                     paymentId: updatedPayment.id,
-                    shippingAddress: intent.shipping?.address ?
-                        `${intent.shipping.address.line1}, ${intent.shipping.address.city}, ${intent.shipping.address.postal_code}, ${intent.shipping.address.country}`
-                        : "Default Shipping Address",
+                    shippingAddress: "Default Shipping Address",
                     billingAddress: "Default Billing Address",
                 });
                 console.log(`Order created successfully for payment intent ${intent.id}`);
@@ -117,10 +112,10 @@ export class StripeWebhookController {
         await this.paymentRepository.updatePaymentStatus(
             intent.id,
             intent.status,
-            intent.charges?.data[0]?.id,
+            intent.id,
             undefined,
             undefined,
-            intent.charges?.data[0]?.payment_method_details
+            intent.payment_method_configuration_details.id
         );
 
         const cart = await this.cartRepository.findCartByPaymentIntent(intent.id);

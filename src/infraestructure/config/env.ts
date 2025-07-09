@@ -16,6 +16,6 @@ export const config = {
     EMAIL_FROM: process.env.EMAIL_FROM as string,
 
     // Stripe configuration
-    STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY as string,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string
 }

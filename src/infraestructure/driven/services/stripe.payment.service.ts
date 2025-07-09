@@ -32,16 +32,12 @@ export class StripePaymentService implements IPaymentService {
         };
     }
 
-    private toPaymentIntent(intent: Stripe.PaymentIntent): PaymentIntent {
-        const paymentIntent: PaymentIntent = {
+    private toPaymentIntent(intent: Stripe.PaymentIntent): Partial<PaymentIntent> {
+        const paymentIntent: Partial<PaymentIntent> = {
             id: intent.id,
-            status: intent.status,
-            client_secret: intent.client_secret,
             amount: intent.amount,
             currency: intent.currency,
-            customer: null,
-            shipping: null,
-            metadata: intent.metadata
+            shipping: null
         }
         return paymentIntent;
     }
@@ -65,7 +61,7 @@ export class StripePaymentService implements IPaymentService {
         }
     }
 
-    public async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntent> {
+    public async createPaymentIntent(params: CreatePaymentIntentParams): Promise<Partial<PaymentIntent>> {
         try {
             const response = await this.stripe.paymentIntents.create(params);
             return this.toPaymentIntent(response);
@@ -74,7 +70,7 @@ export class StripePaymentService implements IPaymentService {
         }
     }
 
-    public async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<PaymentIntent> {
+    public async confirmPaymentIntent(paymentIntentId: string, params?: ConfirmPaymentIntentParams): Promise<Partial<PaymentIntent>> {
         try {
             const response = await this.stripe.paymentIntents.confirm(paymentIntentId);
             return this.toPaymentIntent(response);
@@ -83,7 +79,7 @@ export class StripePaymentService implements IPaymentService {
         }
     }
 
-    public async retrievePaymentIntent(paymentIntentId: string): Promise<PaymentIntent> {
+    public async retrievePaymentIntent(paymentIntentId: string): Promise<Partial<PaymentIntent>> {
         try {
             const response = await this.stripe.paymentIntents.retrieve(paymentIntentId);
             return this.toPaymentIntent(response);

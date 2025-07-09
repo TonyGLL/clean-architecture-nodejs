@@ -200,7 +200,7 @@ CREATE TABLE payments (
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
     currency VARCHAR(3) NOT NULL DEFAULT 'mxn', -- Added currency
     payment_method_details JSONB, -- To store details like card brand, last4 for non-saved methods if needed
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'requires_action', 'canceled', 'refunded')), -- Updated statuses
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'requires_action', 'canceled', 'refunded', 'requires_confirmation')), -- Updated statuses
     stripe_payment_intent_id VARCHAR(255) UNIQUE, -- Made unique
     stripe_charge_id VARCHAR(255) UNIQUE, -- Made unique
     receipt_url TEXT,
@@ -216,11 +216,9 @@ CREATE TABLE stripe_events (
     event_type VARCHAR(100) NOT NULL,
     payload JSONB NOT NULL,
     processed BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE cart_items
 ADD CONSTRAINT unique_cart_product UNIQUE (cart_id, product_id);
-
-ALTER TABLE clients
-ADD COLUMN stripe_customer_id VARCHAR(255) UNIQUE;
