@@ -52,12 +52,10 @@ export class PaymentController {
     public createPaymentIntent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
-            const { cartId, amount, currency, paymentMethodId, saveCard, confirm, metadata } = req.body;
+            const { currency, paymentMethodId, saveCard, confirm, metadata } = req.body;
 
             const dto: CreatePaymentIntentDTO = {
                 clientId,
-                cartId,
-                amount, // Ensure this is in smallest currency unit (e.g., cents)
                 currency,
                 paymentMethodId,
                 saveCard,

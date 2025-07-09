@@ -6,8 +6,6 @@ export interface AddPaymentMethodDTO {
 
 export interface CreatePaymentIntentDTO {
     clientId: number;
-    cartId: number;
-    amount: number; // Amount should be in the smallest currency unit (e.g., cents) if not handled by service
     currency: string;
     paymentMethodId?: string; // Optional: for paying with a specific saved method
     saveCard?: boolean; // Optional: if the user wants to save this new card

@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
 import { productsJob } from "../cron/products";
+import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 
 class App {
     public express: Application;
@@ -24,8 +25,10 @@ class App {
     }
 
     private middlewares(): void {
-        this.express.use(cors({ origin: '*' }));
-        this.express.use(express.json());
+        const corsOptions = {
+            origin: 'http://localhost:4200'
+        };
+        this.express.use(cors(corsOptions));
         this.express.use(express.urlencoded({ extended: true }));
         this.express.use(morgan('dev'));
         this.express.use(helmet());
@@ -38,6 +41,9 @@ class App {
                 cronJobStatus: productsJob.isActive ? 'running' : 'stopped'
             })
         });
+
+        this.express.use('/api/v1/stripe-webhooks', stripeWebhookRouter);
+        this.express.use(express.json());
         this.express.use('/api/v1', mainRouter);
     }
 }

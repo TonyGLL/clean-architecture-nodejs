@@ -14,9 +14,11 @@ export class PostgresCartRepository implements ICartRepository {
     updateCartStatus(cartId: number, status: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
     updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
     findCartByPaymentIntent(paymentIntentId: string): Promise<Cart | null> {
         throw new Error("Method not implemented.");
     }
