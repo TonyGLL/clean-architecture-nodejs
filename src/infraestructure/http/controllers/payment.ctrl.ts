@@ -52,15 +52,13 @@ export class PaymentController {
     public createPaymentIntent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
-            const { currency, paymentMethodId, saveCard, confirm, metadata } = req.body;
+            const { currency, paymentMethodId, saveCard } = req.body;
 
             const dto: CreatePaymentIntentDTO = {
                 clientId,
                 currency,
                 paymentMethodId,
-                saveCard,
-                confirm,
-                metadata
+                saveCard
             };
             const [status, data] = await this.createPaymentIntentUseCase.execute(dto);
             res.status(status).json(data);

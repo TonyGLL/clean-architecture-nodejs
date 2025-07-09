@@ -15,6 +15,10 @@ export class Cart {
         public activePaymentIntentId?: string | null // Added to store associated PI
     ) { }
 
+    public setActivePaymentIntenId(id: string): void {
+        this.activePaymentIntentId = id;
+    }
+
     public calculateSubTotal(items: CartItemDTO[]): void {
         this.subTotal = items.reduce((total: number, item: CartItemDTO) => total + (item.quantity * item.unit_price), 0);
     }

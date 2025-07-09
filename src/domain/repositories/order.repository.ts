@@ -4,7 +4,7 @@ import { Cart } from "../entities/cart";
 export interface CreateOrderParams {
     clientId: number;
     cart: Cart; // Pass the whole cart to extract items and total
-    paymentId: number; // ID of the successful payment record
+    paymentMethod: string; // ID of the successful payment record
     shippingAddress: string; // Or a structured address object
     billingAddress: string; // Or a structured address object
 }

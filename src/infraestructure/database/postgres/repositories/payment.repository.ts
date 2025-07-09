@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { inject, injectable } from 'inversify';
 import { IPaymentRepository } from '../../../../domain/repositories/payment.repository';
 import { Payment } from '../../../../domain/entities/payment';
@@ -30,8 +30,8 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         };
     }
 
-    async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string): Promise<void> {
-        await this.pool.query(
+    async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, client: PoolClient): Promise<void> {
+        await client.query(
             'UPDATE clients SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
             [stripeCustomerId, clientId]
         );
@@ -97,14 +97,14 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         );
     }
 
-    async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Payment> {
+    async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, client: PoolClient): Promise<Payment> {
         const {
             orderId, cartId, amount, status,
             stripePaymentIntentId, stripeChargeId, paymentMethodDetails,
             receiptUrl, paymentDate
         } = payment;
 
-        const result = await this.pool.query(
+        const result = await client.query(
             `INSERT INTO payments (order_id, cart_id, amount, status, stripe_payment_intent_id, stripe_charge_id, payment_method, receipt_url, payment_date)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING id, order_id, cart_id, amount, status, stripe_payment_intent_id, stripe_charge_id, payment_method, receipt_url, payment_date, created_at, updated_at`,
@@ -148,7 +148,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         return result.rows.length > 0 ? result.rows[0] as Payment : null;
     }
 
-    async findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null> {
+    public async findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null> {
         const result = await this.pool.query(
             'SELECT * FROM payments WHERE stripe_payment_intent_id = $1',
             [paymentIntentId]

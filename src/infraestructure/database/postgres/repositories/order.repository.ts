@@ -27,8 +27,8 @@ export class PostgresOrderRepository implements IOrderRepository {
             const orderStatus = 'pending'; // Initial status
 
             const orderResult = await client.query(
-                `INSERT INTO orders (client_id, order_number, total_amount, status, shipping_address, billing_address, payment_id, created_at, updated_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+                `INSERT INTO orders (client_id, order_number, total_amount, status, shipping_address, billing_address, payment_method)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                  RETURNING id, client_id, order_number, total_amount, status, shipping_address, billing_address, payment_id, created_at, updated_at`,
                 [
                     params.clientId,
@@ -37,7 +37,7 @@ export class PostgresOrderRepository implements IOrderRepository {
                     orderStatus,
                     params.shippingAddress,
                     params.billingAddress,
-                    params.paymentId,
+                    params.paymentMethod,
                 ]
             );
             const newOrder = orderResult.rows[0];

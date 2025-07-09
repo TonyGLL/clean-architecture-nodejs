@@ -52,6 +52,7 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.client_id,
                 sc.created_at AS cart_created_at,
                 sc.status,
+                pm.stripe_payment_intent_id
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -81,6 +82,7 @@ export class PostgresCartRepository implements ICartRepository {
             LEFT JOIN products p ON ci.product_id = p.id
             LEFT JOIN product_categories pc ON pc.product_id = p.id
             LEFT JOIN categories c ON pc.category_id = c.id
+            LEFT JOIN payments pm ON pm.cart_id = sc.id
             WHERE sc.client_id = $1 AND sc.status = 'active'
             GROUP BY sc.id;
         `;
@@ -89,8 +91,9 @@ export class PostgresCartRepository implements ICartRepository {
             values: [clientId]
         };
         const result = await this.pool.query(query);
-        const { cart_id, client_id, cart_created_at, items, status } = result.rows[0];
+        const { cart_id, client_id, cart_created_at, items, status, stripe_payment_intent_id } = result.rows[0];
         const cart = new Cart(cart_id, client_id, status, cart_created_at, items || []);
+        cart.setActivePaymentIntenId(stripe_payment_intent_id);
         if (items.length) {
             cart.calculateSubTotal(items);
             cart.calculateTaxes();
