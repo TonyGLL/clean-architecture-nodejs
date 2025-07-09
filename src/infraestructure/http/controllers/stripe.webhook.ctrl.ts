@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { IPaymentService, PaymentEvent, PaymentIntent } from "../../../domain/services/payment.service";
+import { IPaymentService } from "../../../domain/services/payment.service";
 import { DOMAIN_TYPES } from "../../../domain/ioc.types";
 import { IPaymentRepository } from "../../../domain/repositories/payment.repository";
 import { ICartRepository } from "../../../domain/repositories/cart.repository";
 import { HttpStatusCode } from "../../../domain/shared/http.status";
 import { CreateOrderUseCase } from "../../../application/use-cases/order.use-case";
 import { config } from "../../config/env";
+import Stripe from "stripe";
 
 @injectable()
 export class StripeWebhookController {
@@ -24,9 +25,9 @@ export class StripeWebhookController {
         }
     }
 
-    public handleWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public handleWebhook = async (req: Request, res: Response, _: NextFunction): Promise<void> => {
         const sig = req.headers['stripe-signature'];
-        let event: PaymentEvent;
+        let event: Stripe.Event;
 
         try {
             if (!sig) {
@@ -39,7 +40,7 @@ export class StripeWebhookController {
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send(`Webhook Error: Server configuration error`);
                 return;
             }
-            event = await this.paymentService.constructWebhookEvent(req.body, sig, this.webhookSecret);
+            event = this.paymentService.constructWebhookEvent(req.body, sig, this.webhookSecret);
         } catch (err: any) {
             console.error(`Webhook signature verification failed: ${err.message}`);
             res.status(HttpStatusCode.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
@@ -48,17 +49,17 @@ export class StripeWebhookController {
 
         switch (event.type) {
             case 'payment_intent.created':
-                const paymentIntentCreated = event.data.object as PaymentIntent;
+                const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent Created: ${paymentIntentCreated.id}`);
                 await this.handlePaymentIntentSucceeded(paymentIntentCreated);
                 break;
             case 'payment_intent.succeeded':
-                const paymentIntentSucceeded = event.data.object as PaymentIntent;
+                const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
                 await this.handlePaymentIntentSucceeded(paymentIntentSucceeded);
                 break;
             case 'payment_intent.payment_failed':
-                const paymentIntentFailed = event.data.object as PaymentIntent;
+                const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent failed: ${paymentIntentFailed.id}`);
                 await this.handlePaymentIntentFailed(paymentIntentFailed);
                 break;
@@ -69,7 +70,7 @@ export class StripeWebhookController {
         res.status(HttpStatusCode.OK).json({ received: true });
     }
 
-    private async handlePaymentIntentSucceeded(intent: PaymentIntent) {
+    private async handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
         console.log(intent)
         const updatedPayment = await this.paymentRepository.updatePaymentStatus(
             intent.id,
@@ -108,14 +109,14 @@ export class StripeWebhookController {
         }
     }
 
-    private async handlePaymentIntentFailed(intent: PaymentIntent) {
+    private async handlePaymentIntentFailed(intent: Stripe.PaymentIntent) {
         await this.paymentRepository.updatePaymentStatus(
             intent.id,
             intent.status,
             intent.id,
             undefined,
             undefined,
-            intent.payment_method_configuration_details.id
+            intent.payment_method_configuration_details
         );
 
         const cart = await this.cartRepository.findCartByPaymentIntent(intent.id);
