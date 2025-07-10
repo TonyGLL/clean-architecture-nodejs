@@ -18,83 +18,65 @@ export class PostgresOrderRepository implements IOrderRepository {
         return `${prefix}-${timestamp}-${randomSuffix}`;
     }
 
-    async createOrder(params: CreateOrderParams): Promise<Order> {
-        const client = await this.pool.connect();
-        try {
-            await client.query('BEGIN');
+    public async createOrder(params: CreateOrderParams, poolClient: PoolClient): Promise<Order> {
+        const orderNumber = this.generateOrderNumber();
+        const orderStatus = 'pending'; // Initial status
 
-            const orderNumber = this.generateOrderNumber();
-            const orderStatus = 'pending'; // Initial status
-
-            const orderResult = await client.query(
-                `INSERT INTO orders (client_id, order_number, total_amount, status, shipping_address, billing_address, payment_method)
+        const orderResult = await poolClient.query(
+            `INSERT INTO orders (client_id, order_number, total_amount, status, shipping_address, billing_address, payment_method)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
-                 RETURNING id, client_id, order_number, total_amount, status, shipping_address, billing_address, payment_id, created_at, updated_at`,
-                [
-                    params.clientId,
-                    orderNumber,
-                    params.cart.total, // Total amount from cart
-                    orderStatus,
-                    params.shippingAddress,
-                    params.billingAddress,
-                    params.paymentMethod,
-                ]
+                 RETURNING id, client_id, order_number, total_amount, status, shipping_address, billing_address, created_at, updated_at`,
+            [
+                params.clientId,
+                orderNumber,
+                params.cart.total,
+                orderStatus,
+                params.shippingAddress,
+                params.billingAddress,
+                params.paymentMethod,
+            ]
+        );
+        const newOrder = orderResult.rows[0];
+        const orderItems: OrderItem[] = [];
+
+        for (const cartItem of params.cart.items) {
+            // The cartItem is expected to have product details including quantity in cart.
+            const productPrice = cartItem.price;
+            const itemSubtotal = cartItem.quantity * productPrice;
+
+            // Decrease product stock and check for availability
+            const stockUpdateResult = await poolClient.query(
+                'UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1 RETURNING id',
+                [cartItem.quantity, cartItem.id]
             );
-            const newOrder = orderResult.rows[0];
-            const orderItems: OrderItem[] = [];
 
-            for (const cartItem of params.cart.items) {
-                // The cartItem is expected to have product details including quantity in cart.
-                const productPrice = cartItem.price;
-                const itemSubtotal = 1 * productPrice;
+            if (stockUpdateResult.rowCount === 0) {
+                // If rowCount is 0, it means the WHERE condition (stock >= quantity) failed.
+                throw new HttpError(HttpStatusCode.CONFLICT, `Insufficient stock for product: ${cartItem.name} (ID: ${cartItem.id})`);
+            }
 
-                // Decrease product stock and check for availability
-                const stockUpdateResult = await client.query(
-                    'UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1 RETURNING id',
-                    [1, cartItem.id]
-                );
-
-                if (stockUpdateResult.rowCount === 0) {
-                    // If rowCount is 0, it means the WHERE condition (stock >= quantity) failed.
-                    throw new HttpError(HttpStatusCode.CONFLICT, `Insufficient stock for product: ${cartItem.name} (ID: ${cartItem.id})`);
-                }
-
-                const orderItemResult = await client.query(
-                    `INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
+            const orderItemResult = await poolClient.query(
+                `INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
                      VALUES ($1, $2, $3, $4, $5)
                      RETURNING id, order_id, product_id, quantity, unit_price, subtotal`,
-                    [newOrder.id, cartItem.id, 1, productPrice, itemSubtotal]
-                );
-                orderItems.push(orderItemResult.rows[0] as OrderItem);
-            }
-
-            await client.query('COMMIT');
-
-            return new Order(
-                newOrder.id,
-                newOrder.client_id,
-                newOrder.order_number,
-                parseFloat(newOrder.total_amount),
-                newOrder.status,
-                newOrder.shipping_address,
-                newOrder.billing_address,
-                newOrder.payment_id,
-                newOrder.created_at,
-                newOrder.updated_at,
-                orderItems
+                [newOrder.id, cartItem.id, cartItem.quantity, productPrice, itemSubtotal]
             );
-
-        } catch (error: any) {
-            await client.query('ROLLBACK');
-            // Log error for debugging
-            console.error("Error creating order:", error);
-            if (error.code === '23503') { // foreign_key_violation
-                throw new HttpError(HttpStatusCode.BAD_REQUEST, `Invalid reference: ${error.detail || error.message}`);
-            }
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error creating order: ${error.message}`);
-        } finally {
-            client.release();
+            orderItems.push(orderItemResult.rows[0] as OrderItem);
         }
+
+        return new Order(
+            newOrder.id,
+            newOrder.client_id,
+            newOrder.order_number,
+            parseFloat(newOrder.total_amount),
+            newOrder.status,
+            newOrder.shipping_address,
+            newOrder.billing_address,
+            newOrder.payment_id,
+            newOrder.created_at,
+            newOrder.updated_at,
+            orderItems
+        );
     }
 
     async findOrderById(orderId: number): Promise<Order | null> {
@@ -164,25 +146,17 @@ export class PostgresOrderRepository implements IOrderRepository {
         }
     }
 
-    async updateOrderStatus(orderId: number, status: string): Promise<Order | null> {
-        const client = await this.pool.connect();
-        try {
-            const result = await client.query(
-                'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-                [status, orderId]
-            );
-            if (result.rows.length === 0) {
-                throw new HttpError(HttpStatusCode.NOT_FOUND, 'Order not found for status update.');
-            }
-            // For simplicity, returning the updated order data without re-fetching items.
-            // A full Order object reconstruction might be needed depending on use case.
-            const orderData = result.rows[0];
-            return await this.findOrderById(orderData.id); // Re-fetch to include items
-        } catch (error: any) {
-            if (error instanceof HttpError) throw error;
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error updating order status: ${error.message}`);
-        } finally {
-            client.release();
+    async updateOrderStatus(orderId: number, status: string, poolClient: PoolClient): Promise<Order | null> {
+        const result = await poolClient.query(
+            'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+            [status, orderId]
+        );
+        if (result.rows.length === 0) {
+            throw new HttpError(HttpStatusCode.NOT_FOUND, 'Order not found for status update.');
         }
+        // For simplicity, returning the updated order data without re-fetching items.
+        // A full Order object reconstruction might be needed depending on use case.
+        const orderData = result.rows[0];
+        return await this.findOrderById(orderData.id); // Re-fetch to include items
     }
 }

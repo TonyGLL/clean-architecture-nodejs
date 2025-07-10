@@ -71,9 +71,8 @@ export class PaymentController {
         try {
             const clientId = req.user!.id;
             const { paymentIntentId } = req.params;
-            const { paymentMethodId } = req.body; // Optional, depending on confirmation flow
 
-            const dto: ConfirmPaymentDTO = { clientId, paymentIntentId, paymentMethodId };
+            const dto: ConfirmPaymentDTO = { clientId, paymentIntentId };
             const [status, data] = await this.confirmPaymentUseCase.execute(dto);
             res.status(status).json(data);
         } catch (error) {

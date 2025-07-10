@@ -13,6 +13,8 @@ export class Payment {
         public receiptUrl: string | null,
         public paymentDate: Date | null,
         public createdAt: Date,
-        public updatedAt: Date
-    ) {}
+        public updatedAt: Date,
+        public payment_method?: string, // e.g., card brand, last4 for non-saved methods
+        public order_id?: number, // e.g., card brand, last4 for non-saved methods
+    ) { }
 }

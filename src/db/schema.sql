@@ -140,7 +140,6 @@ CREATE TABLE shopping_carts (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(), -- Added updated_at
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')), -- Added 'pending_payment'
-    active_payment_intent_id VARCHAR(255) UNIQUE -- Added to link cart to a Stripe Payment Intent
 );
 
 -- Cart items table
@@ -157,7 +156,7 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    order_number VARCHAR(20) UNIQUE NOT NULL,
+    order_number VARCHAR(50) UNIQUE NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL CHECK (total_amount > 0),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
     shipping_address TEXT NOT NULL,
@@ -199,10 +198,9 @@ CREATE TABLE payments (
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE, -- Added client_id for easier querying
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
     currency VARCHAR(3) NOT NULL DEFAULT 'mxn', -- Added currency
-    payment_method_details JSONB, -- To store details like card brand, last4 for non-saved methods if needed
+    payment_method VARCHAR(50), -- To store details like card brand, last4 for non-saved methods if needed
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'requires_action', 'canceled', 'refunded', 'requires_confirmation')), -- Updated statuses
     stripe_payment_intent_id VARCHAR(255) UNIQUE, -- Made unique
-    stripe_charge_id VARCHAR(255) UNIQUE, -- Made unique
     receipt_url TEXT,
     payment_date TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),

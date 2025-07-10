@@ -98,53 +98,32 @@ export class PostgresPaymentRepository implements IPaymentRepository {
     }
 
     async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, client: PoolClient): Promise<Payment> {
-        const {
-            orderId, cartId, amount, status,
-            stripePaymentIntentId, stripeChargeId, paymentMethodDetails,
-            receiptUrl, paymentDate
-        } = payment;
+        const { orderId, cartId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate } = payment;
 
         const result = await client.query(
-            `INSERT INTO payments (order_id, cart_id, amount, status, stripe_payment_intent_id, stripe_charge_id, payment_method, receipt_url, payment_date)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             RETURNING id, order_id, cart_id, amount, status, stripe_payment_intent_id, stripe_charge_id, payment_method, receipt_url, payment_date, created_at, updated_at`,
-            [orderId, cartId, amount, status, stripePaymentIntentId, stripeChargeId, paymentMethodDetails, receiptUrl, paymentDate]
+            `INSERT INTO payments (order_id, cart_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING id, order_id, cart_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date`,
+            [orderId, cartId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate]
         );
         return result.rows[0] as Payment;
     }
 
-    async updatePaymentStatus(
-        paymentIntentId: string,
-        status: string,
-        chargeId?: string,
-        receiptUrl?: string,
-        paymentDate?: Date,
-        paymentMethodDetails?: any
-    ): Promise<Payment | null> {
+    public async updatePaymentStatus(paymentIntentId: string, status: string, poolClient: PoolClient): Promise<Payment | null> {
         const existingPayment = await this.findPaymentByIntentId(paymentIntentId);
         if (!existingPayment) return null;
 
-        const updates = {
-            status,
-            stripe_charge_id: chargeId ?? existingPayment.stripeChargeId,
-            receipt_url: receiptUrl ?? existingPayment.receiptUrl,
-            payment_date: paymentDate ?? existingPayment.paymentDate,
-            payment_method_details: paymentMethodDetails ?? existingPayment.paymentMethodDetails,
-            updated_at: new Date()
-        };
+        const updates = { status, updated_at: new Date() };
 
         const query = `
             UPDATE payments
-            SET status = $1, stripe_charge_id = $2, receipt_url = $3, payment_date = $4, payment_method_details = $5, updated_at = $6
-            WHERE stripe_payment_intent_id = $7
+            SET status = $1, updated_at = $2
+            WHERE stripe_payment_intent_id = $3
             RETURNING id, order_id, cart_id, client_id, amount, currency, status, stripe_payment_intent_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at
         `;
-        const values = [
-            updates.status, updates.stripe_charge_id, updates.receipt_url, updates.payment_date,
-            updates.payment_method_details, updates.updated_at, paymentIntentId
-        ];
+        const values = [updates.status, updates.updated_at, paymentIntentId];
 
-        const result = await this.pool.query(query, values);
+        const result = await poolClient.query(query, values);
         return result.rows.length > 0 ? result.rows[0] as Payment : null;
     }
 

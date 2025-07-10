@@ -29,7 +29,8 @@ export const fetchExternalData = async () => {
                 image: sanitizeText(item.image),
                 category: sanitizeText(item.category),
                 sku: sanitizeText(`${item.id.toString().padStart(6, '0')}`),
-                stock: 100
+                stock: 100,
+                quantity: 0
             })
         );
 

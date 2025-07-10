@@ -7,19 +7,22 @@ import { CreateOrderDTO, GetClientOrdersDTO, GetOrderByIdDTO, UpdateOrderStatusD
 import { Order } from "../../domain/entities/order";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
+import { Pool } from "pg";
+import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 
 @injectable()
 export class CreateOrderUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
-    ) {}
+        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
 
     public async execute(dto: CreateOrderDTO): Promise<[number, Order]> {
         // 1. Verify Payment
         const payment = await this.paymentRepository.findPaymentByIntentId(dto.paymentId.toString()); // Assuming paymentId is intentId for now
-                                                                                                    // Or find by actual payment record ID if different
+        // Or find by actual payment record ID if different
         if (!payment) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment record not found.");
         }
@@ -43,19 +46,22 @@ export class CreateOrderUseCase {
             throw new HttpError(HttpStatusCode.BAD_REQUEST, "Cannot create order from an empty cart.");
         }
         if (cart.id !== payment.cartId) {
-             throw new HttpError(HttpStatusCode.BAD_REQUEST, "Payment record does not match the provided cart.");
+            throw new HttpError(HttpStatusCode.BAD_REQUEST, "Payment record does not match the provided cart.");
         }
 
+        const poolClient = await this.pool.connect();
 
         // 3. Create Order
         try {
+            await poolClient.query('BEGIN');
+
             const newOrder = await this.orderRepository.createOrder({
                 clientId: dto.clientId,
                 cart: cart,
-                paymentId: payment.id, // Use the database ID of the payment record
+                paymentMethod: payment.paymentMethodDetails, // Use the database ID of the payment record
                 shippingAddress: dto.shippingAddress,
                 billingAddress: dto.billingAddress,
-            });
+            }, poolClient);
 
             // 4. Update Payment with Order ID
             // This creates a circular dependency if payment needs orderId at its creation.
@@ -70,7 +76,7 @@ export class CreateOrderUseCase {
             // The schema has payments.order_id UNIQUE, so a payment can only be linked to one order.
 
             // 5. Update Cart Status to 'completed'
-            await this.cartRepository.updateCartStatus(cart.id, 'completed');
+            await this.cartRepository.updateCartStatus(cart.id, 'completed', poolClient);
             await this.cartRepository.updateCartPaymentIntent(cart.id, null); // Clear active PI from cart
 
             return [HttpStatusCode.CREATED, newOrder];
@@ -84,7 +90,7 @@ export class CreateOrderUseCase {
 
 @injectable()
 export class GetOrderByIdUseCase {
-    constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) {}
+    constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) { }
 
     public async execute(dto: GetOrderByIdDTO): Promise<[number, Order | null]> {
         const order = await this.orderRepository.findOrderById(dto.orderId);
@@ -101,7 +107,7 @@ export class GetOrderByIdUseCase {
 
 @injectable()
 export class GetClientOrdersUseCase {
-    constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) {}
+    constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) { }
 
     public async execute(dto: GetClientOrdersDTO): Promise<[number, Order[]]> {
         const orders = await this.orderRepository.findOrdersByClientId(dto.clientId);
@@ -112,11 +118,16 @@ export class GetClientOrdersUseCase {
 @injectable()
 export class UpdateOrderStatusUseCase {
     // This use case might be restricted to admins
-    constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) {}
+    constructor(
+        @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
 
     public async execute(dto: UpdateOrderStatusDTO): Promise<[number, Order | null]> {
+        const poolClient = await this.pool.connect();
+
         // Add authorization logic here if needed (e.g., check if user is admin)
-        const updatedOrder = await this.orderRepository.updateOrderStatus(dto.orderId, dto.status);
+        const updatedOrder = await this.orderRepository.updateOrderStatus(dto.orderId, dto.status, poolClient);
         if (!updatedOrder) {
             return [HttpStatusCode.NOT_FOUND, null];
         }

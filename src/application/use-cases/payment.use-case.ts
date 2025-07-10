@@ -191,7 +191,7 @@ export class CreatePaymentIntentUseCase {
                 shippingAddress: "",
                 billingAddress: ""
             }
-            const order = await this.orderRepository.createOrder(createOrderParams);
+            const order = await this.orderRepository.createOrder(createOrderParams, poolClient);
 
             //* Crear pago en db
             const createPaymentParams: Omit<Payment, "id" | "createdAt" | "updatedAt"> = {
@@ -202,14 +202,12 @@ export class CreatePaymentIntentUseCase {
                 status: paymentIntent.status!,
                 stripePaymentIntentId: paymentIntent.id!,
                 stripeChargeId: null,
-                paymentMethodDetails: null, // Will be populated by webhook
+                paymentMethodDetails: dto.paymentMethodId,
                 receiptUrl: null,
                 paymentDate: null,
-                orderId: order.id,
+                orderId: order.id
             }
             await this.paymentRepository.createPaymentRecord(createPaymentParams, poolClient);
-
-            //await this.cartRepository.updateCartPaymentIntent(cart.id, paymentIntent.id);
 
             await poolClient.query('COMMIT');
 
@@ -228,12 +226,14 @@ export class CreatePaymentIntentUseCase {
 export class ConfirmPaymentUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
+        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: ConfirmPaymentDTO): Promise<[number, { paymentIntentId: string; status: string; requiresAction: boolean; clientSecret?: string | null; chargeId?: string; receiptUrl?: string }]> {
+
         const localPayment = await this.paymentRepository.findPaymentByIntentId(dto.paymentIntentId);
-        if (!localPayment || localPayment.clientId !== dto.clientId) {
+        if (!localPayment) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment intent not found or does not belong to the client.");
         }
 
@@ -241,24 +241,23 @@ export class ConfirmPaymentUseCase {
             return [HttpStatusCode.OK, { paymentIntentId: localPayment.stripePaymentIntentId!, status: localPayment.status, requiresAction: false, chargeId: localPayment.stripeChargeId || undefined, receiptUrl: localPayment.receiptUrl || undefined }];
         }
 
+        const poolClient = await this.pool.connect();
+
         try {
+            await poolClient.query('BEGIN');
+
             let paymentIntent: Stripe.Response<Stripe.PaymentIntent>;
-            if (localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method' && dto.paymentMethodId)) {
-                paymentIntent = await this.paymentService.confirmPaymentIntent(dto.paymentIntentId, { payment_method: dto.paymentMethodId });
+            if (localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method')) {
+                paymentIntent = await this.paymentService.confirmPaymentIntent(dto.paymentIntentId, { payment_method: localPayment.payment_method });
             } else {
                 paymentIntent = await this.paymentService.retrievePaymentIntent(dto.paymentIntentId);
             }
 
             //const charge = paymentIntent.charges?.data[0];
 
-            await this.paymentRepository.updatePaymentStatus(
-                paymentIntent.id!,
-                paymentIntent.status!,
-                paymentIntent.id,
-                paymentIntent.receipt_email!,
-                paymentIntent.status === 'succeeded' ? new Date(paymentIntent.created! * 1000) : undefined,
-                paymentIntent.payment_method_configuration_details?.id || null
-            );
+            await this.paymentRepository.updatePaymentStatus(paymentIntent.id!, paymentIntent.status!, poolClient);
+
+            await poolClient.query('COMMIT');
 
             return [HttpStatusCode.OK, {
                 paymentIntentId: paymentIntent.id!,
@@ -269,10 +268,14 @@ export class ConfirmPaymentUseCase {
                 receiptUrl: paymentIntent.receipt_email!,
             }];
         } catch (error: any) {
+            await poolClient.query('ROLLBACK');
+
             if (error instanceof HttpError) throw error;
             // A more specific error check for card errors might be needed depending on the payment service abstraction
-            await this.paymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed');
+            await this.paymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed', poolClient);
             throw new HttpError(HttpStatusCode.BAD_REQUEST, `Failed to confirm payment: ${error.message}`);
+        } finally {
+            poolClient.release();
         }
     }
 }
