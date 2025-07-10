@@ -11,7 +11,7 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
-    updateCartStatus(cartId: number, status: string): Promise<void> {
+    public async updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
@@ -52,7 +52,7 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.client_id,
                 sc.created_at AS cart_created_at,
                 sc.status,
-                pm.stripe_payment_intent_id
+                pm.stripe_payment_intent_id,
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -84,7 +84,7 @@ export class PostgresCartRepository implements ICartRepository {
             LEFT JOIN categories c ON pc.category_id = c.id
             LEFT JOIN payments pm ON pm.cart_id = sc.id
             WHERE sc.client_id = $1 AND sc.status = 'active'
-            GROUP BY sc.id;
+            GROUP BY sc.id, pm.stripe_payment_intent_id;
         `;
         const query = {
             text,

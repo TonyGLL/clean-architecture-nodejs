@@ -5,9 +5,13 @@ import { DOMAIN_TYPES } from "../../../domain/ioc.types";
 import { IPaymentRepository } from "../../../domain/repositories/payment.repository";
 import { ICartRepository } from "../../../domain/repositories/cart.repository";
 import { HttpStatusCode } from "../../../domain/shared/http.status";
-import { CreateOrderUseCase } from "../../../application/use-cases/order.use-case";
 import { config } from "../../config/env";
 import Stripe from "stripe";
+import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
+import { Pool } from "pg";
+import { IOrderRepository } from "../../../domain/repositories/order.repository";
+import { ConfirmPaymentUseCase } from "../../../application/use-cases/payment.use-case";
+import { ConfirmPaymentDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
 export class StripeWebhookController {
@@ -17,7 +21,9 @@ export class StripeWebhookController {
         @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
         @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
-        @inject(CreateOrderUseCase) private createOrderUseCase: CreateOrderUseCase
+        @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+        @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) {
         this.webhookSecret = config.STRIPE_WEBHOOK_SECRET;
         if (!this.webhookSecret) {
@@ -48,11 +54,11 @@ export class StripeWebhookController {
         }
 
         switch (event.type) {
-            case 'payment_intent.created':
+            /* case 'payment_intent.created':
                 const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent Created: ${paymentIntentCreated.id}`);
-                await this.handlePaymentIntentSucceeded(paymentIntentCreated);
-                break;
+                await this.handlePaymentIntentCreated(paymentIntentCreated);
+                break; */
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
@@ -71,46 +77,42 @@ export class StripeWebhookController {
     }
 
     private async handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
-        console.log(intent)
-        const updatedPayment = await this.paymentRepository.updatePaymentStatus(
-            intent.id,
-            intent.status,
-            intent.id
-        );
+        const poolClient = await this.pool.connect();
 
-        if (updatedPayment) {
-            if (updatedPayment.orderId) {
-                console.log(`Order ${updatedPayment.orderId} already exists for payment intent ${intent.id}.`);
-                return;
-            }
+        try {
+            await poolClient.query('BEGIN');
 
-            const cartId = intent.metadata.cart_id ? parseInt(intent.metadata.cart_id) : updatedPayment.cartId;
-            const clientId = intent.metadata.client_id ? parseInt(intent.metadata.client_id) : updatedPayment.clientId;
+            //* Cambiar status del pago a pagado
+            const updatePaymentStatusResponse = await this.paymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
 
-            if (!cartId || !clientId) {
-                console.error(`Cannot create order for PI ${intent.id}: missing cartId or clientId.`);
-                return;
-            }
+            //* Cambiar status de la orden
+            await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.orderId!, intent.status, poolClient);
 
-            try {
-                await this.createOrderUseCase.execute({
-                    clientId: clientId,
-                    cartId: cartId,
-                    paymentId: updatedPayment.id,
-                    shippingAddress: "Default Shipping Address",
-                    billingAddress: "Default Billing Address",
-                });
-                console.log(`Order created successfully for payment intent ${intent.id}`);
-            } catch (error: any) {
-                console.error(`CRITICAL: Order creation failed for PI ${intent.id} after successful payment: ${error.message}`, error);
-            }
-        } else {
-            console.warn(`Payment record not found for succeeded payment intent ${intent.id}. Order creation might be impacted.`);
+            //* Cambiar status de carrito activo a completed
+            await this.cartRepository.updateCartStatus(updatePaymentStatusResponse?.cartId!, intent.status, poolClient);
+
+            //* Crear un nuevo carrito al usuario en curso
+            await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.clientId!, poolClient);
+
+            await poolClient.query('COMMIT');
+        } catch (error) {
+            await poolClient.query('ROLLBACK');
+        } finally {
+            poolClient.release();
         }
     }
 
+    private async handlePaymentIntentCreated(intent: Stripe.PaymentIntent) {
+        const dto: ConfirmPaymentDTO = {
+            clientId: 1,
+            paymentIntentId: intent.id
+        };
+
+        await this.confirmPaymentUseCase.execute(dto);
+    }
+
     private async handlePaymentIntentFailed(intent: Stripe.PaymentIntent) {
-        await this.paymentRepository.updatePaymentStatus(
+        /* await this.paymentRepository.updatePaymentStatus(
             intent.id,
             intent.status,
             intent.id,
@@ -123,7 +125,7 @@ export class StripeWebhookController {
         if (cart) {
             await this.cartRepository.updateCartStatus(cart.id, 'active');
             await this.cartRepository.updateCartPaymentIntent(cart.id, null);
-        }
+        } */
         console.log(`Payment intent ${intent.id} failed. Status updated in DB and cart reactivated.`);
     }
 }

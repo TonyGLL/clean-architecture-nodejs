@@ -16,7 +16,6 @@ export interface CreatePaymentIntentDTO {
 export interface ConfirmPaymentDTO {
     clientId: number;
     paymentIntentId: string;
-    paymentMethodId?: string; // Optional: if confirmation requires a specific payment method
 }
 
 export interface ClientPaymentMethodsDTO {

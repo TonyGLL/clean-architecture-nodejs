@@ -7,7 +7,8 @@ export class Product {
         public image: string,
         public category: string,
         public sku: string,
-        public stock: number = 100
+        public stock: number = 100,
+        public quantity: number = 0
     ) { }
 
     public static create(
@@ -18,8 +19,9 @@ export class Product {
         image: string,
         category: string,
         sku: string,
-        stock: number = 100
+        stock: number = 100,
+        quantity: number = 0
     ): Product {
-        return new Product(id, name, description, price, image, category, sku, stock);
+        return new Product(id, name, description, price, image, category, sku, stock, quantity);
     }
 }

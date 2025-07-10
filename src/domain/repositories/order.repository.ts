@@ -1,5 +1,6 @@
-import { Order, OrderItem } from "../entities/order";
+import { Order } from "../entities/order";
 import { Cart } from "../entities/cart";
+import { PoolClient } from "pg";
 
 export interface CreateOrderParams {
     clientId: number;
@@ -10,10 +11,10 @@ export interface CreateOrderParams {
 }
 
 export interface IOrderRepository {
-    createOrder(params: CreateOrderParams): Promise<Order>;
+    createOrder(params: CreateOrderParams, poolClient: PoolClient): Promise<Order>;
     findOrderById(orderId: number): Promise<Order | null>;
     findOrdersByClientId(clientId: number): Promise<Order[]>;
-    updateOrderStatus(orderId: number, status: string): Promise<Order | null>;
+    updateOrderStatus(orderId: number, status: string, poolClient: PoolClient): Promise<Order | null>;
     // Potentially add methods to add/update order items if orders can be modified,
     // but typically orders are immutable once placed.
 }

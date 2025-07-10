@@ -8,7 +8,7 @@ export interface ICartRepository {
     addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean>;
     deleteProductFromCart(clientId: number, productId: number): Promise<void>;
     clearCart(clientId: number, cartId?: number): Promise<void>;
-    updateCartStatus(cartId: number, status: string): Promise<void>;
+    updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void>;
     updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void>;
     findCartByPaymentIntent(paymentIntentId: string): Promise<Cart | null>;
     getOrCreateActiveCartByClientId(clientId: number): Promise<Cart>;
