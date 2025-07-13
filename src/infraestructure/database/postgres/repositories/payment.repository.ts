@@ -98,13 +98,13 @@ export class PostgresPaymentRepository implements IPaymentRepository {
     }
 
     async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, client: PoolClient): Promise<Payment> {
-        const { orderId, cartId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate } = payment;
+        const { orderId, cartId, clientId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate } = payment;
 
         const result = await client.query(
-            `INSERT INTO payments (order_id, cart_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             RETURNING id, order_id, cart_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date`,
-            [orderId, cartId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate]
+            `INSERT INTO payments (order_id, cart_id, client_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             RETURNING id, order_id, cart_id, client_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date`,
+            [orderId, cartId, clientId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate]
         );
         return result.rows[0] as Payment;
     }
