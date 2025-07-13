@@ -54,6 +54,11 @@ export class StripeWebhookController {
         }
 
         switch (event.type) {
+            case 'checkout.session.completed':
+                const checkoutSessionCompleted = event.data.object as Stripe.Checkout.Session;
+                console.log(`PaymentIntent succeeded: ${checkoutSessionCompleted.id}`);
+                await this.handleCheckoutSessionCompleted(checkoutSessionCompleted);
+                break;
             /* case 'payment_intent.created':
                 const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent Created: ${paymentIntentCreated.id}`);
@@ -127,5 +132,30 @@ export class StripeWebhookController {
             await this.cartRepository.updateCartPaymentIntent(cart.id, null);
         } */
         console.log(`Payment intent ${intent.id} failed. Status updated in DB and cart reactivated.`);
+    }
+
+    private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+        const poolClient = await this.pool.connect();
+
+        try {
+            await poolClient.query('BEGIN');
+
+            const setupIntentId = session.setup_intent as string;
+            const customerId = session.customer as string;
+
+            const setupIntent = await this.paymentService.retrieveSetupIntent(setupIntentId);
+            const paymentMethodId = setupIntent.payment_method as string;
+
+            const paymentMethodParams: Stripe.PaymentMethodAttachParams = {
+                customer: customerId
+            };
+            await this.paymentService.attachPaymentMethodToCustomer(paymentMethodId, paymentMethodParams);
+
+            await poolClient.query('COMMIT');
+        } catch (error) {
+            await poolClient.query('ROLLBACK');
+        } finally {
+            poolClient.release();
+        }
     }
 }

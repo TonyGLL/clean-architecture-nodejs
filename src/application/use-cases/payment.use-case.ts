@@ -279,3 +279,89 @@ export class ConfirmPaymentUseCase {
         }
     }
 }
+
+@injectable()
+export class CreateCheckSessionUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
+        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
+        @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
+
+    public async execute(clientId: number): Promise<[number, object]> {
+        const poolClient = await this.pool.connect();
+
+        try {
+            //* Validar si el cliente existe
+            const client = await this.paymentRepository.findClientById(clientId);
+            if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
+
+            //* Validar si el cliente tiene un carrito activo
+            const cart = await this.cartRepository.getCartDetails(clientId);
+            if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
+            if (cart.status !== 'active') throw new HttpError(HttpStatusCode.CONFLICT, "Cart is not active. Cannot create payment intent.");
+
+            await poolClient.query('BEGIN');
+
+            let customerId = client.stripe_customer_id;
+            //* Si el cliente no tiene un customer_id de Stripe, crearlo
+            //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
+            if (!customerId) {
+                //* Crear un nuevo cliente en Stripe
+                const createCustomerParams: Stripe.CustomerCreateParams = {
+                    email: client.email,
+                    name: client.name,
+                    metadata: { client_id: client.id.toString() }
+                };
+                const { id } = await this.paymentService.createCustomer(createCustomerParams);
+
+                //* Actualizar el cliente en la base de datos con el customer_id de Stripe
+                await this.paymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                customerId = id;
+            }
+
+            const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = cart.items.map(item => ({
+                price_data: {
+                    currency: 'mxn',
+                    product_data: { name: item.name },
+                    unit_amount: Math.round(item.price * 100),
+                },
+                quantity: item.quantity
+            }));
+
+            const createCheckoutSessionParams: Stripe.Checkout.SessionCreateParams = {
+                customer: customerId,
+                payment_method_types: ['card'],
+                line_items: line_items,
+                mode: 'payment',
+                success_url: `http://localhost:3000/api/v1/payments/complete?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `http://localhost:3000/api/v1/payments/cancel`,
+                metadata: {
+                    appClientId: clientId.toString(),
+                    appCartId: cart.id.toString()
+                },
+                shipping_address_collection: {
+                    allowed_countries: ['MX']
+                },
+                // Permitir al usuario guardar la tarjeta durante el pago
+                payment_intent_data: {
+                    setup_future_usage: 'on_session'
+                }
+            }
+            const session = await this.paymentService.createCheckoutSession(createCheckoutSessionParams);
+
+            await poolClient.query('COMMIT');
+
+            return [HttpStatusCode.OK, { url: session.url }];
+        } catch (error: any) {
+            await poolClient.query('ROLLBACK');
+
+            if (error instanceof HttpError) throw error;
+            throw new HttpError(HttpStatusCode.BAD_REQUEST, `Failed to create checkout session: ${error.message}`);
+        } finally {
+            poolClient.release();
+        }
+    }
+}

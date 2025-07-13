@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
 import { AddPaymentMethodDTO, ConfirmPaymentDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
@@ -10,7 +10,8 @@ export class PaymentController {
         @inject(GetClientPaymentMethodsUseCase) private getClientPaymentMethodsUseCase: GetClientPaymentMethodsUseCase,
         @inject(DeletePaymentMethodUseCase) private deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
         @inject(CreatePaymentIntentUseCase) private createPaymentIntentUseCase: CreatePaymentIntentUseCase,
-        @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase
+        @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase,
+        @inject(CreateCheckSessionUseCase) private createCheckoutSessionUseCase: CreateCheckSessionUseCase
     ) { }
 
     public addPaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -74,6 +75,39 @@ export class PaymentController {
 
             const dto: ConfirmPaymentDTO = { clientId, paymentIntentId };
             const [status, data] = await this.confirmPaymentUseCase.execute(dto);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public createCheckout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user!.id;
+
+            const [status, data] = await this.createCheckoutSessionUseCase.execute(clientId);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public paymentCompleted = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user!.id;
+
+            const [status, data] = await this.createCheckoutSessionUseCase.execute(clientId);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public paymentCanceled = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user!.id;
+
+            const [status, data] = await this.createCheckoutSessionUseCase.execute(clientId);
             res.status(status).json(data);
         } catch (error) {
             next(error);
