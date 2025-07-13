@@ -365,3 +365,64 @@ export class CreateCheckSessionUseCase {
         }
     }
 }
+
+@injectable()
+export class CreateSetupIntentUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
+        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
+        @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
+    ) { }
+
+    public async execute(clientId: number): Promise<[number, object]> {
+        const poolClient = await this.pool.connect();
+
+        try {
+            //* Validar si el cliente existe
+            const client = await this.paymentRepository.findClientById(clientId);
+            if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
+
+            //* Validar si el cliente tiene un carrito activo
+            const cart = await this.cartRepository.getCartDetails(clientId);
+            if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
+            if (cart.status !== 'active') throw new HttpError(HttpStatusCode.CONFLICT, "Cart is not active. Cannot create payment intent.");
+
+            let customerId = client.stripe_customer_id;
+            //* Si el cliente no tiene un customer_id de Stripe, crearlo
+            //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
+            if (!customerId) {
+                //* Crear un nuevo cliente en Stripe
+                const createCustomerParams: Stripe.CustomerCreateParams = {
+                    email: client.email,
+                    name: client.name,
+                    metadata: { client_id: client.id.toString() }
+                };
+                const { id } = await this.paymentService.createCustomer(createCustomerParams);
+
+                //* Actualizar el cliente en la base de datos con el customer_id de Stripe
+                await this.paymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                customerId = id;
+            }
+
+            const createSetupIntentParams: Stripe.SetupIntentCreateParams = {
+                customer: customerId,
+                payment_method_types: ['card'],
+                usage: 'off_session'
+            };
+            const setupIntent = await this.paymentService.createSetupIntent(createSetupIntentParams);
+
+            await poolClient.query('COMMIT');
+
+            return [HttpStatusCode.OK, { ok: true, clientSecret: setupIntent.client_secret }];
+        } catch (error: any) {
+            await poolClient.query('ROLLBACK');
+
+            if (error instanceof HttpError) throw error;
+            throw new HttpError(HttpStatusCode.BAD_REQUEST, `Failed to create setup intent: ${error.message}`);
+        } finally {
+            poolClient.release();
+        }
+    }
+}

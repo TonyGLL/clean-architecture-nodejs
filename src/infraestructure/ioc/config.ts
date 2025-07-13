@@ -43,7 +43,7 @@ import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCas
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase } from '../../application/use-cases/cart.use-case';
-import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/payment.use-case';
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/payment.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 
 //* Controllers
@@ -123,6 +123,7 @@ container.bind<DeletePaymentMethodUseCase>(DeletePaymentMethodUseCase).toSelf();
 container.bind<CreatePaymentIntentUseCase>(CreatePaymentIntentUseCase).toSelf();
 container.bind<ConfirmPaymentUseCase>(ConfirmPaymentUseCase).toSelf();
 container.bind<CreateCheckSessionUseCase>(CreateCheckSessionUseCase).toSelf();
+container.bind<CreateSetupIntentUseCase>(CreateSetupIntentUseCase).toSelf();
 // Order
 container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf();
 container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf();

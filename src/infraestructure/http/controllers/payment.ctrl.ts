@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
 import { AddPaymentMethodDTO, ConfirmPaymentDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
@@ -11,7 +11,8 @@ export class PaymentController {
         @inject(DeletePaymentMethodUseCase) private deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
         @inject(CreatePaymentIntentUseCase) private createPaymentIntentUseCase: CreatePaymentIntentUseCase,
         @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase,
-        @inject(CreateCheckSessionUseCase) private createCheckoutSessionUseCase: CreateCheckSessionUseCase
+        @inject(CreateCheckSessionUseCase) private createCheckoutSessionUseCase: CreateCheckSessionUseCase,
+        @inject(CreateSetupIntentUseCase) private createSetupIntentUseCase: CreateSetupIntentUseCase
     ) { }
 
     public addPaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -53,13 +54,12 @@ export class PaymentController {
     public createPaymentIntent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
-            const { currency, paymentMethodId, saveCard } = req.body;
+            const { currency, paymentMethodId } = req.body;
 
             const dto: CreatePaymentIntentDTO = {
                 clientId,
                 currency,
-                paymentMethodId,
-                saveCard
+                paymentMethodId
             };
             const [status, data] = await this.createPaymentIntentUseCase.execute(dto);
             res.status(status).json(data);
@@ -108,6 +108,17 @@ export class PaymentController {
             const clientId = req.user!.id;
 
             const [status, data] = await this.createCheckoutSessionUseCase.execute(clientId);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public createSetupIntent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user!.id;
+
+            const [status, data] = await this.createSetupIntentUseCase.execute(clientId);
             res.status(status).json(data);
         } catch (error) {
             next(error);

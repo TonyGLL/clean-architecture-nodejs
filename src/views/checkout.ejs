@@ -1,0 +1,60 @@
+<%- include('partials/header', { title: 'Checkout' }) %>
+
+<body data-stripe-key="<%= stripePublicKey %>">
+  <div class="container">
+    <h1>Checkout</h1>
+
+    <!-- Mensaje que se muestra si el usuario no ha iniciado sesión -->
+    <div id="login-prompt">
+      <h2>Por favor, inicia sesión para continuar</h2>
+      <p>Debes identificarte para poder realizar el pago.</p>
+      <button id="show-login-btn">Iniciar Sesión</button>
+    </div>
+
+    <!-- El contenido principal del checkout, oculto al inicio -->
+    <div id="checkout-content" class="hidden">
+      <h2>Selecciona un método de pago</h2>
+
+      <!-- Lista de tarjetas guardadas -->
+      <% if (typeof paymentMethods !== 'undefined' && paymentMethods.length > 0) { %>
+        <% paymentMethods.forEach(function(method) { %>
+          <div class="radio-group">
+            <input type="radio" name="payment-method" id="pm_<%= method.id %>" value="<%= method.stripe_payment_method_id %>" />
+            <label for="pm_<%= method.id %>"><%= method.card_brand %> terminada en <%= method.card_last4 %></label>
+          </div>
+        <% }); %>
+      <% } %>
+
+      <!-- Opción para nueva tarjeta -->
+      <div class="radio-group">
+        <input type="radio" name="payment-method" id="pm_new" value="new" checked />
+        <label for="pm_new">Pagar con nueva tarjeta</label>
+      </div>
+
+      <!-- CONTENEDOR DEL FORMULARIO DE STRIPE (se muestra/oculta con JS) -->
+      <div id="new-card-container" class="hidden">
+        <h3>Datos de la nueva tarjeta</h3>
+        <div id="payment-element">
+          <!-- El formulario de Stripe se montará aquí -->
+        </div>
+        <div id="save-card-option">
+          <input type="checkbox" id="save-card-checkbox" />
+          <label for="save-card-checkbox">Guardar para futuras compras</label>
+        </div>
+      </div>
+
+      <!-- Botón de pago unificado -->
+      <button id="pay-btn">Pagar Ahora</button>
+    </div>
+
+    <!-- Contenedores para mensajes de estado y spinner -->
+    <div id="spinner" class="spinner hidden"></div>
+    <p id="error-message" class="error-message hidden"></p>
+  </div>
+
+  <%- include('partials/login-modal') %>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/checkout.js"></script>
+</body>
+</html>
