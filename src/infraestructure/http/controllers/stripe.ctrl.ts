@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/payment.use-case";
+import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/stripe.use-case";
 import { AddPaymentMethodDTO, ConfirmPaymentDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()

@@ -1,7 +1,9 @@
 -- Tabla de clients
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
-    stripe_customer_id VARCHAR(255) UNIQUE, -- Added Stripe Customer ID
+    external_customer_id VARCHAR(255),
+    customer_provider VARCHAR(20) CHECK (customer_provider IN ('stripe', 'paypal', 'openpay')),
+    UNIQUE (customer_provider, external_customer_id), -- Garantiza unicidad por proveedor
     "name" VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -180,42 +182,51 @@ CREATE TABLE order_items (
 CREATE TABLE payment_methods (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    stripe_payment_method_id VARCHAR(255) UNIQUE NOT NULL, -- Made unique
-    card_brand VARCHAR(50), -- Nullable as not all payment methods are cards
-    card_last4 VARCHAR(4), -- Nullable
-    card_exp_month INT, -- Nullable
-    card_exp_year INT, -- Nullable
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('stripe', 'paypal', 'openpay')), -- NUEVO
+    external_payment_method_id VARCHAR(255) NOT NULL, -- external_payment_method_id, paypal billing_agreement_id, openpay token, etc.
+    UNIQUE (provider, external_payment_method_id), -- Garantiza unicidad por proveedor
+    -- Solo para tarjetas
+    card_brand VARCHAR(50),
+    card_last4 VARCHAR(4),
+    card_exp_month INT,
+    card_exp_year INT,
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW() -- Added updated_at
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Payments table
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
-    order_id INT UNIQUE REFERENCES orders(id) ON DELETE CASCADE, -- Made unique as one order should have one primary payment
+    order_id INT UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
     cart_id INT NOT NULL REFERENCES shopping_carts(id) ON DELETE CASCADE,
-    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE, -- Added client_id for easier querying
+    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-    currency VARCHAR(3) NOT NULL DEFAULT 'mxn', -- Added currency
-    payment_method VARCHAR(50), -- To store details like card brand, last4 for non-saved methods if needed
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'requires_action', 'canceled', 'refunded', 'requires_confirmation')), -- Updated statuses
-    stripe_payment_intent_id VARCHAR(255) UNIQUE, -- Made unique
+    currency VARCHAR(3) NOT NULL DEFAULT 'mxn',
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('stripe', 'paypal', 'openpay')), -- NUEVO
+    payment_method_id INT REFERENCES payment_methods(id), -- Ahora referencia a tabla genérica
+    external_payment_id VARCHAR(255), -- Stripe: payment_intent_id, PayPal: transaction_id, OpenPay: charge_id
+    UNIQUE (provider, external_payment_id),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN (
+        'pending', 'succeeded', 'failed', 'requires_action', 'canceled',
+        'refunded', 'requires_confirmation'
+    )),
     receipt_url TEXT,
     payment_date TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Stripe events log
-CREATE TABLE stripe_events (
+CREATE TABLE payment_provider_events (
     id SERIAL PRIMARY KEY,
-    event_id VARCHAR(255) UNIQUE NOT NULL,
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('stripe', 'paypal', 'openpay')),
+    event_id VARCHAR(255) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
     payload JSONB NOT NULL,
     processed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (provider, event_id)
 );
 
 ALTER TABLE cart_items
