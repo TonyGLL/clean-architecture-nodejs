@@ -28,7 +28,7 @@ export class AddPaymentMethodUseCase {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
         }
 
-        if (!client.stripe_customer_id) {
+        if (!client.external_customer_id) {
             const customerParams: Stripe.CustomerCreateParams = {
                 email: client.email,
                 name: client.name,
@@ -36,12 +36,12 @@ export class AddPaymentMethodUseCase {
             };
             const customer = await this.paymentService.createCustomer(customerParams);
             await this.paymentRepository.updateClientStripeCustomerId(client.id, customer.id, poolClient);
-            client.stripe_customer_id = customer.id;
+            client.external_customer_id = customer.id;
         }
 
         try {
             const paymentMethodParams: Stripe.PaymentMethodAttachParams = {
-                customer: client.stripe_customer_id
+                customer: client.external_customer_id
             };
             const domainPaymentMethod = await this.paymentService.attachPaymentMethodToCustomer(dto.stripePaymentMethodId, paymentMethodParams);
 
@@ -134,7 +134,7 @@ export class CreatePaymentIntentUseCase {
 
             await poolClient.query('BEGIN');
 
-            let customerId = client.stripe_customer_id;
+            let customerId = client.external_customer_id;
             //* Si el cliente no tiene un customer_id de Stripe, crearlo
             //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
             if (!customerId) {
@@ -305,7 +305,7 @@ export class CreateCheckSessionUseCase {
 
             await poolClient.query('BEGIN');
 
-            let customerId = client.stripe_customer_id;
+            let customerId = client.external_customer_id;
             //* Si el cliente no tiene un customer_id de Stripe, crearlo
             //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
             if (!customerId) {
@@ -389,7 +389,7 @@ export class CreateSetupIntentUseCase {
             if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
             if (cart.status !== 'active') throw new HttpError(HttpStatusCode.CONFLICT, "Cart is not active. Cannot create payment intent.");
 
-            let customerId = client.stripe_customer_id;
+            let customerId = client.external_customer_id;
             //* Si el cliente no tiene un customer_id de Stripe, crearlo
             //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
             if (!customerId) {

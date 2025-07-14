@@ -13,9 +13,9 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         this.pool = pool;
     }
 
-    async findClientById(clientId: number): Promise<{ id: number; stripe_customer_id: string | null; email: string; name: string; } | null> {
+    async findClientById(clientId: number): Promise<{ id: number; external_customer_id: string | null; email: string; name: string; } | null> {
         const result = await this.pool.query(
-            'SELECT id, stripe_customer_id, email, name FROM clients WHERE id = $1 AND deleted = FALSE',
+            'SELECT id, external_customer_id, email, name FROM clients WHERE id = $1 AND deleted = FALSE',
             [clientId]
         );
         if (result.rows.length === 0) {
@@ -24,7 +24,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         const client = result.rows[0];
         return {
             id: client.id,
-            stripe_customer_id: client.stripe_customer_id,
+            external_customer_id: client.external_customer_id,
             email: client.email,
             name: client.name
         };
@@ -32,7 +32,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
 
     async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, client: PoolClient): Promise<void> {
         await client.query(
-            'UPDATE clients SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2',
+            'UPDATE clients SET external_customer_id = $1, updated_at = NOW() WHERE id = $2',
             [stripeCustomerId, clientId]
         );
     }
@@ -54,9 +54,9 @@ export class PostgresPaymentRepository implements IPaymentRepository {
             );
         }
         const result = await this.pool.query(
-            `INSERT INTO payment_methods (client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at)
+            `INSERT INTO payment_methods (client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-             RETURNING id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at`,
+             RETURNING id, client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at`,
             [clientId, stripePaymentMethodId, cardBrand, cardLast4, cardExpMonth, cardExpYear, isDefault]
         );
         return result.rows[0] as PaymentMethod;
@@ -64,7 +64,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
 
     async getClientPaymentMethods(clientId: number): Promise<PaymentMethod[]> {
         const result = await this.pool.query(
-            'SELECT id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE client_id = $1 ORDER BY created_at DESC',
+            'SELECT id, client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE client_id = $1 ORDER BY created_at DESC',
             [clientId]
         );
         return result.rows as PaymentMethod[];
@@ -72,7 +72,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
 
     async findPaymentMethodByStripeId(stripePaymentMethodId: string): Promise<PaymentMethod | null> {
         const result = await this.pool.query(
-            'SELECT id, client_id, stripe_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE stripe_payment_method_id = $1',
+            'SELECT id, client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE external_payment_method_id = $1',
             [stripePaymentMethodId]
         );
         return result.rows.length > 0 ? result.rows[0] as PaymentMethod : null;
@@ -101,9 +101,9 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         const { orderId, cartId, clientId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate } = payment;
 
         const result = await client.query(
-            `INSERT INTO payments (order_id, cart_id, client_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date)
+            `INSERT INTO payments (order_id, cart_id, client_id, amount, status, external_payment_id, payment_method, receipt_url, payment_date)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             RETURNING id, order_id, cart_id, client_id, amount, status, stripe_payment_intent_id, payment_method, receipt_url, payment_date`,
+             RETURNING id, order_id, cart_id, client_id, amount, status, external_payment_id, payment_method, receipt_url, payment_date`,
             [orderId, cartId, clientId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate]
         );
         return result.rows[0] as Payment;
@@ -118,8 +118,8 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         const query = `
             UPDATE payments
             SET status = $1, updated_at = $2
-            WHERE stripe_payment_intent_id = $3
-            RETURNING id, order_id, cart_id, client_id, amount, currency, status, stripe_payment_intent_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at
+            WHERE external_payment_id = $3
+            RETURNING id, order_id, cart_id, client_id, amount, currency, status, external_payment_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at
         `;
         const values = [updates.status, updates.updated_at, paymentIntentId];
 
@@ -129,7 +129,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
 
     public async findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null> {
         const result = await this.pool.query(
-            'SELECT * FROM payments WHERE stripe_payment_intent_id = $1',
+            'SELECT * FROM payments WHERE external_payment_id = $1',
             [paymentIntentId]
         );
         return result.rows.length > 0 ? result.rows[0] as Payment : null;

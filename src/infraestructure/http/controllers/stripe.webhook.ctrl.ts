@@ -10,7 +10,7 @@ import Stripe from "stripe";
 import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
 import { Pool } from "pg";
 import { IOrderRepository } from "../../../domain/repositories/order.repository";
-import { ConfirmPaymentUseCase } from "../../../application/use-cases/payment.use-case";
+import { ConfirmPaymentUseCase } from "../../../application/use-cases/stripe.use-case";
 import { ConfirmPaymentDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
