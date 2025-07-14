@@ -17,5 +17,6 @@ export const config = {
 
     // Stripe configuration
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
+    STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY as string,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string
 }

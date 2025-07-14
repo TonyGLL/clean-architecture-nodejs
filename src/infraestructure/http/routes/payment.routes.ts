@@ -10,10 +10,11 @@ router
     .post('/payment-methods', PaymentMethodValidator, controller.addPaymentMethod)
     .get('/payment-methods', controller.getClientPaymentMethods)
     .delete('/payment-methods/:paymentMethodId', DeletePaymentMethodValidator, controller.deletePaymentMethod)
-    .post('/payment-intents', CreatePaymentIntentValidator, controller.createPaymentIntent)
+    .post('/create-payment-intent', CreatePaymentIntentValidator, controller.createPaymentIntent)
     .post('/checkout', controller.createCheckout)
     .get('/complete', controller.paymentCompleted)
     .get('/cancel', controller.paymentCanceled)
+    .post('/create-setup-intent', controller.createSetupIntent)
     .post('/payment-intents/:paymentIntentId/confirm', ConfirmPaymentValidator, controller.confirmPayment);
 
 export default router;
