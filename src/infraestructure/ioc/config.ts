@@ -56,6 +56,7 @@ import { ProductsController } from '../http/controllers/products.ctrl';
 import { CartController } from '../http/controllers/cart.ctrl';
 import { PaymentController } from '../http/controllers/payment.ctrl';
 import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl';
+import { StripeController } from '../http/controllers/stripe.ctrl';
 
 const container = new Container();
 
@@ -139,6 +140,7 @@ container.bind<ModulesController>(ModulesController).toSelf();
 container.bind<ProductsController>(ProductsController).toSelf();
 container.bind<CartController>(CartController).toSelf();
 container.bind<PaymentController>(PaymentController).toSelf();
+container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 
 export { container };
