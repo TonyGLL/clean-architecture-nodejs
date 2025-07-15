@@ -1,12 +1,12 @@
 import { Pool, PoolClient } from 'pg';
 import { inject, injectable } from 'inversify';
-import { IPaymentRepository } from '../../../../domain/repositories/payment.repository';
+import { IStripePaymentRepository } from '../../../../domain/repositories/stripe.payment.repository';
 import { Payment } from '../../../../domain/entities/payment';
 import { PaymentMethod } from '../../../../domain/entities/paymentMethod';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 
 @injectable()
-export class PostgresPaymentRepository implements IPaymentRepository {
+export class PostgresStripePaymentRepository implements IStripePaymentRepository {
     private pool: Pool;
 
     constructor(@inject(INFRASTRUCTURE_TYPES.PostgresPool) pool: Pool) {

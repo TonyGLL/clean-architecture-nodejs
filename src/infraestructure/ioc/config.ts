@@ -21,8 +21,8 @@ import { IProductsRepository } from '../../domain/repositories/products.reposito
 import { PostgresProductsRepository } from '../database/postgres/repositories/products.repository';
 import { ICartRepository } from '../../domain/repositories/cart.repository';
 import { PostgresCartRepository } from '../database/postgres/repositories/cart.repository';
-import { IPaymentRepository } from '../../domain/repositories/payment.repository';
-import { PostgresPaymentRepository } from '../database/postgres/repositories/payment.repository';
+import { IStripePaymentRepository } from '../../domain/repositories/stripe.payment.repository';
+import { PostgresStripePaymentRepository } from '../database/postgres/repositories/stripe.payment.repository';
 import { IOrderRepository } from '../../domain/repositories/order.repository';
 import { PostgresOrderRepository } from '../database/postgres/repositories/order.repository';
 
@@ -33,7 +33,7 @@ import { JwtService } from '../driven/services/jwt.service';
 import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
 import { BcryptService } from '../driven/services/bcrypt.service';
-import { IPaymentService } from '../../domain/services/payment.service';
+import { IStripeService } from '../../domain/services/stripe.service';
 import { StripePaymentService } from '../driven/services/stripe.payment.service';
 
 //* Use Cases
@@ -71,7 +71,7 @@ container.bind<IUserRepository>(DOMAIN_TYPES.IUserRepository).to(PostgresUserRep
 container.bind<IModulesRepository>(DOMAIN_TYPES.IModulesRepository).to(PostgresModulesRepository);
 container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(PostgresProductsRepository);
 container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRepository);
-container.bind<IPaymentRepository>(DOMAIN_TYPES.IPaymentRepository).to(PostgresPaymentRepository);
+container.bind<IStripePaymentRepository>(DOMAIN_TYPES.IStripePaymentRepository).to(PostgresStripePaymentRepository);
 container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository);
 
 //* Services (Interface -> Implementation)
@@ -79,7 +79,7 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
-container.bind<IPaymentService>(DOMAIN_TYPES.IPaymentService).to(StripePaymentService);
+container.bind<IStripeService>(DOMAIN_TYPES.IStripeService).to(StripePaymentService);
 
 //* Use Cases (Concrete classes)
 // AUTH

@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
-import { IPaymentRepository } from "../../domain/repositories/payment.repository";
+import { IStripePaymentRepository } from "../../domain/repositories/stripe.payment.repository";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { AddPaymentMethodDTO, ClientPaymentMethodsDTO, ConfirmPaymentDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../dtos/payment.dto";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
 import { PaymentMethod } from "../../domain/entities/paymentMethod";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
-import { IPaymentService } from "../../domain/services/payment.service";
+import { IStripeService } from "../../domain/services/stripe.service";
 import Stripe from "stripe";
 import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 import { Pool, PoolClient } from "pg";
@@ -16,14 +16,14 @@ import { CreateOrderParams, IOrderRepository } from "../../domain/repositories/o
 @injectable()
 export class AddPaymentMethodUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: AddPaymentMethodDTO): Promise<[number, PaymentMethod]> {
         const poolClient: PoolClient = await this.pool.connect();
-        let client = await this.paymentRepository.findClientById(dto.clientId);
+        let client = await this.stripePaymentRepository.findClientById(dto.clientId);
         if (!client) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
         }
@@ -34,8 +34,8 @@ export class AddPaymentMethodUseCase {
                 name: client.name,
                 metadata: { client_id: client.id.toString() }
             };
-            const customer = await this.paymentService.createCustomer(customerParams);
-            await this.paymentRepository.updateClientStripeCustomerId(client.id, customer.id, poolClient);
+            const customer = await this.stripeService.createCustomer(customerParams);
+            await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, customer.id, poolClient);
             client.external_customer_id = customer.id;
         }
 
@@ -43,21 +43,21 @@ export class AddPaymentMethodUseCase {
             const paymentMethodParams: Stripe.PaymentMethodAttachParams = {
                 customer: client.external_customer_id
             };
-            const domainPaymentMethod = await this.paymentService.attachPaymentMethodToCustomer(dto.stripePaymentMethodId, paymentMethodParams);
+            const domainPaymentMethod = await this.stripeService.attachPaymentMethodToCustomer(dto.stripePaymentMethodId, paymentMethodParams);
 
-            const existingMethod = await this.paymentRepository.findPaymentMethodByStripeId(domainPaymentMethod.id);
+            const existingMethod = await this.stripePaymentRepository.findPaymentMethodByStripeId(domainPaymentMethod.id);
             if (existingMethod) {
                 if (existingMethod.clientId !== dto.clientId) {
                     throw new HttpError(HttpStatusCode.CONFLICT, "Payment Method is already associated with another client.");
                 }
                 if (dto.isDefault) {
-                    await this.paymentRepository.setDefaultPaymentMethod(dto.clientId, existingMethod.id);
+                    await this.stripePaymentRepository.setDefaultPaymentMethod(dto.clientId, existingMethod.id);
                     existingMethod.isDefault = true;
                 }
                 return [HttpStatusCode.OK, existingMethod];
             }
 
-            const newPaymentMethod = await this.paymentRepository.addPaymentMethod(
+            const newPaymentMethod = await this.stripePaymentRepository.addPaymentMethod(
                 dto.clientId,
                 domainPaymentMethod.id,
                 domainPaymentMethod.card?.brand || null,
@@ -77,11 +77,11 @@ export class AddPaymentMethodUseCase {
 @injectable()
 export class GetClientPaymentMethodsUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository
     ) { }
 
     public async execute(dto: ClientPaymentMethodsDTO): Promise<[number, PaymentMethod[]]> {
-        const paymentMethods = await this.paymentRepository.getClientPaymentMethods(dto.clientId);
+        const paymentMethods = await this.stripePaymentRepository.getClientPaymentMethods(dto.clientId);
         return [HttpStatusCode.OK, paymentMethods];
     }
 }
@@ -89,19 +89,19 @@ export class GetClientPaymentMethodsUseCase {
 @injectable()
 export class DeletePaymentMethodUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository
     ) { }
 
     public async execute(dto: DeletePaymentMethodDTO): Promise<[number, object]> {
-        const paymentMethod = await this.paymentRepository.findPaymentMethodByStripeId(dto.paymentMethodId);
+        const paymentMethod = await this.stripePaymentRepository.findPaymentMethodByStripeId(dto.paymentMethodId);
         if (!paymentMethod || paymentMethod.clientId !== dto.clientId) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment method not found or does not belong to the client.");
         }
 
         try {
-            await this.paymentService.detachPaymentMethod(dto.paymentMethodId);
-            await this.paymentRepository.deletePaymentMethod(paymentMethod.id);
+            await this.stripeService.detachPaymentMethod(dto.paymentMethodId);
+            await this.stripePaymentRepository.deletePaymentMethod(paymentMethod.id);
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to delete payment method: ${error.message}`);
@@ -112,8 +112,8 @@ export class DeletePaymentMethodUseCase {
 @injectable()
 export class CreatePaymentIntentUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
@@ -124,7 +124,7 @@ export class CreatePaymentIntentUseCase {
 
         try {
             //* Validar si el cliente existe
-            const client = await this.paymentRepository.findClientById(dto.clientId);
+            const client = await this.stripePaymentRepository.findClientById(dto.clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
             //* Validar si el cliente tiene un carrito activo
@@ -144,10 +144,10 @@ export class CreatePaymentIntentUseCase {
                     name: client.name,
                     metadata: { client_id: client.id.toString() }
                 };
-                const { id } = await this.paymentService.createCustomer(createCustomerParams);
+                const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
                 //* Actualizar el cliente en la base de datos con el customer_id de Stripe
-                await this.paymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
                 customerId = id;
             }
 
@@ -156,10 +156,10 @@ export class CreatePaymentIntentUseCase {
 
             if (cart.activePaymentIntentId) {
                 //* Obtener el intento de pago si es que el mismo existe
-                const existingPayment = await this.paymentRepository.findPaymentByIntentId(cart.activePaymentIntentId || '');
+                const existingPayment = await this.stripePaymentRepository.findPaymentByIntentId(cart.activePaymentIntentId || '');
 
                 if (existingPayment?.stripePaymentIntentId && (existingPayment.status === 'pending' || existingPayment.status === 'requires_action')) {
-                    paymentIntent = await this.paymentService.retrievePaymentIntent(existingPayment.stripePaymentIntentId);
+                    paymentIntent = await this.stripeService.retrievePaymentIntent(existingPayment.stripePaymentIntentId);
                     if (['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(paymentIntent.status!)) {
 
                         await poolClient.query('COMMIT');
@@ -181,7 +181,7 @@ export class CreatePaymentIntentUseCase {
                 metadata: { ...dto.metadata, cart_id: cart.id.toString(), client_id: dto.clientId.toString() },
                 description: `Payment for cart ${cart.id}`
             };
-            paymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentParams);
+            paymentIntent = await this.stripeService.createPaymentIntent(createPaymentIntentParams);
 
             //* Crear orden en dn en estado pending
             const createOrderParams: CreateOrderParams = {
@@ -207,7 +207,7 @@ export class CreatePaymentIntentUseCase {
                 paymentDate: null,
                 orderId: order.id
             }
-            await this.paymentRepository.createPaymentRecord(createPaymentParams, poolClient);
+            await this.stripePaymentRepository.createPaymentRecord(createPaymentParams, poolClient);
 
             await poolClient.query('COMMIT');
 
@@ -225,14 +225,14 @@ export class CreatePaymentIntentUseCase {
 @injectable()
 export class ConfirmPaymentUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: ConfirmPaymentDTO): Promise<[number, { paymentIntentId: string; status: string; requiresAction: boolean; clientSecret?: string | null; chargeId?: string; receiptUrl?: string }]> {
 
-        const localPayment = await this.paymentRepository.findPaymentByIntentId(dto.paymentIntentId);
+        const localPayment = await this.stripePaymentRepository.findPaymentByIntentId(dto.paymentIntentId);
         if (!localPayment) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment intent not found or does not belong to the client.");
         }
@@ -248,14 +248,14 @@ export class ConfirmPaymentUseCase {
 
             let paymentIntent: Stripe.Response<Stripe.PaymentIntent>;
             if (localPayment.status === 'requires_confirmation' || (localPayment.status === 'requires_payment_method')) {
-                paymentIntent = await this.paymentService.confirmPaymentIntent(dto.paymentIntentId, { payment_method: localPayment.payment_method });
+                paymentIntent = await this.stripeService.confirmPaymentIntent(dto.paymentIntentId, { payment_method: localPayment.payment_method });
             } else {
-                paymentIntent = await this.paymentService.retrievePaymentIntent(dto.paymentIntentId);
+                paymentIntent = await this.stripeService.retrievePaymentIntent(dto.paymentIntentId);
             }
 
             //const charge = paymentIntent.charges?.data[0];
 
-            await this.paymentRepository.updatePaymentStatus(paymentIntent.id!, paymentIntent.status!, poolClient);
+            await this.stripePaymentRepository.updatePaymentStatus(paymentIntent.id!, paymentIntent.status!, poolClient);
 
             await poolClient.query('COMMIT');
 
@@ -272,7 +272,7 @@ export class ConfirmPaymentUseCase {
 
             if (error instanceof HttpError) throw error;
             // A more specific error check for card errors might be needed depending on the payment service abstraction
-            await this.paymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed', poolClient);
+            await this.stripePaymentRepository.updatePaymentStatus(dto.paymentIntentId, 'failed', poolClient);
             throw new HttpError(HttpStatusCode.BAD_REQUEST, `Failed to confirm payment: ${error.message}`);
         } finally {
             poolClient.release();
@@ -283,8 +283,8 @@ export class ConfirmPaymentUseCase {
 @injectable()
 export class CreateCheckSessionUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
@@ -295,7 +295,7 @@ export class CreateCheckSessionUseCase {
 
         try {
             //* Validar si el cliente existe
-            const client = await this.paymentRepository.findClientById(clientId);
+            const client = await this.stripePaymentRepository.findClientById(clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
             //* Validar si el cliente tiene un carrito activo
@@ -315,10 +315,10 @@ export class CreateCheckSessionUseCase {
                     name: client.name,
                     metadata: { client_id: client.id.toString() }
                 };
-                const { id } = await this.paymentService.createCustomer(createCustomerParams);
+                const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
                 //* Actualizar el cliente en la base de datos con el customer_id de Stripe
-                await this.paymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
                 customerId = id;
             }
 
@@ -350,7 +350,7 @@ export class CreateCheckSessionUseCase {
                     setup_future_usage: 'on_session'
                 }
             }
-            const session = await this.paymentService.createCheckoutSession(createCheckoutSessionParams);
+            const session = await this.stripeService.createCheckoutSession(createCheckoutSessionParams);
 
             await poolClient.query('COMMIT');
 
@@ -369,8 +369,8 @@ export class CreateCheckSessionUseCase {
 @injectable()
 export class CreateSetupIntentUseCase {
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
@@ -381,7 +381,7 @@ export class CreateSetupIntentUseCase {
 
         try {
             //* Validar si el cliente existe
-            const client = await this.paymentRepository.findClientById(clientId);
+            const client = await this.stripePaymentRepository.findClientById(clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
             //* Validar si el cliente tiene un carrito activo
@@ -399,10 +399,10 @@ export class CreateSetupIntentUseCase {
                     name: client.name,
                     metadata: { client_id: client.id.toString() }
                 };
-                const { id } = await this.paymentService.createCustomer(createCustomerParams);
+                const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
                 //* Actualizar el cliente en la base de datos con el customer_id de Stripe
-                await this.paymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
                 customerId = id;
             }
 
@@ -411,7 +411,7 @@ export class CreateSetupIntentUseCase {
                 payment_method_types: ['card'],
                 usage: 'off_session'
             };
-            const setupIntent = await this.paymentService.createSetupIntent(createSetupIntentParams);
+            const setupIntent = await this.stripeService.createSetupIntent(createSetupIntentParams);
 
             await poolClient.query('COMMIT');
 

@@ -2,7 +2,7 @@ import { inject, injectable } from "inversify";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { IOrderRepository } from "../../domain/repositories/order.repository";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
-import { IPaymentRepository } from "../../domain/repositories/payment.repository";
+import { IStripePaymentRepository } from "../../domain/repositories/stripe.payment.repository";
 import { CreateOrderDTO, GetClientOrdersDTO, GetOrderByIdDTO, UpdateOrderStatusDTO } from "../dtos/order.dto";
 import { Order } from "../../domain/entities/order";
 import { HttpError } from "../../domain/errors/http.error";
@@ -15,13 +15,13 @@ export class CreateOrderUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
     public async execute(dto: CreateOrderDTO): Promise<[number, Order]> {
         // 1. Verify Payment
-        const payment = await this.paymentRepository.findPaymentByIntentId(dto.paymentId.toString()); // Assuming paymentId is intentId for now
+        const payment = await this.stripePaymentRepository.findPaymentByIntentId(dto.paymentId.toString()); // Assuming paymentId is intentId for now
         // Or find by actual payment record ID if different
         if (!payment) {
             throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment record not found.");
@@ -67,7 +67,7 @@ export class CreateOrderUseCase {
             // This creates a circular dependency if payment needs orderId at its creation.
             // Better to link payment to order after order is created.
             // The payments table already has an order_id column.
-            // await this.paymentRepository.linkOrderToPayment(payment.id, newOrder.id); // Need to add this method to IPaymentRepository
+            // await this.stripePaymentRepository.linkOrderToPayment(payment.id, newOrder.id); // Need to add this method to IPaymentRepository
             // For now, let's assume the schema update for payments.order_id will be handled by setting it directly if possible,
             // or the webhook handler will eventually update it.
             // A simpler approach: update the payment record with the order ID.

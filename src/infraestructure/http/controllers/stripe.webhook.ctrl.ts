@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { IPaymentService } from "../../../domain/services/payment.service";
+import { IStripeService } from "../../../domain/services/stripe.service";
 import { DOMAIN_TYPES } from "../../../domain/ioc.types";
-import { IPaymentRepository } from "../../../domain/repositories/payment.repository";
+import { IStripePaymentRepository } from "../../../domain/repositories/stripe.payment.repository";
 import { ICartRepository } from "../../../domain/repositories/cart.repository";
 import { HttpStatusCode } from "../../../domain/shared/http.status";
 import { config } from "../../config/env";
@@ -18,8 +18,8 @@ export class StripeWebhookController {
     private webhookSecret: string;
 
     constructor(
-        @inject(DOMAIN_TYPES.IPaymentService) private paymentService: IPaymentService,
-        @inject(DOMAIN_TYPES.IPaymentRepository) private paymentRepository: IPaymentRepository,
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase,
@@ -46,7 +46,7 @@ export class StripeWebhookController {
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send(`Webhook Error: Server configuration error`);
                 return;
             }
-            event = this.paymentService.constructWebhookEvent(req.body, sig, this.webhookSecret);
+            event = this.stripeService.constructWebhookEvent(req.body, sig, this.webhookSecret);
         } catch (err: any) {
             console.error(`Webhook signature verification failed: ${err.message}`);
             res.status(HttpStatusCode.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
@@ -88,7 +88,7 @@ export class StripeWebhookController {
             await poolClient.query('BEGIN');
 
             //* Cambiar status del pago a pagado
-            const updatePaymentStatusResponse = await this.paymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
+            const updatePaymentStatusResponse = await this.stripePaymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
 
             //* Cambiar status de la orden
             await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.orderId!, intent.status, poolClient);
@@ -143,13 +143,13 @@ export class StripeWebhookController {
             const setupIntentId = session.setup_intent as string;
             const customerId = session.customer as string;
 
-            const setupIntent = await this.paymentService.retrieveSetupIntent(setupIntentId);
+            const setupIntent = await this.stripeService.retrieveSetupIntent(setupIntentId);
             const paymentMethodId = setupIntent.payment_method as string;
 
             const paymentMethodParams: Stripe.PaymentMethodAttachParams = {
                 customer: customerId
             };
-            await this.paymentService.attachPaymentMethodToCustomer(paymentMethodId, paymentMethodParams);
+            await this.stripeService.attachPaymentMethodToCustomer(paymentMethodId, paymentMethodParams);
 
             await poolClient.query('COMMIT');
         } catch (error) {

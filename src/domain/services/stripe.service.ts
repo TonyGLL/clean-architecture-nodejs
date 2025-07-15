@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
-export interface IPaymentService {
+export interface IStripeService {
     /**
      * Crea un nuevo cliente en Stripe.
      *
@@ -130,7 +130,35 @@ export interface IPaymentService {
      */
     constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Stripe.Event;
 
+    /**
+     * Crea una sesión de Checkout en Stripe.
+     *
+     * @name createCheckoutSession
+     * @param {Stripe.Checkout.SessionCreateParams} params - Parámetros para la creación de la sesión de Checkout (monto, moneda, customer, métodos de pago, etc).
+     * @returns {Promise<Stripe.Response<Stripe.Checkout.Session>>} Una promesa que resuelve con la respuesta de Stripe que contiene la sesión de Checkout creada.
+     * @throws {HttpError} Lanza un error HTTP 500 si la creación de la sesión falla en Stripe.
+     *
+     * @example
+     * const session = await stripePaymentService.createCheckoutSession({
+     *   payment_method_types: ['card'],
+     *   line_items: [{ price: 'price_xxx', quantity: 1 }],
+     *   mode: 'payment',
+     *   success_url: 'https://tuapp.com/success',
+     *   cancel_url: 'https://tuapp.com/cancel'
+     * });
+     */
     createCheckoutSession(params: Stripe.Checkout.SessionCreateParams): Promise<Stripe.Response<Stripe.Checkout.Session>>;
 
+    /**
+     * Recupera un SetupIntent por su ID.
+     *
+     * @name retrieveSetupIntent
+     * @param {string} setupIntentId - El ID del SetupIntent a recuperar.
+     * @returns {Promise<Stripe.Response<Stripe.SetupIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el SetupIntent.
+     * @throws {HttpError} Lanza un error HTTP 500 si la recuperación falla en Stripe.
+     *
+     * @example
+     * const setupIntent = await stripePaymentService.retrieveSetupIntent('seti_xxx');
+     */
     retrieveSetupIntent(setupIntentId: string): Promise<Stripe.Response<Stripe.SetupIntent>>;
 }

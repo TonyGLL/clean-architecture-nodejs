@@ -9,7 +9,7 @@ export const DOMAIN_TYPES = {
     IModulesRepository: Symbol.for('IModulesRepository'),
     IProductsRepository: Symbol.for('IProductsRepository'),
     ICartRepository: Symbol.for('ICartRepository'),
-    IPaymentRepository: Symbol.for("IPaymentRepository"),
-    IPaymentService: Symbol.for("IPaymentService"),
+    IStripePaymentRepository: Symbol.for("IStripePaymentRepository"),
+    IStripeService: Symbol.for("IStripeService"),
     IOrderRepository: Symbol.for("IOrderRepository"), // Added
 };

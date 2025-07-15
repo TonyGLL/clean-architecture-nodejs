@@ -3,10 +3,10 @@ import { config } from '../../../infraestructure/config/env';
 import { injectable } from 'inversify';
 import { HttpError } from '../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../domain/shared/http.status';
-import { IPaymentService } from '../../../domain/services/payment.service';
+import { IStripeService } from '../../../domain/services/stripe.service';
 
 @injectable()
-export class StripePaymentService implements IPaymentService {
+export class StripePaymentService implements IStripeService {
     private stripe: Stripe;
 
     constructor() {
