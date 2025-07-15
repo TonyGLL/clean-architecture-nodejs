@@ -31,43 +31,11 @@ export class StripePaymentService implements IStripeService {
         }
     }
 
-    public async confirmPaymentIntent(paymentIntentId: string, params?: Stripe.PaymentIntentConfirmParams): Promise<Stripe.Response<Stripe.PaymentIntent>> {
-        try {
-            return await this.stripe.paymentIntents.confirm(paymentIntentId);
-        } catch (error: any) {
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe payment intent confirmation failed: ${error.message}`);
-        }
-    }
-
     public async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>> {
         try {
             return await this.stripe.paymentIntents.retrieve(paymentIntentId);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe retrieve payment intent failed: ${error.message}`);
-        }
-    }
-
-    public async retrieveSetupIntent(setupIntentId: string): Promise<Stripe.Response<Stripe.SetupIntent>> {
-        try {
-            return await this.stripe.setupIntents.retrieve(setupIntentId);
-        } catch (error: any) {
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe retrieve payment intent failed: ${error.message}`);
-        }
-    }
-
-    public async attachPaymentMethodToCustomer(id: string, params: Stripe.PaymentMethodAttachParams): Promise<Stripe.Response<Stripe.PaymentMethod>> {
-        try {
-            return this.stripe.paymentMethods.attach(id, { customer: params.customer });
-        } catch (error: any) {
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe attach payment method failed: ${error.message}`);
-        }
-    }
-
-    public async listCustomerPaymentMethods(params: Stripe.PaymentMethodListParams): Promise<Stripe.ApiListPromise<Stripe.PaymentMethod>> {
-        try {
-            return await this.stripe.paymentMethods.list({ customer: params.customer, type: params.type || 'card' });
-        } catch (error: any) {
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe list payment methods failed: ${error.message}`);
         }
     }
 
@@ -92,15 +60,6 @@ export class StripePaymentService implements IStripeService {
             return this.stripe.webhooks.constructEvent(payload, sig, secret);
         } catch (error: any) {
             throw new HttpError(HttpStatusCode.BAD_REQUEST, `Webhook Error: ${error.message}`);
-        }
-    }
-
-    public async createCheckoutSession(params: Stripe.Checkout.SessionCreateParams): Promise<Stripe.Response<Stripe.Checkout.Session>> {
-        try {
-            return await this.stripe.checkout.sessions.create(params);
-        } catch (error: any) {
-            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe checkout session creation failed: ${error.message}`);
-
         }
     }
 }

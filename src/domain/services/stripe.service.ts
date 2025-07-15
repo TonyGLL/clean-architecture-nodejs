@@ -36,20 +36,6 @@ export interface IStripeService {
     createPaymentIntent(params: Stripe.PaymentIntentCreateParams): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
     /**
-     * Confirma un PaymentIntent existente en Stripe.
-     *
-     * @name confirmPaymentIntent
-     * @param {string} paymentIntentId - El ID del PaymentIntent a confirmar.
-     * @param {Stripe.PaymentIntentConfirmParams} [params] - Parámetros opcionales para la confirmación.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el PaymentIntent confirmado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la confirmación falla en Stripe.
-     *
-     * @example
-     * const confirmed = await stripePaymentService.confirmPaymentIntent('pi_xxx');
-     */
-    confirmPaymentIntent(paymentIntentId: string, params?: Stripe.PaymentIntentConfirmParams): Promise<Stripe.Response<Stripe.PaymentIntent>>;
-
-    /**
      * Recupera un PaymentIntent por su ID.
      *
      * @name retrievePaymentIntent
@@ -61,33 +47,6 @@ export interface IStripeService {
      * const paymentIntent = await stripePaymentService.retrievePaymentIntent('pi_xxx');
      */
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
-
-    /**
-     * Asocia un método de pago a un cliente de Stripe.
-     *
-     * @name attachPaymentMethodToCustomer
-     * @param {string} id - El ID del método de pago a asociar.
-     * @param {Stripe.PaymentMethodAttachParams} params - Parámetros que incluyen el ID del cliente.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago asociado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la asociación falla en Stripe.
-     *
-     * @example
-     * const paymentMethod = await stripePaymentService.attachPaymentMethodToCustomer('pm_xxx', { customer: 'cus_xxx' });
-     */
-    attachPaymentMethodToCustomer(id: string, params: Stripe.PaymentMethodAttachParams): Promise<Stripe.Response<Stripe.PaymentMethod>>;
-
-    /**
-     * Lista los métodos de pago de un cliente.
-     *
-     * @name listCustomerPaymentMethods
-     * @param {Stripe.PaymentMethodListParams} params - Parámetros para listar los métodos de pago (customer, type).
-     * @returns {Promise<Stripe.ApiListPromise<Stripe.PaymentMethod>>} Una promesa que resuelve con la lista de métodos de pago del cliente.
-     * @throws {HttpError} Lanza un error HTTP 500 si la consulta falla en Stripe.
-     *
-     * @example
-     * const methods = await stripePaymentService.listCustomerPaymentMethods({ customer: 'cus_xxx', type: 'card' });
-     */
-    listCustomerPaymentMethods(params: Stripe.PaymentMethodListParams): Promise<Stripe.ApiListPromise<Stripe.PaymentMethod>>;
 
     /**
      * Desasocia un método de pago de un cliente.
@@ -129,36 +88,4 @@ export interface IStripeService {
      * const event = stripePaymentService.constructWebhookEvent(req.body, req.headers['stripe-signature'], webhookSecret);
      */
     constructWebhookEvent(payload: string | Buffer, sig: string | string[] | Buffer, secret: string): Stripe.Event;
-
-    /**
-     * Crea una sesión de Checkout en Stripe.
-     *
-     * @name createCheckoutSession
-     * @param {Stripe.Checkout.SessionCreateParams} params - Parámetros para la creación de la sesión de Checkout (monto, moneda, customer, métodos de pago, etc).
-     * @returns {Promise<Stripe.Response<Stripe.Checkout.Session>>} Una promesa que resuelve con la respuesta de Stripe que contiene la sesión de Checkout creada.
-     * @throws {HttpError} Lanza un error HTTP 500 si la creación de la sesión falla en Stripe.
-     *
-     * @example
-     * const session = await stripePaymentService.createCheckoutSession({
-     *   payment_method_types: ['card'],
-     *   line_items: [{ price: 'price_xxx', quantity: 1 }],
-     *   mode: 'payment',
-     *   success_url: 'https://tuapp.com/success',
-     *   cancel_url: 'https://tuapp.com/cancel'
-     * });
-     */
-    createCheckoutSession(params: Stripe.Checkout.SessionCreateParams): Promise<Stripe.Response<Stripe.Checkout.Session>>;
-
-    /**
-     * Recupera un SetupIntent por su ID.
-     *
-     * @name retrieveSetupIntent
-     * @param {string} setupIntentId - El ID del SetupIntent a recuperar.
-     * @returns {Promise<Stripe.Response<Stripe.SetupIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el SetupIntent.
-     * @throws {HttpError} Lanza un error HTTP 500 si la recuperación falla en Stripe.
-     *
-     * @example
-     * const setupIntent = await stripePaymentService.retrieveSetupIntent('seti_xxx');
-     */
-    retrieveSetupIntent(setupIntentId: string): Promise<Stripe.Response<Stripe.SetupIntent>>;
 }
