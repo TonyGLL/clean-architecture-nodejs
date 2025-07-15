@@ -160,7 +160,7 @@ CREATE TABLE orders (
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     order_number VARCHAR(50) UNIQUE NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL CHECK (total_amount > 0),
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled', 'succeeded')),
     shipping_address TEXT NOT NULL,
     billing_address TEXT NOT NULL,
     payment_method VARCHAR(50) NOT NULL,

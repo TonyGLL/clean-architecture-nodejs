@@ -119,7 +119,7 @@ export class CreatePaymentIntentUseCase {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
-    public async execute(dto: CreatePaymentIntentDTO): Promise<[number, { clientSecret: string | null; paymentIntentId: string; requiresAction: boolean; status: string; }]> {
+    public async execute(dto: CreatePaymentIntentDTO): Promise<[number, { ok: boolean, clientSecret: string | null; paymentIntentId: string; requiresAction: boolean; status: string; }]> {
         const poolClient = await this.pool.connect();
 
         try {
@@ -164,7 +164,7 @@ export class CreatePaymentIntentUseCase {
 
                         await poolClient.query('COMMIT');
 
-                        return [HttpStatusCode.OK, { clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
+                        return [HttpStatusCode.OK, { ok: true, clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
                     } else if (paymentIntent.status === 'succeeded') {
                         throw new HttpError(HttpStatusCode.CONFLICT, "Payment for this cart has already succeeded.");
                     }
@@ -211,7 +211,7 @@ export class CreatePaymentIntentUseCase {
 
             await poolClient.query('COMMIT');
 
-            return [HttpStatusCode.CREATED, { clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
+            return [HttpStatusCode.CREATED, { ok: true, clientSecret: paymentIntent.client_secret!, paymentIntentId: paymentIntent.id!, requiresAction: paymentIntent.status === 'requires_action', status: paymentIntent.status! }];
         } catch (error: any) {
             await poolClient.query('ROLLBACK');
             if (error instanceof HttpError) throw error;
