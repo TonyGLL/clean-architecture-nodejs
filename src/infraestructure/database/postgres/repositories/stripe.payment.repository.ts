@@ -13,7 +13,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         this.pool = pool;
     }
 
-    async findClientById(clientId: number): Promise<{ id: number; external_customer_id: string | null; email: string; name: string; } | null> {
+    public async findClientById(clientId: number): Promise<{ id: number; external_customer_id: string | null; email: string; name: string; } | null> {
         const result = await this.pool.query(
             'SELECT id, external_customer_id, email, name FROM clients WHERE id = $1 AND deleted = FALSE',
             [clientId]
@@ -30,14 +30,14 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         };
     }
 
-    async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, client: PoolClient): Promise<void> {
+    public async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, client: PoolClient): Promise<void> {
         await client.query(
-            'UPDATE clients SET external_customer_id = $1, updated_at = NOW() WHERE id = $2',
+            'UPDATE clients SET external_customer_id = $1, updated_at = NOW(), customer_provider = "stripe" WHERE id = $2',
             [stripeCustomerId, clientId]
         );
     }
 
-    async addPaymentMethod(
+    public async addPaymentMethod(
         clientId: number,
         stripePaymentMethodId: string,
         cardBrand: string | null,
@@ -62,7 +62,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         return result.rows[0] as PaymentMethod;
     }
 
-    async getClientPaymentMethods(clientId: number): Promise<PaymentMethod[]> {
+    public async getClientPaymentMethods(clientId: number): Promise<PaymentMethod[]> {
         const result = await this.pool.query(
             'SELECT id, client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE client_id = $1 ORDER BY created_at DESC',
             [clientId]
@@ -70,7 +70,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         return result.rows as PaymentMethod[];
     }
 
-    async findPaymentMethodByStripeId(stripePaymentMethodId: string): Promise<PaymentMethod | null> {
+    public async findPaymentMethodByStripeId(stripePaymentMethodId: string): Promise<PaymentMethod | null> {
         const result = await this.pool.query(
             'SELECT id, client_id, external_payment_method_id, card_brand, card_last4, card_exp_month, card_exp_year, is_default, created_at, updated_at FROM payment_methods WHERE external_payment_method_id = $1',
             [stripePaymentMethodId]
@@ -78,13 +78,13 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         return result.rows.length > 0 ? result.rows[0] as PaymentMethod : null;
     }
 
-    async deletePaymentMethod(paymentMethodId: number): Promise<void> {
+    public async deletePaymentMethod(paymentMethodId: number): Promise<void> {
         // Instead of deleting, you might want to mark as deleted or disassociate from client if Stripe API doesn't delete it
         // For now, direct deletion:
         await this.pool.query('DELETE FROM payment_methods WHERE id = $1', [paymentMethodId]);
     }
 
-    async setDefaultPaymentMethod(clientId: number, paymentMethodId: number): Promise<void> {
+    public async setDefaultPaymentMethod(clientId: number, paymentMethodId: number): Promise<void> {
         // First, set all other methods for this client to not be default
         await this.pool.query(
             'UPDATE payment_methods SET is_default = FALSE WHERE client_id = $1 AND id != $2',
@@ -97,7 +97,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         );
     }
 
-    async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, client: PoolClient): Promise<Payment> {
+    public async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, client: PoolClient): Promise<Payment> {
         const { orderId, cartId, clientId, amount, status, stripePaymentIntentId, paymentMethodDetails, receiptUrl, paymentDate } = payment;
 
         const result = await client.query(
@@ -109,7 +109,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         return result.rows[0] as Payment;
     }
 
-    public async updatePaymentStatus(paymentIntentId: string, status: string, poolClient: PoolClient): Promise<Payment | null> {
+    public async updatePaymentStatus(paymentIntentId: string, status: string, poolClient: PoolClient): Promise<any> {
         const existingPayment = await this.findPaymentByIntentId(paymentIntentId);
         if (!existingPayment) return null;
 
@@ -119,7 +119,7 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
             UPDATE payments
             SET status = $1, updated_at = $2
             WHERE external_payment_id = $3
-            RETURNING id, order_id, cart_id, client_id, amount, currency, status, external_payment_id, stripe_charge_id, payment_method_details, receipt_url, payment_date, created_at, updated_at
+            RETURNING id, order_id, cart_id, client_id, amount, currency, status, external_payment_id, payment_method, receipt_url, payment_date, created_at, updated_at
         `;
         const values = [updates.status, updates.updated_at, paymentIntentId];
 

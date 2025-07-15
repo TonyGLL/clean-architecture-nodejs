@@ -10,8 +10,6 @@ import Stripe from "stripe";
 import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
 import { Pool } from "pg";
 import { IOrderRepository } from "../../../domain/repositories/order.repository";
-import { ConfirmPaymentUseCase } from "../../../application/use-cases/stripe.use-case";
-import { ConfirmPaymentDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
 export class StripeWebhookController {
@@ -22,7 +20,6 @@ export class StripeWebhookController {
         @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
-        @inject(ConfirmPaymentUseCase) private confirmPaymentUseCase: ConfirmPaymentUseCase,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) {
         this.webhookSecret = config.STRIPE_WEBHOOK_SECRET;
@@ -54,16 +51,6 @@ export class StripeWebhookController {
         }
 
         switch (event.type) {
-            case 'checkout.session.completed':
-                const checkoutSessionCompleted = event.data.object as Stripe.Checkout.Session;
-                console.log(`PaymentIntent succeeded: ${checkoutSessionCompleted.id}`);
-                await this.handleCheckoutSessionCompleted(checkoutSessionCompleted);
-                break;
-            /* case 'payment_intent.created':
-                const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
-                console.log(`PaymentIntent Created: ${paymentIntentCreated.id}`);
-                await this.handlePaymentIntentCreated(paymentIntentCreated);
-                break; */
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
                 console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
@@ -91,13 +78,13 @@ export class StripeWebhookController {
             const updatePaymentStatusResponse = await this.stripePaymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
 
             //* Cambiar status de la orden
-            await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.orderId!, intent.status, poolClient);
+            await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.order_id!, intent.status, poolClient);
 
             //* Cambiar status de carrito activo a completed
-            await this.cartRepository.updateCartStatus(updatePaymentStatusResponse?.cartId!, intent.status, poolClient);
+            await this.cartRepository.updateCartStatus(updatePaymentStatusResponse?.cart_id!, 'completed', poolClient);
 
             //* Crear un nuevo carrito al usuario en curso
-            await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.clientId!, poolClient);
+            await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.client_id!, poolClient);
 
             await poolClient.query('COMMIT');
         } catch (error) {
@@ -105,15 +92,6 @@ export class StripeWebhookController {
         } finally {
             poolClient.release();
         }
-    }
-
-    private async handlePaymentIntentCreated(intent: Stripe.PaymentIntent) {
-        const dto: ConfirmPaymentDTO = {
-            clientId: 1,
-            paymentIntentId: intent.id
-        };
-
-        await this.confirmPaymentUseCase.execute(dto);
     }
 
     private async handlePaymentIntentFailed(intent: Stripe.PaymentIntent) {
@@ -132,30 +110,5 @@ export class StripeWebhookController {
             await this.cartRepository.updateCartPaymentIntent(cart.id, null);
         } */
         console.log(`Payment intent ${intent.id} failed. Status updated in DB and cart reactivated.`);
-    }
-
-    private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-        const poolClient = await this.pool.connect();
-
-        try {
-            await poolClient.query('BEGIN');
-
-            const setupIntentId = session.setup_intent as string;
-            const customerId = session.customer as string;
-
-            const setupIntent = await this.stripeService.retrieveSetupIntent(setupIntentId);
-            const paymentMethodId = setupIntent.payment_method as string;
-
-            const paymentMethodParams: Stripe.PaymentMethodAttachParams = {
-                customer: customerId
-            };
-            await this.stripeService.attachPaymentMethodToCustomer(paymentMethodId, paymentMethodParams);
-
-            await poolClient.query('COMMIT');
-        } catch (error) {
-            await poolClient.query('ROLLBACK');
-        } finally {
-            poolClient.release();
-        }
     }
 }

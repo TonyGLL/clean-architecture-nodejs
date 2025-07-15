@@ -20,7 +20,7 @@ export class PostgresOrderRepository implements IOrderRepository {
 
     public async createOrder(params: CreateOrderParams, poolClient: PoolClient): Promise<Order> {
         const orderNumber = this.generateOrderNumber();
-        const orderStatus = 'pending'; // Initial status
+        const orderStatus = 'pending';
 
         const orderResult = await poolClient.query(
             `INSERT INTO orders (client_id, order_number, total_amount, status, shipping_address, billing_address, payment_method)
@@ -79,7 +79,7 @@ export class PostgresOrderRepository implements IOrderRepository {
         );
     }
 
-    async findOrderById(orderId: number): Promise<Order | null> {
+    public async findOrderById(orderId: number): Promise<Order | null> {
         const client = await this.pool.connect();
         try {
             const orderResult = await client.query('SELECT * FROM orders WHERE id = $1', [orderId]);
@@ -95,8 +95,7 @@ export class PostgresOrderRepository implements IOrderRepository {
             );
 
             const orderItems = itemsResult.rows.map(item => new OrderItem(
-                item.id, item.order_id, item.product_id, item.quantity, parseFloat(item.unit_price), parseFloat(item.subtotal),
-                // new Product(item.product_id, item.product_name, '', parseFloat(item.unit_price), 0, '', item.product_image) // Simplified Product for display
+                item.id, item.order_id, item.product_id, item.quantity, parseFloat(item.unit_price), parseFloat(item.subtotal)
             ));
 
             return new Order(
@@ -111,7 +110,7 @@ export class PostgresOrderRepository implements IOrderRepository {
         }
     }
 
-    async findOrdersByClientId(clientId: number): Promise<Order[]> {
+    public async findOrdersByClientId(clientId: number): Promise<Order[]> {
         const client = await this.pool.connect();
         try {
             // This query could be complex if fetching all items for all orders.
@@ -129,8 +128,7 @@ export class PostgresOrderRepository implements IOrderRepository {
                     [orderData.id]
                 );
                 const orderItems = itemsResult.rows.map(item => new OrderItem(
-                    item.id, item.order_id, item.product_id, item.quantity, parseFloat(item.unit_price), parseFloat(item.subtotal),
-                    // new Product(item.product_id, item.product_name, '', parseFloat(item.unit_price), 0, '', item.product_image)
+                    item.id, item.order_id, item.product_id, item.quantity, parseFloat(item.unit_price), parseFloat(item.subtotal)
                 ));
                 orders.push(new Order(
                     orderData.id, orderData.client_id, orderData.order_number, parseFloat(orderData.total_amount),
@@ -146,7 +144,7 @@ export class PostgresOrderRepository implements IOrderRepository {
         }
     }
 
-    async updateOrderStatus(orderId: number, status: string, poolClient: PoolClient): Promise<Order | null> {
+    public async updateOrderStatus(orderId: number, status: string, poolClient: PoolClient): Promise<Order | null> {
         const result = await poolClient.query(
             'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
             [status, orderId]

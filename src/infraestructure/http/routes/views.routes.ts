@@ -11,7 +11,7 @@ router.get('/checkout', async (req: Request, res: Response) => {
         // Para el ejemplo, lo hardcodeamos o lo pasamos por query param
         const clientId = 1;
         const { rows: paymentMethods } = await pool.query(
-            `SELECT id, card_brand, card_last4, stripe_payment_method_id FROM payment_methods WHERE client_id = $1`,
+            `SELECT id, card_brand, card_last4, external_payment_method_id FROM payment_methods WHERE client_id = $1`,
             [clientId]
         );
 

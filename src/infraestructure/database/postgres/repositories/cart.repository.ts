@@ -12,7 +12,15 @@ export class PostgresCartRepository implements ICartRepository {
     ) { }
 
     public async updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void> {
-        throw new Error("Method not implemented.");
+        const text = `
+            UPDATE shopping_carts
+                SET status = $2 WHERE id = $1;
+            `;
+        const query = {
+            text,
+            values: [cartId, status]
+        };
+        await poolClient.query(query);
     }
 
     updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void> {
@@ -52,7 +60,7 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.client_id,
                 sc.created_at AS cart_created_at,
                 sc.status,
-                pm.stripe_payment_intent_id,
+                pm.external_payment_id,
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -84,16 +92,16 @@ export class PostgresCartRepository implements ICartRepository {
             LEFT JOIN categories c ON pc.category_id = c.id
             LEFT JOIN payments pm ON pm.cart_id = sc.id
             WHERE sc.client_id = $1 AND sc.status = 'active'
-            GROUP BY sc.id, pm.stripe_payment_intent_id;
+            GROUP BY sc.id, pm.external_payment_id;
         `;
         const query = {
             text,
             values: [clientId]
         };
         const result = await this.pool.query(query);
-        const { cart_id, client_id, cart_created_at, items, status, stripe_payment_intent_id } = result.rows[0];
+        const { cart_id, client_id, cart_created_at, items, status, external_payment_id } = result.rows[0];
         const cart = new Cart(cart_id, client_id, status, cart_created_at, items || []);
-        cart.setActivePaymentIntenId(stripe_payment_intent_id);
+        cart.setActivePaymentIntenId(external_payment_id);
         if (items.length) {
             cart.calculateSubTotal(items);
             cart.calculateTaxes();

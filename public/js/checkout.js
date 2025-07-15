@@ -102,14 +102,17 @@ async function payWithSavedCard(paymentMethodId) {
 
   try {
     const response = await fetch(
-      '/api/v1/client/payments/create-payment-intent',
+      '/api/v1/client/payments/stripe/create-payment-intent',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ cartId: 1, paymentMethodId: paymentMethodId }),
+        body: JSON.stringify({
+          currency: 'mxn',
+          paymentMethodId: paymentMethodId,
+        }),
       }
     );
     const data = await response.json();
@@ -129,7 +132,7 @@ async function setupNewCardForm() {
   try {
     // 1. Pedimos al backend un "client secret" para el SetupIntent
     const response = await fetch(
-      '/api/v1/client/payments/create-setup-intent',
+      '/api/v1/client/payments/stripe/create-setup-intent',
       {
         method: 'POST',
         headers: {
@@ -193,12 +196,35 @@ async function payWithNewCard() {
 }
 
 // --- Manejo de Respuestas y Resultados ---
-function handleBackendPaymentResponse({ clientSecret, status, orderId }) {
+async function handleBackendPaymentResponse({ clientSecret, status, orderId }) {
   if (status === 'succeeded') {
     window.location.href = `/success?order_id=${orderId}`;
   } else if (status === 'requires_action') {
     // Para autenticación 3D Secure (la ventanita del banco)
-    stripe.handleNextAction({ clientSecret }).then(handleStripeResult);
+    await stripe.handleNextAction({ clientSecret }).then(handleStripeResult);
+  } else if (status === 'requires_confirmation') {
+    const selectedPM = document.querySelector(
+      'input[name="payment-method"]:checked'
+    ).value;
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(
+      clientSecret,
+      {
+        payment_method: selectedPM,
+      }
+    );
+
+    if (error) {
+      showError(error.message);
+      setLoading(false);
+    } else if (paymentIntent.status === 'succeeded') {
+      window.location.href = `/success?order_id=${
+        paymentIntent.metadata?.order_id ?? ''
+      }`;
+    } else {
+      showError(`Pago fallido con estado: ${paymentIntent.status}`);
+      setLoading(false);
+    }
   } else {
     showError(`Pago fallido con estado: ${status}`);
     setLoading(false);

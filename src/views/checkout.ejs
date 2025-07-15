@@ -19,7 +19,7 @@
       <% if (typeof paymentMethods !== 'undefined' && paymentMethods.length > 0) { %>
         <% paymentMethods.forEach(function(method) { %>
           <div class="radio-group">
-            <input type="radio" name="payment-method" id="pm_<%= method.id %>" value="<%= method.stripe_payment_method_id %>" />
+            <input type="radio" name="payment-method" id="pm_<%= method.id %>" value="<%= method.external_payment_method_id %>" />
             <label for="pm_<%= method.id %>"><%= method.card_brand %> terminada en <%= method.card_last4 %></label>
           </div>
         <% }); %>

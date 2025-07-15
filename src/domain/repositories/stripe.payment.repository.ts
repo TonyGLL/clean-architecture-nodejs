@@ -16,6 +16,6 @@ export interface IStripePaymentRepository {
 
     // Payment Intent / Payment related
     createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>, poolClient: PoolClient): Promise<Payment>;
-    updatePaymentStatus(paymentIntentId: string, status: string, poolClient: PoolClient): Promise<Payment | null>;
+    updatePaymentStatus(paymentIntentId: string, status: string, poolClient: PoolClient): Promise<any>;
     findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null>;
 }
