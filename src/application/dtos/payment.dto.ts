@@ -13,11 +13,6 @@ export interface CreatePaymentIntentDTO {
     metadata?: Record<string, any>;
 }
 
-export interface ConfirmPaymentDTO {
-    clientId: number;
-    paymentIntentId: string;
-}
-
 export interface ClientPaymentMethodsDTO {
     clientId: number;
 }

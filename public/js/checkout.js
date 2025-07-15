@@ -118,7 +118,7 @@ async function payWithSavedCard(paymentMethodId) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
 
-    handleBackendPaymentResponse(data);
+    handleBackendPaymentResponse(data, paymentMethodId);
   } catch (error) {
     showError(error.message);
     setLoading(false);
@@ -196,21 +196,20 @@ async function payWithNewCard() {
 }
 
 // --- Manejo de Respuestas y Resultados ---
-async function handleBackendPaymentResponse({ clientSecret, status, orderId }) {
+async function handleBackendPaymentResponse(
+  { clientSecret, status, orderId },
+  paymentMethod
+) {
   if (status === 'succeeded') {
     window.location.href = `/success?order_id=${orderId}`;
   } else if (status === 'requires_action') {
     // Para autenticación 3D Secure (la ventanita del banco)
     await stripe.handleNextAction({ clientSecret }).then(handleStripeResult);
   } else if (status === 'requires_confirmation') {
-    const selectedPM = document.querySelector(
-      'input[name="payment-method"]:checked'
-    ).value;
-
     const { error, paymentIntent } = await stripe.confirmCardPayment(
       clientSecret,
       {
-        payment_method: selectedPM,
+        payment_method: paymentMethod,
       }
     );
 

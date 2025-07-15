@@ -43,7 +43,7 @@ import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCas
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase } from '../../application/use-cases/cart.use-case';
-import { AddPaymentMethodUseCase, ConfirmPaymentUseCase, CreateCheckSessionUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
+import { CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 
 //* Controllers
@@ -54,7 +54,6 @@ import { ModulesController } from '../http/controllers/modules.ctrl';
 import { AuthAdminController } from '../http/controllers/auth.admin.ctrl';
 import { ProductsController } from '../http/controllers/products.ctrl';
 import { CartController } from '../http/controllers/cart.ctrl';
-import { PaymentController } from '../http/controllers/payment.ctrl';
 import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl';
 import { StripeController } from '../http/controllers/stripe.ctrl';
 
@@ -118,12 +117,9 @@ container.bind<AddProductToCartUseCase>(AddProductToCartUseCase).toSelf();
 container.bind<DeleteProductFromCartUseCase>(DeleteProductFromCartUseCase).toSelf();
 container.bind<ClearCartUseCase>(ClearCartUseCase).toSelf();
 // Payment
-container.bind<AddPaymentMethodUseCase>(AddPaymentMethodUseCase).toSelf();
 container.bind<GetClientPaymentMethodsUseCase>(GetClientPaymentMethodsUseCase).toSelf();
 container.bind<DeletePaymentMethodUseCase>(DeletePaymentMethodUseCase).toSelf();
 container.bind<CreatePaymentIntentUseCase>(CreatePaymentIntentUseCase).toSelf();
-container.bind<ConfirmPaymentUseCase>(ConfirmPaymentUseCase).toSelf();
-container.bind<CreateCheckSessionUseCase>(CreateCheckSessionUseCase).toSelf();
 container.bind<CreateSetupIntentUseCase>(CreateSetupIntentUseCase).toSelf();
 // Order
 container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf();
@@ -139,7 +135,6 @@ container.bind<UserController>(UserController).toSelf();
 container.bind<ModulesController>(ModulesController).toSelf();
 container.bind<ProductsController>(ProductsController).toSelf();
 container.bind<CartController>(CartController).toSelf();
-container.bind<PaymentController>(PaymentController).toSelf();
 container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 
