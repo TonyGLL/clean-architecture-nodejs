@@ -2,7 +2,7 @@ import { PoolClient } from "pg";
 import { Payment } from "../entities/payment";
 import { PaymentMethod } from "../entities/paymentMethod";
 
-export interface IPaymentRepository {
+export interface IStripePaymentRepository {
     // Client related
     findClientById(clientId: number): Promise<{ id: number; external_customer_id: string | null; email: string; name: string; } | null>;
     updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, poolClient: PoolClient): Promise<void>;
