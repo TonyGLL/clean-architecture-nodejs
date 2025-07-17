@@ -2,14 +2,87 @@ import { PoolClient } from "pg";
 import { Cart } from "../entities/cart";
 import { AddProductToCartDTOPayload } from "../../application/dtos/cart.dto";
 
+/**
+ * @interface ICartRepository
+ * @desc Interface for cart repository
+ */
 export interface ICartRepository {
-    createCartFromLogin(clientId: number, clientPool?: PoolClient): Promise<void>; // Return cartId
+    /**
+     * @method createCartFromLogin
+     * @param {number} clientId
+     * @param {PoolClient} [clientPool]
+     * @returns {Promise<void>}
+     * @desc Create a cart for a client upon login
+     */
+    createCartFromLogin(clientId: number, clientPool?: PoolClient): Promise<void>;
+
+    /**
+     * @method getCartDetails
+     * @param {number} clientId
+     * @param {number} [cartId]
+     * @returns {Promise<Cart | null>}
+     * @desc Get cart details
+     */
     getCartDetails(clientId: number, cartId?: number): Promise<Cart | null>;
+
+    /**
+     * @method addProductToCart
+     * @param {AddProductToCartDTOPayload} product
+     * @returns {Promise<boolean>}
+     * @desc Add a product to the cart
+     */
     addProductToCart(product: AddProductToCartDTOPayload): Promise<boolean>;
+
+    /**
+     * @method deleteProductFromCart
+     * @param {number} clientId
+     * @param {number} productId
+     * @returns {Promise<void>}
+     * @desc Delete a product from the cart
+     */
     deleteProductFromCart(clientId: number, productId: number): Promise<void>;
+
+    /**
+     * @method clearCart
+     * @param {number} clientId
+     * @param {number} [cartId]
+     * @returns {Promise<void>}
+     * @desc Clear the cart
+     */
     clearCart(clientId: number, cartId?: number): Promise<void>;
+
+    /**
+     * @method updateCartStatus
+     * @param {number} cartId
+     * @param {string} status
+     * @param {PoolClient} poolClient
+     * @returns {Promise<void>}
+     * @desc Update cart status
+     */
     updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void>;
+
+    /**
+     * @method updateCartPaymentIntent
+     * @param {number} cartId
+     * @param {(string | null)} paymentIntentId
+     * @returns {Promise<void>}
+     * @desc Update cart payment intent
+     */
     updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void>;
+
+    /**
+     * @method findCartByPaymentIntent
+     * @param {string} paymentIntentId
+     * @returns {Promise<Cart | null>}
+     * @desc Find a cart by payment intent
+     */
     findCartByPaymentIntent(paymentIntentId: string): Promise<Cart | null>;
+
+    /**
+     * @method getOrCreateActiveCartByClientId
+     * @param {number} clientId
+     * @returns {Promise<Cart>}
+     * @desc Get or create an active cart for a client
+     */
     getOrCreateActiveCartByClientId(clientId: number): Promise<Cart>;
 }
