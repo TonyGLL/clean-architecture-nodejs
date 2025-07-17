@@ -5,7 +5,7 @@ import { PaymentMethod } from "../entities/paymentMethod";
 export interface IStripePaymentRepository {
     // Client related
     findClientById(clientId: number): Promise<{ id: number; external_customer_id: string | null; email: string; name: string; } | null>;
-    updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, poolClient: PoolClient): Promise<void>;
+    updateClientStripeCustomerId(clientId: number, stripeCustomerId: string): Promise<void>;
 
     // Payment Method related
     addPaymentMethod(clientId: number, stripePaymentMethodId: string, cardBrand: string | null, cardLast4: string | null, cardExpMonth: number | null, cardExpYear: number | null, isDefault: boolean): Promise<PaymentMethod>;

@@ -40,6 +40,10 @@ function addEventListeners() {
   document.querySelectorAll('input[name="payment-method"]').forEach((radio) => {
     radio.addEventListener('change', handlePaymentMethodChange);
   });
+
+  document.querySelectorAll('.delete-method-button').forEach((btn) => {
+    btn.addEventListener('click', handleDeletePaymentMethod);
+  });
 }
 
 function handlePaymentMethodChange(event) {
@@ -236,6 +240,56 @@ function handleStripeResult({ error, paymentIntent }) {
     setLoading(false);
   } else if (paymentIntent && paymentIntent.status === 'succeeded') {
     window.location.href = `/success?order_id=${paymentIntent.metadata.order_id}`;
+  }
+}
+
+async function handleDeletePaymentMethod(event) {
+  event.preventDefault();
+  const button = event.currentTarget;
+  const methodId = button.dataset.methodId;
+
+  const confirmed = confirm(
+    '¿Estás seguro de que deseas eliminar este método de pago?'
+  );
+
+  if (!confirmed) return;
+
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    showError('No estás autenticado.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(
+      `/api/v1/client/payments/stripe/payment-methods/${methodId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    await response.json();
+
+    // Opcional: eliminar visualmente el método del DOM
+    button.closest('.payment-method-row').remove();
+
+    // Si se eliminó el método que estaba seleccionado, selecciona otro o "nueva tarjeta"
+    const selected = document.querySelector(
+      'input[name="payment-method"]:checked'
+    );
+    if (!selected || selected.id === methodId) {
+      document.getElementById('pm_new').checked = true;
+    }
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    setLoading(false);
   }
 }
 

@@ -30,9 +30,9 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         };
     }
 
-    public async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string, client: PoolClient): Promise<void> {
-        await client.query(
-            'UPDATE clients SET external_customer_id = $1, updated_at = NOW(), customer_provider = "stripe" WHERE id = $2',
+    public async updateClientStripeCustomerId(clientId: number, stripeCustomerId: string): Promise<void> {
+        await this.pool.query(
+            'UPDATE clients SET external_customer_id = $1, updated_at = NOW(), customer_provider = \'stripe\' WHERE id = $2',
             [stripeCustomerId, clientId]
         );
     }

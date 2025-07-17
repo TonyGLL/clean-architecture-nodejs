@@ -1,3 +1,4 @@
+
 import { inject, injectable } from "inversify";
 import { IStripePaymentRepository } from "../../domain/repositories/stripe.payment.repository";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
@@ -12,6 +13,48 @@ import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 import { Pool } from "pg";
 import { Payment } from "../../domain/entities/payment";
 import { CreateOrderParams, IOrderRepository } from "../../domain/repositories/order.repository";
+
+@injectable()
+export class AddPaymentMethodUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
+        @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository
+    ) { }
+
+    public async execute(dto: AddPaymentMethodDTO): Promise<[number, PaymentMethod]> {
+        const client = await this.stripePaymentRepository.findClientById(dto.clientId);
+        if (!client || !client.external_customer_id) {
+            throw new HttpError(HttpStatusCode.NOT_FOUND, "Stripe customer not found.");
+        }
+
+        try {
+            // Attach the payment method to the customer in Stripe
+            await this.stripeService.attachPaymentMethod(dto.stripePaymentMethodId, client.external_customer_id);
+
+            // Retrieve payment method details to store locally
+            const paymentMethodDetails = await this.stripeService.retrievePaymentMethod(dto.stripePaymentMethodId);
+            if (!paymentMethodDetails.card) {
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, "Payment method is not a card.");
+            }
+
+            // Add payment method to the local database
+            const newPaymentMethod = await this.stripePaymentRepository.addPaymentMethod(
+                dto.clientId,
+                dto.stripePaymentMethodId,
+                paymentMethodDetails.card.brand,
+                paymentMethodDetails.card.last4,
+                paymentMethodDetails.card.exp_month,
+                paymentMethodDetails.card.exp_year,
+                dto.isDefault || false
+            );
+
+            return [HttpStatusCode.CREATED, newPaymentMethod];
+        } catch (error: any) {
+            if (error instanceof HttpError) throw error;
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Failed to add payment method: ${error.message}`);
+        }
+    }
+}
 
 @injectable()
 export class GetClientPaymentMethodsUseCase {
@@ -34,9 +77,7 @@ export class DeletePaymentMethodUseCase {
 
     public async execute(dto: DeletePaymentMethodDTO): Promise<[number, object]> {
         const paymentMethod = await this.stripePaymentRepository.findPaymentMethodByStripeId(dto.paymentMethodId);
-        if (!paymentMethod || paymentMethod.clientId !== dto.clientId) {
-            throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment method not found or does not belong to the client.");
-        }
+        if (!paymentMethod) throw new HttpError(HttpStatusCode.NOT_FOUND, "Payment method not found or does not belong to the client.");
 
         try {
             await this.stripeService.detachPaymentMethod(dto.paymentMethodId);
@@ -86,7 +127,7 @@ export class CreatePaymentIntentUseCase {
                 const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
                 //* Actualizar el cliente en la base de datos con el customer_id de Stripe
-                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id);
                 customerId = id;
             }
 
@@ -175,14 +216,10 @@ export class CreateSetupIntentUseCase {
         const poolClient = await this.pool.connect();
 
         try {
+            await poolClient.query('BEGIN');
             //* Validar si el cliente existe
             const client = await this.stripePaymentRepository.findClientById(clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
-
-            //* Validar si el cliente tiene un carrito activo
-            const cart = await this.cartRepository.getCartDetails(clientId);
-            if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
-            if (cart.status !== 'active') throw new HttpError(HttpStatusCode.CONFLICT, "Cart is not active. Cannot create payment intent.");
 
             let customerId = client.external_customer_id;
             //* Si el cliente no tiene un customer_id de Stripe, crearlo
@@ -197,7 +234,7 @@ export class CreateSetupIntentUseCase {
                 const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
                 //* Actualizar el cliente en la base de datos con el customer_id de Stripe
-                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id, poolClient);
+                await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id);
                 customerId = id;
             }
 

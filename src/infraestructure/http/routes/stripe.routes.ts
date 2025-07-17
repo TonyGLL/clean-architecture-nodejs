@@ -10,6 +10,7 @@ router
     .get('/payment-methods', controller.getClientPaymentMethods)
     .delete('/payment-methods/:paymentMethodId', DeletePaymentMethodValidator, controller.deletePaymentMethod)
     .post('/create-payment-intent', CreatePaymentIntentValidator, controller.createPaymentIntent)
-    .post('/create-setup-intent', controller.createSetupIntent);
+    .post('/create-setup-intent', controller.createSetupIntent)
+    .post('/payment-methods', PaymentMethodValidator, controller.addPaymentMethod);
 
 export default router;

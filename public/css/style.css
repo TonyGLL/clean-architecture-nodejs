@@ -80,6 +80,34 @@ button:disabled {
     margin-right: 15px;
 }
 
+/* --- Nuevo: fila para métodos de pago con botón eliminar --- */
+.payment-method-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* --- Botón de eliminar método de pago (específico y sin heredar estilos generales) --- */
+.delete-method-button {
+  all: unset; /* Limpia TODOS los estilos heredados del button { ... } */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #e3342f; /* rojo intenso */
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.delete-method-button:hover {
+  color: #a71d2a; /* rojo más oscuro al hacer hover */
+  background-color: rgba(227, 52, 47, 0.1);
+}
+
+/* --- Guardar tarjeta nueva --- */
 #save-card-option {
     margin-top: 15px;
 }
@@ -164,6 +192,7 @@ button:disabled {
     color: black;
 }
 
+/* --- Formulario Login --- */
 .form-group {
     margin-bottom: 15px;
 }
