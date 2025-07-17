@@ -9,6 +9,7 @@ export class PaymentMethod {
         public cardExpYear: number | null,
         public isDefault: boolean,
         public createdAt: Date,
-        public updatedAt: Date
-    ) {}
+        public updatedAt: Date,
+        public client_id: number
+    ) { }
 }

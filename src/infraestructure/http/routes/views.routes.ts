@@ -27,9 +27,14 @@ router.get('/checkout', async (req: Request, res: Response) => {
 
 // Página para añadir tarjeta
 router.get('/add-card', (req: Request, res: Response) => {
-    res.render('add-card', {
-        stripePublicKey: config.STRIPE_PUBLIC_KEY
-    });
+    try {
+        res.render('add-card', {
+            stripePublicKey: config.STRIPE_PUBLIC_KEY
+        });
+    } catch (error) {
+        console.error('ERROR en /add-card:', error instanceof Error ? error.message : error);
+        res.status(500).send('Error interno');
+    }
 });
 
 // Página de éxito

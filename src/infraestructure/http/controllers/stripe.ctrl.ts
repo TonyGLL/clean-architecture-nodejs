@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/stripe.use-case";
+import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from "../../../application/use-cases/stripe.use-case";
 import { AddPaymentMethodDTO, CreatePaymentIntentDTO, DeletePaymentMethodDTO } from "../../../application/dtos/payment.dto";
 
 @injectable()
@@ -9,7 +9,8 @@ export class StripeController {
         @inject(GetClientPaymentMethodsUseCase) private getClientPaymentMethodsUseCase: GetClientPaymentMethodsUseCase,
         @inject(DeletePaymentMethodUseCase) private deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
         @inject(CreatePaymentIntentUseCase) private createPaymentIntentUseCase: CreatePaymentIntentUseCase,
-        @inject(CreateSetupIntentUseCase) private createSetupIntentUseCase: CreateSetupIntentUseCase
+        @inject(CreateSetupIntentUseCase) private createSetupIntentUseCase: CreateSetupIntentUseCase,
+        @inject(AddPaymentMethodUseCase) private addPaymentMethodUseCase: AddPaymentMethodUseCase
     ) { }
 
     public getClientPaymentMethods = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -57,6 +58,19 @@ export class StripeController {
             const clientId = req.user!.id;
 
             const [status, data] = await this.createSetupIntentUseCase.execute(clientId);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public addPaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user!.id;
+            const { paymentMethodId, isDefault } = req.body;
+
+            const dto: AddPaymentMethodDTO = { clientId, stripePaymentMethodId: paymentMethodId, isDefault };
+            const [status, data] = await this.addPaymentMethodUseCase.execute(dto);
             res.status(status).json(data);
         } catch (error) {
             next(error);

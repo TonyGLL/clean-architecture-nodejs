@@ -39,6 +39,22 @@ export class StripePaymentService implements IStripeService {
         }
     }
 
+    public async attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.Response<Stripe.PaymentMethod>> {
+        try {
+            return await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+        } catch (error: any) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe attach payment method failed: ${error.message}`);
+        }
+    }
+
+    public async retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>> {
+        try {
+            return await this.stripe.paymentMethods.retrieve(paymentMethodId);
+        } catch (error: any) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe retrieve payment method failed: ${error.message}`);
+        }
+    }
+
     public async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>> {
         try {
             return await this.stripe.paymentMethods.detach(paymentMethodId);

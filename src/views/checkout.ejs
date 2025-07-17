@@ -18,9 +18,28 @@
       <!-- Lista de tarjetas guardadas -->
       <% if (typeof paymentMethods !== 'undefined' && paymentMethods.length > 0) { %>
         <% paymentMethods.forEach(function(method) { %>
-          <div class="radio-group">
-            <input type="radio" name="payment-method" id="pm_<%= method.id %>" value="<%= method.external_payment_method_id %>" />
-            <label for="pm_<%= method.id %>"><%= method.card_brand %> terminada en <%= method.card_last4 %></label>
+          <div class="radio-group payment-method-row">
+            <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+              <input
+                type="radio"
+                name="payment-method"
+                id="pm_<%= method.id %>"
+                value="<%= method.external_payment_method_id %>"
+              />
+              <label for="pm_<%= method.id %>">
+                <%= method.card_brand %> terminada en <%= method.card_last4 %>
+              </label>
+            </div>
+
+            <!-- Botón eliminar método -->
+            <button
+              class="delete-method-button"
+              data-method-id="<%= method.external_payment_method_id %>"
+              title="Eliminar tarjeta"
+              aria-label="Eliminar tarjeta"
+            >
+              🗑️
+            </button>
           </div>
         <% }); %>
       <% } %>
@@ -31,11 +50,11 @@
         <label for="pm_new">Pagar con nueva tarjeta</label>
       </div>
 
-      <!-- CONTENEDOR DEL FORMULARIO DE STRIPE (se muestra/oculta con JS) -->
+      <!-- CONTENEDOR DEL FORMULARIO DE STRIPE -->
       <div id="new-card-container" class="hidden">
         <h3>Datos de la nueva tarjeta</h3>
         <div id="payment-element">
-          <!-- El formulario de Stripe se montará aquí -->
+          <!-- Stripe montará aquí el formulario -->
         </div>
         <div id="save-card-option">
           <input type="checkbox" id="save-card-checkbox" />
@@ -43,11 +62,11 @@
         </div>
       </div>
 
-      <!-- Botón de pago unificado -->
+      <!-- Botón de pagar -->
       <button id="pay-btn">Pagar Ahora</button>
     </div>
 
-    <!-- Contenedores para mensajes de estado y spinner -->
+    <!-- Spinner y errores -->
     <div id="spinner" class="spinner hidden"></div>
     <p id="error-message" class="error-message hidden"></p>
   </div>

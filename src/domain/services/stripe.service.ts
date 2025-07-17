@@ -48,6 +48,10 @@ export interface IStripeService {
      */
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
+    attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
+
+    retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
+
     /**
      * Desasocia un método de pago de un cliente.
      *
