@@ -48,8 +48,31 @@ export interface IStripeService {
      */
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
+    /**
+     * Asocia un método de pago a un cliente en Stripe.
+     *
+     * @name attachPaymentMethod
+     * @param {string} paymentMethodId - El ID del método de pago a asociar.
+     * @param {string} customerId - El ID del cliente al que se asociará el método de pago.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago asociado.
+     * @throws {HttpError} Lanza un error HTTP 500 si la operación falla en Stripe.
+     *
+     * @example
+     * const paymentMethod = await stripePaymentService.attachPaymentMethod('pm_xxx', 'cus_xxx');
+     */
     attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
 
+    /**
+     * Recupera un método de pago por su ID.
+     *
+     * @name retrievePaymentMethod
+     * @param {string} paymentMethodId - El ID del método de pago a recuperar.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago.
+     * @throws {HttpError} Lanza un error HTTP 500 si la recuperación falla en Stripe.
+     *
+     * @example
+     * const paymentMethod = await stripePaymentService.retrievePaymentMethod('pm_xxx');
+     */
     retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
 
     /**
