@@ -25,6 +25,8 @@ import { IStripePaymentRepository } from '../../domain/repositories/stripe.payme
 import { PostgresStripePaymentRepository } from '../database/postgres/repositories/stripe.payment.repository';
 import { IOrderRepository } from '../../domain/repositories/order.repository';
 import { PostgresOrderRepository } from '../database/postgres/repositories/order.repository';
+import { IAddressRepository } from '../../domain/repositories/address.repository';
+import { PostgresAddressRepository } from '../database/postgres/repositories/address.repository';
 
 //* Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -45,6 +47,7 @@ import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWith
 import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase } from '../../application/use-cases/cart.use-case';
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
+import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 
 //* Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -56,6 +59,7 @@ import { ProductsController } from '../http/controllers/products.ctrl';
 import { CartController } from '../http/controllers/cart.ctrl';
 import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl';
 import { StripeController } from '../http/controllers/stripe.ctrl';
+import { AddressController } from '../http/controllers/address.ctrl';
 
 const container = new Container();
 
@@ -72,6 +76,7 @@ container.bind<IProductsRepository>(DOMAIN_TYPES.IProductsRepository).to(Postgre
 container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRepository);
 container.bind<IStripePaymentRepository>(DOMAIN_TYPES.IStripePaymentRepository).to(PostgresStripePaymentRepository);
 container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository);
+container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -127,6 +132,13 @@ container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf();
 container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf();
 container.bind<GetClientOrdersUseCase>(GetClientOrdersUseCase).toSelf();
 container.bind<UpdateOrderStatusUseCase>(UpdateOrderStatusUseCase).toSelf();
+// Address
+container.bind<CreateAddressUseCase>(CreateAddressUseCase).toSelf();
+container.bind<GetAddressByClientIdUseCase>(GetAddressByClientIdUseCase).toSelf();
+container.bind<GetAddressByIdUseCase>(GetAddressByIdUseCase).toSelf();
+container.bind<UpdateAddressUseCase>(UpdateAddressUseCase).toSelf();
+container.bind<DeleteAddressUseCase>(DeleteAddressUseCase).toSelf();
+container.bind<SetDefaultAddressUseCase>(SetDefaultAddressUseCase).toSelf();
 
 //* Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -138,5 +150,6 @@ container.bind<ProductsController>(ProductsController).toSelf();
 container.bind<CartController>(CartController).toSelf();
 container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
+container.bind<AddressController>(AddressController).toSelf();
 
 export { container };
