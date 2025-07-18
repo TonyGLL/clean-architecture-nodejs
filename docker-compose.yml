@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ca_nodejs:0.0.3
+    image: ca_nodejs:0.0.4
     container_name: ca_nodejs
     ports:
       - '3000:3000'
