@@ -12,4 +12,5 @@ export const DOMAIN_TYPES = {
     IStripePaymentRepository: Symbol.for("IStripePaymentRepository"),
     IStripeService: Symbol.for("IStripeService"),
     IOrderRepository: Symbol.for("IOrderRepository"), // Added
+    IAddressRepository: Symbol.for("IAddressRepository"),
 };
