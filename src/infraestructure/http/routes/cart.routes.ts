@@ -8,6 +8,7 @@ const controller = container.get<CartController>(CartController);
 router
     .get('/', controller.getCart)
     .post('/add/:id', controller.addProductToCart)
+    .post('/address/:id', controller.linkAddressToCart)
     .delete('/delete/:id', controller.deleteProductFromCart)
     .delete('/clear', controller.clearCart);
 

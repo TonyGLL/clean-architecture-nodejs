@@ -153,4 +153,13 @@ export class PostgresCartRepository implements ICartRepository {
         };
         await this.pool.query(query);
     }
+
+    public async linkAddressToCart(addressId: number, clientId: number): Promise<void> {
+        const text = `UPDATE shopping_carts SET shipping_address_id = $2 WHERE client_id = $1 AND status = 'active'`;
+        const query = {
+            text,
+            values: [clientId, addressId]
+        }
+        await this.pool.query(query);
+    }
 }

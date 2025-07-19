@@ -85,4 +85,13 @@ export interface ICartRepository {
      * @desc Get or create an active cart for a client
      */
     getOrCreateActiveCartByClientId(clientId: number): Promise<Cart>;
+
+    /**
+     * @method linkAddressToCart
+     * @param {number} addressId
+     * @param {number} clientId
+     * @returns {Promise<Cart>}
+     * @desc Link a valid client address to his current cart
+     */
+    linkAddressToCart(addressId: number, clientId: number): Promise<void>;
 }
