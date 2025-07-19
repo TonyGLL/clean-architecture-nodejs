@@ -159,7 +159,18 @@ export class CreatePaymentIntentUseCase {
                 payment_method: dto.paymentMethodId,
                 confirm: dto.confirm || false,
                 metadata: { ...dto.metadata, cart_id: cart.id.toString(), client_id: dto.clientId.toString() },
-                description: `Payment for cart ${cart.id}`
+                description: `Payment for cart ${cart.id}`,
+                shipping: {
+                    name: client.name,
+                    address: {
+                        line1: cart.address?.address_line1,
+                        line2: cart.address?.address_line2,
+                        city: cart.address?.city,
+                        state: cart.address?.state,
+                        postal_code: cart.address?.postal_code,
+                        country: cart.address?.country
+                    }
+                },
             };
             paymentIntent = await this.stripeService.createPaymentIntent(createPaymentIntentParams);
 
@@ -207,8 +218,6 @@ export class CreateSetupIntentUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IStripeService) private stripeService: IStripeService,
         @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
-        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
-        @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 

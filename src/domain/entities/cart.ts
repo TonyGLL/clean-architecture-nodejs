@@ -1,4 +1,5 @@
 import { CartItemDTO } from "../../application/dtos/product.dto";
+import { Address } from "./address";
 import { Product } from "./product";
 
 export class Cart {
@@ -8,11 +9,12 @@ export class Cart {
         public status: string = 'active',
         public createdAt: Date = new Date(),
         public items: Product[] = [],
+        public address: Address | null,
         public subTotal: number = 0,
         public taxes: number = 0,
         public shipping: number = 40,
         public total: number = 0,
-        public activePaymentIntentId?: string | null // Added to store associated PI
+        public activePaymentIntentId?: string | null
     ) { }
 
     public setActivePaymentIntenId(id: string): void {
