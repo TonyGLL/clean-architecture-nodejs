@@ -61,6 +61,20 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.created_at AS cart_created_at,
                 sc.status,
                 pm.external_payment_id,
+
+                -- Dirección de envío (puede ser NULL si no existe)
+                json_build_object(
+                    'id', a.id,
+                    'address_line1', a.address_line1,
+                    'address_line2', a.address_line2,
+                    'city', a.city,
+                    'state', a.state,
+                    'postal_code', a.postal_code,
+                    'country', a.country,
+                    'is_default', a.is_default
+                ) AS address,
+
+                -- Productos en el carrito
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -91,16 +105,17 @@ export class PostgresCartRepository implements ICartRepository {
             LEFT JOIN product_categories pc ON pc.product_id = p.id
             LEFT JOIN categories c ON pc.category_id = c.id
             LEFT JOIN payments pm ON pm.cart_id = sc.id
+            LEFT JOIN addresses a ON sc.shipping_address_id = a.id
             WHERE sc.client_id = $1 AND sc.status = 'active'
-            GROUP BY sc.id, pm.external_payment_id;
+            GROUP BY sc.id, pm.external_payment_id, a.id;
         `;
         const query = {
             text,
             values: [clientId]
         };
         const result = await this.pool.query(query);
-        const { cart_id, client_id, cart_created_at, items, status, external_payment_id } = result.rows[0];
-        const cart = new Cart(cart_id, client_id, status, cart_created_at, items || []);
+        const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address } = result.rows[0];
+        const cart = new Cart(cart_id, client_id, status, cart_created_at, items || [], address);
         cart.setActivePaymentIntenId(external_payment_id);
         if (items.length) {
             cart.calculateSubTotal(items);
