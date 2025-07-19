@@ -71,3 +71,15 @@ export class ClearCartUseCase {
         return [HttpStatusCode.NO_CONTENT, {}];
     }
 }
+
+@injectable()
+export class LinkAddressToCartUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository
+    ) { }
+
+    public async execute(addressId: number, clientId: number): Promise<[number, object]> {
+        await this.cartRepository.linkAddressToCart(addressId, clientId);
+        return [HttpStatusCode.NO_CONTENT, {}];
+    }
+}

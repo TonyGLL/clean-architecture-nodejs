@@ -139,8 +139,9 @@ CREATE TABLE product_categories (
 CREATE TABLE shopping_carts (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    shipping_address_id INT REFERENCES addresses(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(), -- Added updated_at
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')), -- Added 'pending_payment'
 );
 
