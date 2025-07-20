@@ -13,7 +13,7 @@ const errorMessage = document.getElementById('error-message');
 
 function initializeAddCardFlow(publicKey) {
   if (!publicKey) {
-    showError('Error: Clave pública de Stripe no configurada.');
+    showError('Error: Stripe public key not configured.');
     return;
   }
 
@@ -58,7 +58,7 @@ async function setupStripeForm(token) {
     const paymentElement = elements.create('payment');
     paymentElement.mount('#payment-element');
   } catch (error) {
-    showError('Error al inicializar Stripe: ' + error.message);
+    showError('Error initializing Stripe: ' + error.message);
   } finally {
     setLoading(false);
   }
@@ -66,7 +66,7 @@ async function setupStripeForm(token) {
 
 async function handleAddCard() {
   if (!elements) {
-    showError('El formulario de tarjeta no está listo.');
+    showError('The card form is not ready.');
     return;
   }
 
@@ -85,12 +85,12 @@ async function handleAddCard() {
 
     if (setupError) throw new Error(setupError.message);
     if (setupIntent.status !== 'succeeded') {
-      throw new Error(`El guardado falló con estado: ${setupIntent.status}`);
+      throw new Error(`Saving failed with status: ${setupIntent.status}`);
     }
 
     const paymentMethodId = setupIntent.payment_method;
 
-    // Llamamos al backend para asociar y marcar como predeterminado si aplica
+    // We call the backend to associate and mark as default if applicable.
     const response = await fetch(
       '/api/v1/client/payments/stripe/payment-methods',
       {

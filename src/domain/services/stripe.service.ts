@@ -2,29 +2,29 @@ import Stripe from 'stripe';
 
 export interface IStripeService {
     /**
-     * Crea un nuevo cliente en Stripe.
+     * Creates a new customer in Stripe.
      *
      * @name createCustomer
-     * @param {Stripe.CustomerCreateParams} params - Parámetros para la creación del cliente, como email, nombre, descripción, etc.
-     * @returns {Promise<Stripe.Response<Stripe.Customer>>} Una promesa que resuelve con la respuesta de Stripe que contiene el cliente creado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la creación del cliente falla en Stripe.
+     * @param {Stripe.CustomerCreateParams} params - Parameters for customer creation, such as email, name, description, etc.
+     * @returns {Promise<Stripe.Response<Stripe.Customer>>} A promise that resolves with the Stripe response containing the created customer.
+     * @throws {HttpError} Throws an HTTP 500 error if customer creation fails in Stripe.
      *
      * @example
      * const customer = await stripePaymentService.createCustomer({
-     *   email: 'usuario@ejemplo.com',
-     *   name: 'Nombre Apellido',
-     *   description: 'Cliente de ejemplo'
+     *   email: 'user@example.com',
+     *   name: 'Name Lastname',
+     *   description: 'Example customer'
      * });
      */
     createCustomer(params: Stripe.CustomerCreateParams): Promise<Stripe.Response<Stripe.Customer>>;
 
     /**
-     * Crea un nuevo PaymentIntent en Stripe.
+     * Creates a new PaymentIntent in Stripe.
      *
      * @name createPaymentIntent
-     * @param {Stripe.PaymentIntentCreateParams} params - Parámetros para la creación del PaymentIntent (monto, moneda, customer, etc).
-     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el PaymentIntent creado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la creación del PaymentIntent falla en Stripe.
+     * @param {Stripe.PaymentIntentCreateParams} params - Parameters for PaymentIntent creation (amount, currency, customer, etc).
+     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} A promise that resolves with the Stripe response containing the created PaymentIntent.
+     * @throws {HttpError} Throws an HTTP 500 error if PaymentIntent creation fails in Stripe.
      *
      * @example
      * const paymentIntent = await stripePaymentService.createPaymentIntent({
@@ -36,12 +36,12 @@ export interface IStripeService {
     createPaymentIntent(params: Stripe.PaymentIntentCreateParams): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
     /**
-     * Recupera un PaymentIntent por su ID.
+     * Retrieves a PaymentIntent by its ID.
      *
      * @name retrievePaymentIntent
-     * @param {string} paymentIntentId - El ID del PaymentIntent a recuperar.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el PaymentIntent.
-     * @throws {HttpError} Lanza un error HTTP 500 si la recuperación falla en Stripe.
+     * @param {string} paymentIntentId - The ID of the PaymentIntent to retrieve.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} A promise that resolves with the Stripe response containing the PaymentIntent.
+     * @throws {HttpError} Throws an HTTP 500 error if retrieval fails in Stripe.
      *
      * @example
      * const paymentIntent = await stripePaymentService.retrievePaymentIntent('pi_xxx');
@@ -49,13 +49,13 @@ export interface IStripeService {
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
     /**
-     * Asocia un método de pago a un cliente en Stripe.
+     * Attaches a payment method to a customer in Stripe.
      *
      * @name attachPaymentMethod
-     * @param {string} paymentMethodId - El ID del método de pago a asociar.
-     * @param {string} customerId - El ID del cliente al que se asociará el método de pago.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago asociado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la operación falla en Stripe.
+     * @param {string} paymentMethodId - The ID of the payment method to attach.
+     * @param {string} customerId - The ID of the customer to whom the payment method will be attached.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} A promise that resolves with the Stripe response containing the attached payment method.
+     * @throws {HttpError} Throws an HTTP 500 error if the operation fails in Stripe.
      *
      * @example
      * const paymentMethod = await stripePaymentService.attachPaymentMethod('pm_xxx', 'cus_xxx');
@@ -63,12 +63,12 @@ export interface IStripeService {
     attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
 
     /**
-     * Recupera un método de pago por su ID.
+     * Retrieves a payment method by its ID.
      *
      * @name retrievePaymentMethod
-     * @param {string} paymentMethodId - El ID del método de pago a recuperar.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago.
-     * @throws {HttpError} Lanza un error HTTP 500 si la recuperación falla en Stripe.
+     * @param {string} paymentMethodId - The ID of the payment method to retrieve.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} A promise that resolves with the Stripe response containing the payment method.
+     * @throws {HttpError} Throws an HTTP 500 error if retrieval fails in Stripe.
      *
      * @example
      * const paymentMethod = await stripePaymentService.retrievePaymentMethod('pm_xxx');
@@ -76,12 +76,12 @@ export interface IStripeService {
     retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
 
     /**
-     * Desasocia un método de pago de un cliente.
+     * Detaches a payment method from a customer.
      *
      * @name detachPaymentMethod
-     * @param {string} paymentMethodId - El ID del método de pago a desasociar.
-     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} Una promesa que resuelve con la respuesta de Stripe que contiene el método de pago desasociado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la operación falla en Stripe.
+     * @param {string} paymentMethodId - The ID of the payment method to detach.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentMethod>>} A promise that resolves with the Stripe response containing the detached payment method.
+     * @throws {HttpError} Throws an HTTP 500 error if the operation fails in Stripe.
      *
      * @example
      * const detached = await stripePaymentService.detachPaymentMethod('pm_xxx');
@@ -89,12 +89,12 @@ export interface IStripeService {
     detachPaymentMethod(paymentMethodId: string): Promise<Stripe.Response<Stripe.PaymentMethod>>;
 
     /**
-     * Crea un SetupIntent para guardar un método de pago para uso futuro.
+     * Creates a SetupIntent to save a payment method for future use.
      *
      * @name createSetupIntent
-     * @param {Stripe.SetupIntentCreateParams} params - Parámetros para la creación del SetupIntent.
-     * @returns {Promise<Stripe.Response<Stripe.SetupIntent>>} Una promesa que resuelve con la respuesta de Stripe que contiene el SetupIntent creado.
-     * @throws {HttpError} Lanza un error HTTP 500 si la creación falla en Stripe.
+     * @param {Stripe.SetupIntentCreateParams} params - Parameters for SetupIntent creation.
+     * @returns {Promise<Stripe.Response<Stripe.SetupIntent>>} A promise that resolves with the Stripe response containing the created SetupIntent.
+     * @throws {HttpError} Throws an HTTP 500 error if creation fails in Stripe.
      *
      * @example
      * const setupIntent = await stripePaymentService.createSetupIntent({ customer: 'cus_xxx' });
@@ -102,14 +102,14 @@ export interface IStripeService {
     createSetupIntent(params: Stripe.SetupIntentCreateParams): Promise<Stripe.Response<Stripe.SetupIntent>>;
 
     /**
-     * Construye y valida un evento de webhook recibido desde Stripe.
+     * Constructs and validates a webhook event received from Stripe.
      *
      * @name constructWebhookEvent
-     * @param {string | Buffer} payload - El cuerpo crudo recibido en el webhook.
-     * @param {string | string[] | Buffer} sig - La cabecera Stripe-Signature del webhook.
-     * @param {string} secret - El secreto del endpoint de webhook.
-     * @returns {Stripe.Event} El evento validado de Stripe.
-     * @throws {HttpError} Lanza un error HTTP 400 si la validación falla.
+     * @param {string | Buffer} payload - The raw body received in the webhook.
+     * @param {string | string[] | Buffer} sig - The Stripe-Signature header of the webhook.
+     * @param {string} secret - The webhook endpoint secret.
+     * @returns {Stripe.Event} The validated Stripe event.
+     * @throws {HttpError} Throws an HTTP 400 error if validation fails.
      *
      * @example
      * const event = stripePaymentService.constructWebhookEvent(req.body, req.headers['stripe-signature'], webhookSecret);

@@ -62,7 +62,7 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.status,
                 pm.external_payment_id,
 
-                -- Dirección de envío (puede ser NULL si no existe)
+                // Shipping address (can be NULL if it does not exist)
                 json_build_object(
                     'id', a.id,
                     'address_line1', a.address_line1,
@@ -74,7 +74,7 @@ export class PostgresCartRepository implements ICartRepository {
                     'is_default', a.is_default
                 ) AS address,
 
-                -- Productos en el carrito
+                // Products in the cart
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -83,7 +83,7 @@ export class PostgresCartRepository implements ICartRepository {
                             'unit_price', ci.unit_price,
                             'added_at', ci.added_at,
 
-                            -- Datos del producto
+                            // Product data
                             'name', p.name,
                             'description', p.description,
                             'price', p.price,
@@ -91,7 +91,7 @@ export class PostgresCartRepository implements ICartRepository {
                             'sku', p.sku,
                             'image', p.image,
 
-                            -- Datos de la categoría
+                            // Category data
                             'category_id', c.id,
                             'category_name', c.name,
                             'category_description', c.description

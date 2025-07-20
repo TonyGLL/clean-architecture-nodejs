@@ -1,135 +1,135 @@
 # Clean Architecture Node.js API
 
-## Descripción
+## Description
 
-Este proyecto es una API RESTful construida con Node.js, Express.js y TypeScript, siguiendo los principios de Clean Architecture. Proporciona una base sólida para construir servicios de backend escalables y mantenibles, con un enfoque principal en la autenticación y gestión de usuarios, catálogo de productos, carrito de compras y procesamiento de pagos. La arquitectura enfatiza la separación de preocupaciones, lo que hace que el código base sea modular, comprobable y fácil de evolucionar.
+This project is a RESTful API built with Node.js, Express.js, and TypeScript, following the principles of Clean Architecture. It provides a solid foundation for building scalable and maintainable backend services, with a primary focus on user authentication and management, product catalog, shopping cart, and payment processing. The architecture emphasizes separation of concerns, making the codebase modular, testable, and easy to evolve.
 
 ## Features
 
-*   **Sistema de Autenticación Dual:**
-    *   **Autenticación de Cliente:** Permite a los nuevos clientes (compradores) registrarse, iniciar sesión y gestionar sus cuentas (por ejemplo, restablecer la contraseña por correo electrónico).
-    *   **Autenticación de Administrador:** Autenticación separada para usuarios administradores con tokens de sesión basados en JWT.
-*   **Gestión Segura de Contraseñas:** Utiliza `bcryptjs` para hashear las contraseñas tanto de los clientes como de los usuarios administradores.
-*   **Control de Acceso Basado en Roles (RBAC) para el Panel de Administración:** Asegura los endpoints de la API de administración mediante JSON Web Tokens y permisos basados en roles.
-*   **Gestión de Usuarios y Roles de Administrador:** Proporciona operaciones CRUD para gestionar usuarios administradores y sus roles/permisos.
-*   **Gestión de Módulos (Admin):** Permite a los administradores realizar operaciones CRUD en los módulos del sistema, que se utilizan para definir permisos.
-*   **Gestión del Catálogo de Productos:**
-    *   Los administradores pueden insertar o actualizar productos y sus categorías a través de un procedimiento almacenado.
-    *   Los clientes pueden buscar productos, ver detalles de productos y listar productos por categoría.
-*   **Funcionalidad del Carrito de Compras (Cliente):**
-    *   Los clientes pueden agregar productos a su carrito.
-    *   Ver los detalles del carrito.
-    *   Eliminar productos del carrito.
-    *   Vaciar todo el carrito.
-*   **Integración de Pagos con Stripe:**
-    *   Gestión de métodos de pago del cliente.
-    *   Creación de intentos de pago (Payment Intents) para procesar transacciones.
-    *   Manejo de webhooks de Stripe para actualizar el estado de los pagos y pedidos.
-*   **Gestión de Pedidos:**
-    *   Creación de pedidos después de un pago exitoso.
-    *   Consulta del historial de pedidos para los clientes.
-    *   Actualización del estado de los pedidos (por ejemplo, pendiente, enviado, entregado).
-*   **Health Check:** Un endpoint dedicado (`/health`) para monitorear el estado de la API.
+*   **Dual Authentication System:**
+    *   **Client Authentication:** Allows new customers (shoppers) to register, log in, and manage their accounts (e.g., reset password via email).
+    *   **Admin Authentication:** Separate authentication for admin users with JWT-based session tokens.
+*   **Secure Password Management:** Uses `bcryptjs` to hash the passwords of both clients and admin users.
+*   **Role-Based Access Control (RBAC) for the Admin Panel:** Secures the admin API endpoints using JSON Web Tokens and role-based permissions.
+*   **Admin User and Role Management:** Provides CRUD operations to manage admin users and their roles/permissions.
+*   **Module Management (Admin):** Allows admins to perform CRUD operations on system modules, which are used to define permissions.
+*   **Product Catalog Management:**
+    *   Admins can insert or update products and their categories through a stored procedure.
+    *   Clients can search for products, view product details, and list products by category.
+*   **Shopping Cart Functionality (Client):**
+    *   Clients can add products to their cart.
+    *   View cart details.
+    *   Remove products from the cart.
+    *   Empty the entire cart.
+*   **Payment Integration with Stripe:**
+    *   Management of client payment methods.
+    *   Creation of Payment Intents to process transactions.
+    *   Handling of Stripe webhooks to update the status of payments and orders.
+*   **Order Management:**
+    *   Creation of orders after a successful payment.
+    *   Viewing order history for clients.
+    *   Updating the status of orders (e.g., pending, shipped, delivered).
+*   **Health Check:** A dedicated endpoint (`/health`) to monitor the API's status.
 
-## Tecnologías Utilizadas
+## Technologies Used
 
 *   **Core:**
     *   Node.js
     *   Express.js
     *   TypeScript
-*   **Base de Datos:**
+*   **Database:**
     *   PostgreSQL
-*   **Arquitectura y Diseño:**
+*   **Architecture and Design:**
     *   Clean Architecture
-    *   Inyección de Dependencias (InversifyJS)
-*   **Autenticación y Autorización:**
+    *   Dependency Injection (InversifyJS)
+*   **Authentication and Authorization:**
     *   JSON Web Tokens (JWT)
-    *   `bcryptjs` (Hashing de Contraseñas)
-*   **Pagos:**
+    *   `bcryptjs` (Password Hashing)
+*   **Payments:**
     *   Stripe
-*   **Validación:**
+*   **Validation:**
     *   `express-validator`
-*   **Correo Electrónico:**
+*   **Email:**
     *   Nodemailer
-*   **Desarrollo y Herramientas:**
-    *   Docker y Docker Compose
-    *   Nodemon (para recarga en vivo durante el desarrollo)
+*   **Development and Tools:**
+    *   Docker and Docker Compose
+    *   Nodemon (for live reloading during development)
     *   `ts-node`
-*   **Seguridad y Logging:**
-    *   Helmet (Cabeceras de Seguridad)
-    *   Morgan (Logging de Peticiones HTTP)
+*   **Security and Logging:**
+    *   Helmet (Security Headers)
+    *   Morgan (HTTP Request Logging)
     *   CORS
 
-## Estructura del Proyecto
+## Project Structure
 
-El proyecto se adhiere a los principios de Clean Architecture, dividiendo el código base en capas distintas:
+The project adheres to the principles of Clean Architecture, dividing the codebase into distinct layers:
 
-*   **Domain:** Contiene la lógica de negocio principal, las entidades y las interfaces específicas del dominio. Esta capa es independiente de cualquier framework o preocupación de infraestructura.
-    *   `src/domain/entities/`: Objetos de negocio (ej. `User`, `Role`, `Client`, `Product`, `Cart`, `Module`, `Order`, `Payment`).
-    *   `src/domain/repositories/`: Interfaces para el acceso a datos (ej. `IUserRepository`, `IRoleRepository`, `IProductsRepository`, `ICartRepository`, `IOrderRepository`, `IStripePaymentRepository`).
-    *   `src/domain/services/`: Servicios específicos del dominio (ej. `HashingService`, `MailService`, `StripeService`).
-*   **Application:** Orquesta los casos de uso de la aplicación. Depende de la capa de Dominio pero no de la capa de Infraestructura.
-    *   `src/application/use-cases/`: Reglas de negocio específicas de la aplicación (ej. `AuthUseCase`, `ProductsUseCase`, `CartUseCase`, `OrderUseCase`, `StripeUseCase`).
-    *   `src/application/services/`: Servicios a nivel de aplicación (ej. `JwtService`).
-    *   `src/application/dtos/`: Data Transfer Objects (DTOs) utilizados por los casos de uso para entrada y salida.
-*   **Infrastructure:** Implementa las interfaces definidas en las capas de Aplicación y Dominio. Esta capa incluye frameworks, bases de datos, integraciones de servicios externos y componentes de UI.
-    *   `src/infraestructure/config/`: Configuración del entorno (`env.ts`).
-    *   `src/infraestructure/database/`: Conexión a PostgreSQL, implementaciones de repositorios.
-    *   `src/infraestructure/driven/services/`: Implementaciones de servicios externos (ej. `NodemailerMailService`, `StripeServiceImpl`).
-    *   `src/infraestructure/http/`: Código relacionado con Express.js:
-        *   `controllers/`: Manejan las peticiones HTTP y orquestan las respuestas.
-        *   `routes/`: Definen los endpoints de la API.
-        *   `middlewares/`: Middleware personalizado para tareas como autenticación y validación.
-        *   `validators/`: Reglas de validación de peticiones con `express-validator`.
-    *   `src/infraestructure/ioc/`: Configuración del contenedor de inyección de dependencias de InversifyJS.
-*   **Main:** El punto de entrada de la aplicación (`src/main/server.ts`), responsable de inicializar y arrancar el servidor.
-*   **Esquema de la Base de Datos (`src/db/`)**:
-    *   `schema.sql`: Contiene las sentencias DDL para crear tablas y definir relaciones.
-    *   `inserts.sql`: Datos iniciales para tablas (ej. roles, módulos).
-    *   `stored-procedures/`: Scripts SQL para crear procedimientos almacenados.
+*   **Domain:** Contains the core business logic, entities, and domain-specific interfaces. This layer is independent of any framework or infrastructure concerns.
+    *   `src/domain/entities/`: Business objects (e.g., `User`, `Role`, `Client`, `Product`, `Cart`, `Module`, `Order`, `Payment`).
+    *   `src/domain/repositories/`: Interfaces for data access (e.g., `IUserRepository`, `IRoleRepository`, `IProductsRepository`, `ICartRepository`, `IOrderRepository`, `IStripePaymentRepository`).
+    *   `src/domain/services/`: Domain-specific services (e.g., `HashingService`, `MailService`, `StripeService`).
+*   **Application:** Orchestrates the application's use cases. It depends on the Domain layer but not on the Infrastructure layer.
+    *   `src/application/use-cases/`: Application-specific business rules (e.g., `AuthUseCase`, `ProductsUseCase`, `CartUseCase`, `OrderUseCase`, `StripeUseCase`).
+    *   `src/application/services/`: Application-level services (e.g., `JwtService`).
+    *   `src/application/dtos/`: Data Transfer Objects (DTOs) used by the use cases for input and output.
+*   **Infrastructure:** Implements the interfaces defined in the Application and Domain layers. This layer includes frameworks, databases, external service integrations, and UI components.
+    *   `src/infraestructure/config/`: Environment configuration (`env.ts`).
+    *   `src/infraestructure/database/`: PostgreSQL connection, repository implementations.
+    *   `src/infraestructure/driven/services/`: Implementations of external services (e.g., `NodemailerMailService`, `StripeServiceImpl`).
+    *   `src/infraestructure/http/`: Express.js-related code:
+        *   `controllers/`: Handle HTTP requests and orchestrate responses.
+        *   `routes/`: Define the API endpoints.
+        *   `middlewares/`: Custom middleware for tasks like authentication and validation.
+        *   `validators/`: Request validation rules with `express-validator`.
+    *   `src/infraestructure/ioc/`: Configuration of the InversifyJS dependency injection container.
+*   **Main:** The application's entry point (`src/main/server.ts`), responsible for initializing and starting the server.
+*   **Database Schema (`src/db/`)**:
+    *   `schema.sql`: Contains the DDL statements to create tables and define relationships.
+    *   `inserts.sql`: Initial data for tables (e.g., roles, modules).
+    *   `stored-procedures/`: SQL scripts to create stored procedures.
 
-## Requisitos Previos
+## Prerequisites
 
-Antes de empezar, asegúrate de tener instalado lo siguiente:
+Before you begin, make sure you have the following installed:
 
-*   Node.js (v18.x o superior recomendado)
-*   npm (o yarn)
-*   Docker (opcional, para ejecutar con Docker Compose)
+*   Node.js (v18.x or higher recommended)
+*   npm (or yarn)
+*   Docker (optional, for running with Docker Compose)
 
 ## Getting Started
 
-### 1. Clonar el Repositorio
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd <repository-name>
 ```
 
-### 2. Instalar Dependencias
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configurar Variables de Entorno
+### 3. Configure Environment Variables
 
-Crea un archivo `.env` en la raíz del proyecto. Puedes usar el archivo `dev.env` como plantilla.
+Create a `.env` file in the project root. You can use the `dev.env` file as a template.
 
-**Ejemplo de contenido para `.env`:**
+**Example content for `.env`:**
 ```env
 PORT=3000
 
 # JWT
 JWT_SECRET=your_very_secret_jwt_key_here
 
-# PostgreSQL Database (si no usas Docker)
+# PostgreSQL Database (if not using Docker)
 PSQL_HOST=localhost
 PSQL_PORT=5432
 PSQL_USER=your_db_user
 PSQL_PASSWORD=your_db_password
 PSQL_DB=your_db_name
 
-# Email Configuration (ej. Mailtrap.io)
+# Email Configuration (e.g., Mailtrap.io)
 SMTP_HOST=your_smtp_host
 SMTP_PORT=your_smtp_port
 SMTP_USER=your_smtp_user
@@ -141,131 +141,131 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-**Nota sobre la Base de Datos con Docker Compose:**
-Si usas `docker-compose.yml`, este define un servicio de PostgreSQL con usuario `root`, contraseña `secret`, y base de datos `ca_nodejs`. La aplicación se conecta a esta base de datos a través de la variable de entorno `DB_SOURCE` definida en `docker-compose.yml`.
+**Note on the Database with Docker Compose:**
+If you use `docker-compose.yml`, it defines a PostgreSQL service with user `root`, password `secret`, and database `ca_nodejs`. The application connects to this database through the `DB_SOURCE` environment variable defined in `docker-compose.yml`.
 
-### 4. Inicializar la Base de Datos
+### 4. Initialize the Database
 
-Los scripts para inicializar la base de datos se encuentran en `src/db/`. Deben ejecutarse en el siguiente orden:
+The scripts to initialize the database are located in `src/db/`. They should be executed in the following order:
 
-1.  `src/db/schema.sql` (crear tablas)
-2.  `src/db/inserts.sql` (insertar datos iniciales)
-3.  Scripts en `src/db/stored-procedures/` (crear procedimientos almacenados)
+1.  `src/db/schema.sql` (create tables)
+2.  `src/db/inserts.sql` (insert initial data)
+3.  Scripts in `src/db/stored-procedures/` (create stored procedures)
 
-**Si usas Docker Compose (Recomendado):**
+**If you use Docker Compose (Recommended):**
 
-1.  Asegúrate de que el contenedor de la base de datos esté en ejecución: `docker-compose up -d db`.
-2.  Conéctate a la base de datos usando un cliente de PostgreSQL (como `psql` o una herramienta gráfica) con las siguientes credenciales:
+1.  Make sure the database container is running: `docker-compose up -d db`.
+2.  Connect to the database using a PostgreSQL client (like `psql` or a graphical tool) with the following credentials:
     *   **Host:** `localhost`
-    *   **Puerto:** `5432`
-    *   **Usuario:** `root`
-    *   **Contraseña:** `secret`
-    *   **Base de datos:** `ca_nodejs`
-3.  Ejecuta los scripts SQL en el orden mencionado.
+    *   **Port:** `5432`
+    *   **User:** `root`
+    *   **Password:** `secret`
+    *   **Database:** `ca_nodejs`
+3.  Execute the SQL scripts in the mentioned order.
 
-**Si usas PostgreSQL manualmente:**
+**If you use PostgreSQL manually:**
 
-1.  Asegúrate de que tu servidor de PostgreSQL esté en ejecución.
-2.  Usa `psql` u otro cliente para conectarte a tu base de datos.
-3.  Ejecuta los scripts SQL en el orden correcto.
+1.  Make sure your PostgreSQL server is running.
+2.  Use `psql` or another client to connect to your database.
+3.  Execute the SQL scripts in the correct order.
 
-### 5. Ejecutar el Servidor de Desarrollo (sin Docker)
+### 5. Run the Development Server (without Docker)
 
 ```bash
 npm run dev
 ```
-El servidor se iniciará en `http://localhost:3000`.
+The server will start at `http://localhost:3000`.
 
-### 6. Ejecutar con Docker Compose
+### 6. Run with Docker Compose
 
-1.  Asegúrate de que Docker esté en ejecución.
-2.  Crea tu archivo `.env` como se describe en el paso 3.
-3.  Construye e inicia los servicios:
+1.  Make sure Docker is running.
+2.  Create your `.env` file as described in step 3.
+3.  Build and start the services:
     ```bash
     docker-compose up --build -d
     ```
-    Esto iniciará la aplicación Node.js y la base de datos PostgreSQL. La aplicación estará disponible en `http://localhost:3000`.
-4.  **Inicializa la base de datos** como se describe en el paso 4.
+    This will start the Node.js application and the PostgreSQL database. The application will be available at `http://localhost:3000`.
+4.  **Initialize the database** as described in step 4.
 
 ## API Endpoints
 
-Todos los endpoints de la API tienen el prefijo `/api/v1`.
+All API endpoints are prefixed with `/api/v1`.
 
-### Autenticación de Cliente (`/client/auth`)
+### Client Authentication (`/client/auth`)
 
-*   `POST /client/auth/register`: Registrar un nuevo cliente.
-*   `POST /client/auth/login`: Iniciar sesión como cliente.
-*   `POST /client/auth/send-email`: Solicitar un correo para restablecer la contraseña.
-*   `POST /client/auth/restore-password`: Restablecer la contraseña con un token.
+*   `POST /client/auth/register`: Register a new client.
+*   `POST /client/auth/login`: Log in as a client.
+*   `POST /client/auth/send-email`: Request an email to reset the password.
+*   `POST /client/auth/restore-password`: Reset the password with a token.
 
-### Catálogo de Productos (`/products`)
+### Product Catalog (`/products`)
 
-*   `GET /products/search?q=<query>`: Buscar productos.
-*   `GET /products/:id`: Obtener detalles de un producto.
-*   `GET /products/categories/:id`: Obtener productos por categoría.
+*   `GET /products/search?q=<query>`: Search for products.
+*   `GET /products/:id`: Get details of a product.
+*   `GET /products/categories/:id`: Get products by category.
 
-### Carrito de Compras del Cliente (`/client/cart`)
+### Client Shopping Cart (`/client/cart`)
 
-*   `GET /client/cart`: Obtener el carrito del cliente.
-*   `POST /client/cart/add/:id`: Añadir un producto al carrito.
-*   `DELETE /client/cart/delete/:id`: Eliminar un producto del carrito.
-*   `DELETE /client/cart/clear`: Vaciar el carrito.
+*   `GET /client/cart`: Get the client's cart.
+*   `POST /client/cart/add/:id`: Add a product to the cart.
+*   `DELETE /client/cart/delete/:id`: Remove a product from the cart.
+*   `DELETE /client/cart/clear`: Empty the cart.
 
-### Pagos con Stripe (`/client/stripe`)
+### Payments with Stripe (`/client/stripe`)
 
-*   `POST /client/stripe/create-setup-intent`: Crear un intento de configuración para guardar una tarjeta.
-*   `POST /client/stripe/payment-methods`: Añadir un método de pago.
-*   `GET /client/stripe/payment-methods`: Obtener los métodos de pago del cliente.
-*   `DELETE /client/stripe/payment-methods/:paymentMethodId`: Eliminar un método de pago.
-*   `POST /client/stripe/create-payment-intent`: Crear un intento de pago para procesar una compra.
+*   `POST /client/stripe/create-setup-intent`: Create a setup intent to save a card.
+*   `POST /client/stripe/payment-methods`: Add a payment method.
+*   `GET /client/stripe/payment-methods`: Get the client's payment methods.
+*   `DELETE /client/stripe/payment-methods/:paymentMethodId`: Delete a payment method.
+*   `POST /client/stripe/create-payment-intent`: Create a payment intent to process a purchase.
 
-### Webhooks de Stripe (`/stripe/webhook`)
+### Stripe Webhooks (`/stripe/webhook`)
 
-*   `POST /stripe/webhook`: Manejar eventos de webhook de Stripe (ej. `payment_intent.succeeded`).
+*   `POST /stripe/webhook`: Handle Stripe webhook events (e.g., `payment_intent.succeeded`).
 
-### Panel de Administración (`/admin`)
+### Admin Panel (`/admin`)
 
-Todos los endpoints bajo `/admin` requieren autenticación de administrador.
+All endpoints under `/admin` require admin authentication.
 
-#### Autenticación de Admin (`/admin/auth`)
-*   `POST /admin/auth/login`: Iniciar sesión como administrador.
+#### Admin Authentication (`/admin/auth`)
+*   `POST /admin/auth/login`: Log in as an admin.
 
-#### Gestión de Usuarios Admin (`/admin/users`)
-*   `GET /admin/users`: Obtener lista de usuarios admin.
-*   `POST /admin/users`: Crear un nuevo usuario admin.
-*   ... (CRUD completo)
+#### Admin User Management (`/admin/users`)
+*   `GET /admin/users`: Get a list of admin users.
+*   `POST /admin/users`: Create a new admin user.
+*   ... (full CRUD)
 
-#### Gestión de Roles (`/admin/roles`)
-*   `GET /admin/roles`: Obtener lista de roles.
-*   `POST /admin/roles`: Crear un nuevo rol.
-*   ... (CRUD completo)
+#### Role Management (`/admin/roles`)
+*   `GET /admin/roles`: Get a list of roles.
+*   `POST /admin/roles`: Create a new role.
+*   ... (full CRUD)
 
-#### Gestión de Módulos (`/admin/modules`)
-*   `GET /admin/modules`: Obtener lista de módulos.
-*   `POST /admin/modules`: Crear un nuevo módulo.
-*   ... (CRUD completo)
+#### Module Management (`/admin/modules`)
+*   `GET /admin/modules`: Get a list of modules.
+*   `POST /admin/modules`: Create a new module.
+*   ... (full CRUD)
 
 ### Health Check (`/health`)
 
-*   `GET /health`: Comprobar el estado de la API.
+*   `GET /health`: Check the API's status.
 
-## Ejecutar Pruebas
+## Run Tests
 
 ```bash
 npm test
 ```
 
-## Contribuciones
+## Contributions
 
-Las contribuciones son bienvenidas. Por favor, sigue estos pasos:
+Contributions are welcome. Please follow these steps:
 
-1.  Haz un fork del repositorio.
-2.  Crea una nueva rama (`git checkout -b feature/your-feature-name`).
-3.  Realiza tus cambios.
-4.  Haz commit de tus cambios (`git commit -m 'Add some feature'`).
-5.  Empuja a la rama (`git push origin feature/your-feature-name`).
-6.  Abre un Pull Request.
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature-name`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -m 'Add some feature'`).
+5.  Push to the branch (`git push origin feature/your-feature-name`).
+6.  Open a Pull Request.
 
-## Licencia
+## License
 
-Este proyecto está licenciado bajo la Licencia ISC.
+This project is licensed under the ISC License.
