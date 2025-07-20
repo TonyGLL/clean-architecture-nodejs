@@ -4,11 +4,11 @@ import { config } from "../../config/env";
 
 const router = Router();
 
-// Página de Checkout
+// Checkout page
 router.get('/checkout', async (req: Request, res: Response) => {
     try {
-        // En una app real, obtendrías el clientId de la sesión/token
-        // Para el ejemplo, lo hardcodeamos o lo pasamos por query param
+        // In a real app, you would get the clientId from the session/token
+        // For the example, we hardcode it or pass it as a query param
         const clientId = 1;
         const { rows: paymentMethods } = await pool.query(
             `SELECT id, card_brand, card_last4, external_payment_method_id FROM payment_methods WHERE client_id = $1`,
@@ -20,24 +20,24 @@ router.get('/checkout', async (req: Request, res: Response) => {
             paymentMethods: paymentMethods
         });
     } catch (error) {
-        console.error('ERROR en /checkout:', error instanceof Error ? error.message : error);
-        res.status(500).send('Error interno');
+        console.error('ERROR in /checkout:', error instanceof Error ? error.message : error);
+        res.status(500).send('Internal error');
     }
 });
 
-// Página para añadir tarjeta
+// Page to add card
 router.get('/add-card', (req: Request, res: Response) => {
     try {
         res.render('add-card', {
             stripePublicKey: config.STRIPE_PUBLIC_KEY
         });
     } catch (error) {
-        console.error('ERROR en /add-card:', error instanceof Error ? error.message : error);
-        res.status(500).send('Error interno');
+        console.error('ERROR in /add-card:', error instanceof Error ? error.message : error);
+        res.status(500).send('Internal error');
     }
 });
 
-// Página de éxito
+// Success page
 router.get('/success', (req: Request, res: Response) => {
     res.render('success', { orderId: req.query.order_id });
 });

@@ -4,18 +4,18 @@
   <div class="container">
     <h1>Checkout</h1>
 
-    <!-- Mensaje que se muestra si el usuario no ha iniciado sesión -->
+    <!-- Message displayed if the user is not logged in -->
     <div id="login-prompt">
-      <h2>Por favor, inicia sesión para continuar</h2>
-      <p>Debes identificarte para poder realizar el pago.</p>
-      <button id="show-login-btn">Iniciar Sesión</button>
+      <h2>Please log in to continue</h2>
+      <p>You must be logged in to make a payment.</p>
+      <button id="show-login-btn">Log In</button>
     </div>
 
-    <!-- El contenido principal del checkout, oculto al inicio -->
+    <!-- The main content of the checkout, hidden at the beginning -->
     <div id="checkout-content" class="hidden">
-      <h2>Selecciona un método de pago</h2>
+      <h2>Select a payment method</h2>
 
-      <!-- Lista de tarjetas guardadas -->
+      <!-- List of saved cards -->
       <% if (typeof paymentMethods !== 'undefined' && paymentMethods.length > 0) { %>
         <% paymentMethods.forEach(function(method) { %>
           <div class="radio-group payment-method-row">
@@ -27,16 +27,16 @@
                 value="<%= method.external_payment_method_id %>"
               />
               <label for="pm_<%= method.id %>">
-                <%= method.card_brand %> terminada en <%= method.card_last4 %>
+                <%= method.card_brand %> ending in <%= method.card_last4 %>
               </label>
             </div>
 
-            <!-- Botón eliminar método -->
+            <!-- Button to delete method -->
             <button
               class="delete-method-button"
               data-method-id="<%= method.external_payment_method_id %>"
-              title="Eliminar tarjeta"
-              aria-label="Eliminar tarjeta"
+              title="Delete card"
+              aria-label="Delete card"
             >
               🗑️
             </button>
@@ -44,29 +44,29 @@
         <% }); %>
       <% } %>
 
-      <!-- Opción para nueva tarjeta -->
+      <!-- Option for new card -->
       <div class="radio-group">
         <input type="radio" name="payment-method" id="pm_new" value="new" checked />
-        <label for="pm_new">Pagar con nueva tarjeta</label>
+        <label for="pm_new">Pay with new card</label>
       </div>
 
-      <!-- CONTENEDOR DEL FORMULARIO DE STRIPE -->
+      <!-- STRIPE FORM CONTAINER -->
       <div id="new-card-container" class="hidden">
-        <h3>Datos de la nueva tarjeta</h3>
+        <h3>New card details</h3>
         <div id="payment-element">
-          <!-- Stripe montará aquí el formulario -->
+          <!-- Stripe will mount the form here -->
         </div>
         <div id="save-card-option">
           <input type="checkbox" id="save-card-checkbox" />
-          <label for="save-card-checkbox">Guardar para futuras compras</label>
+          <label for="save-card-checkbox">Save for future purchases</label>
         </div>
       </div>
 
-      <!-- Botón de pagar -->
-      <button id="pay-btn">Pagar Ahora</button>
+      <!-- Pay button -->
+      <button id="pay-btn">Pay Now</button>
     </div>
 
-    <!-- Spinner y errores -->
+    <!-- Spinner and errors -->
     <div id="spinner" class="spinner hidden"></div>
     <p id="error-message" class="error-message hidden"></p>
   </div>

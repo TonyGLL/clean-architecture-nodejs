@@ -1,10 +1,10 @@
-// public/js/checkout.js (CORREGIDO Y FUNCIONAL)
+// public/js/checkout.js (FIXED AND FUNCTIONAL)
 
 /**
- * Lógica para la página de checkout.
- * Implementa el flujo de dos caminos:
- * 1. Tarjeta guardada -> PaymentIntent directo.
- * 2. Tarjeta nueva -> SetupIntent, luego PaymentIntent.
+ * Logic for the checkout page.
+ * Implements the two-path flow:
+ * 1. Saved card -> Direct PaymentIntent.
+ * 2. New card -> SetupIntent, then PaymentIntent.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +24,7 @@ const errorMessage = document.getElementById('error-message');
 
 function initializeCheckout(publicKey) {
   if (!publicKey) {
-    showError('Error: Clave pública de Stripe no configurada.');
+    showError('Error: Stripe public key not configured.');
     return;
   }
   stripe = Stripe(publicKey);
@@ -33,7 +33,7 @@ function initializeCheckout(publicKey) {
 }
 
 function addEventListeners() {
-  // El listener de 'loginSuccess' sigue siendo útil si el modal está en la misma página
+  // The 'loginSuccess' listener is still useful if the modal is on the same page
   document.addEventListener('loginSuccess', checkLoginStatus);
   payBtn.addEventListener('click', handlePayment);
 
@@ -51,8 +51,8 @@ function handlePaymentMethodChange(event) {
   newCardContainer.classList.toggle('hidden', !isNewCard);
 
   if (isNewCard && !elements) {
-    // Si se selecciona "nueva tarjeta" y el formulario no existe, lo creamos.
-    // Esto funciona tanto al hacer clic como en la carga inicial.
+    // If "new card" is selected and the form does not exist, we create it.
+    // This works both on click and on initial load.
     setupNewCardForm();
   }
 }
@@ -67,22 +67,22 @@ function checkLoginStatus() {
 }
 
 // ===================================================================
-// =================== AQUÍ ESTÁ EL CAMBIO PRINCIPAL ===================
+// =================== HERE IS THE MAIN CHANGE ===================
 // ===================================================================
 function showCheckoutContent() {
   loginPrompt.classList.add('hidden');
   checkoutContent.classList.remove('hidden');
 
-  // ANTES: Usabas un dispatchEvent() que era poco fiable.
+  // BEFORE: You used a dispatchEvent() which was unreliable.
 
-  // AHORA: Hacemos una comprobación directa y explícita del estado inicial.
-  // Esto es mucho más robusto.
+  // NOW: We do a direct and explicit check of the initial state.
+  // This is much more robust.
   const initialSelection = document.querySelector(
     'input[name="payment-method"]:checked'
   );
   if (initialSelection) {
-    // Simulamos el evento 'change' llamando directamente a su manejador
-    // con un objeto que imita la estructura de un evento.
+    // We simulate the 'change' event by directly calling its handler
+    // with an object that mimics the structure of an event.
     handlePaymentMethodChange({ target: initialSelection });
   }
 }
@@ -99,7 +99,7 @@ async function handlePayment() {
   }
 }
 
-// --- Flujo 1: Pagar con Tarjeta Guardada ---
+// --- Flow 1: Pay with Saved Card ---
 async function payWithSavedCard(paymentMethodId) {
   setLoading(true);
   const token = localStorage.getItem('authToken');
@@ -129,12 +129,12 @@ async function payWithSavedCard(paymentMethodId) {
   }
 }
 
-// --- Flujo 2: Pagar con Tarjeta Nueva ---
+// --- Flow 2: Pay with New Card ---
 async function setupNewCardForm() {
   setLoading(true);
   const token = localStorage.getItem('authToken');
   try {
-    // 1. Pedimos al backend un "client secret" para el SetupIntent
+    // 1. We ask the backend for a "client secret" for the SetupIntent
     const response = await fetch(
       '/api/v1/client/payments/stripe/create-setup-intent',
       {
@@ -148,16 +148,16 @@ async function setupNewCardForm() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
 
-    // 2. Usamos el secret para inicializar los Stripe Elements
+    // 2. We use the secret to initialize the Stripe Elements
     elements = stripe.elements({ clientSecret: data.clientSecret });
 
-    // 3. Creamos el componente de pago (que incluye CVV, fecha, etc.)
+    // 3. We create the payment component (which includes CVV, date, etc.)
     const paymentElement = elements.create('payment');
 
-    // 4. ¡LA MAGIA! "Pintamos" el formulario dentro de nuestro div vacío.
+    // 4. THE MAGIC! We "paint" the form inside our empty div.
     paymentElement.mount('#payment-element');
   } catch (error) {
-    showError('No se pudo cargar el formulario de pago: ' + error.message);
+    showError('Could not load the payment form: ' + error.message);
   } finally {
     setLoading(false);
   }
@@ -166,18 +166,18 @@ async function setupNewCardForm() {
 async function payWithNewCard() {
   if (!elements) {
     showError(
-      'El formulario de pago no está listo. Por favor, espera un momento.'
+      'The payment form is not ready. Please wait a moment.'
     );
     return;
   }
   setLoading(true);
 
-  // Confirmamos el setup para tokenizar la tarjeta de forma segura
+  // We confirm the setup to tokenize the card securely
   const { error: setupError, setupIntent } = await stripe.confirmSetup({
     elements,
     redirect: 'if_required',
     confirmParams: {
-      return_url: window.location.href.split('?')[0], // URL sin parámetros
+      return_url: window.location.href.split('?')[0], // URL without parameters
     },
   });
 
@@ -188,18 +188,18 @@ async function payWithNewCard() {
   }
 
   if (setupIntent.status === 'succeeded') {
-    // Éxito. Stripe nos devuelve un ID para el método de pago (`setupIntent.payment_method`)
-    // Ahora hacemos el cobro real usando ese ID.
+    // Success. Stripe returns a payment method ID (`setupIntent.payment_method`)
+    // Now we make the actual charge using that ID.
     await payWithSavedCard(setupIntent.payment_method);
   } else {
     showError(
-      `El guardado de la tarjeta falló con estado: ${setupIntent.status}`
+      `Card saving failed with status: ${setupIntent.status}`
     );
     setLoading(false);
   }
 }
 
-// --- Manejo de Respuestas y Resultados ---
+// --- Response and Result Handling ---
 async function handleBackendPaymentResponse(
   { clientSecret, status, orderId },
   paymentMethod
@@ -207,7 +207,7 @@ async function handleBackendPaymentResponse(
   if (status === 'succeeded') {
     window.location.href = `/success?order_id=${orderId}`;
   } else if (status === 'requires_action') {
-    // Para autenticación 3D Secure (la ventanita del banco)
+    // For 3D Secure authentication (the bank's pop-up window)
     await stripe.handleNextAction({ clientSecret }).then(handleStripeResult);
   } else if (status === 'requires_confirmation') {
     const { error, paymentIntent } = await stripe.confirmCardPayment(
@@ -225,11 +225,11 @@ async function handleBackendPaymentResponse(
         paymentIntent.metadata?.order_id ?? ''
       }`;
     } else {
-      showError(`Pago fallido con estado: ${paymentIntent.status}`);
+      showError(`Payment failed with status: ${paymentIntent.status}`);
       setLoading(false);
     }
   } else {
-    showError(`Pago fallido con estado: ${status}`);
+    showError(`Payment failed with status: ${status}`);
     setLoading(false);
   }
 }
@@ -249,14 +249,14 @@ async function handleDeletePaymentMethod(event) {
   const methodId = button.dataset.methodId;
 
   const confirmed = confirm(
-    '¿Estás seguro de que deseas eliminar este método de pago?'
+    'Are you sure you want to delete this payment method?'
   );
 
   if (!confirmed) return;
 
   const token = localStorage.getItem('authToken');
   if (!token) {
-    showError('No estás autenticado.');
+    showError('You are not authenticated.');
     return;
   }
 
@@ -276,10 +276,10 @@ async function handleDeletePaymentMethod(event) {
 
     await response.json();
 
-    // Opcional: eliminar visualmente el método del DOM
+    // Optional: visually remove the method from the DOM
     button.closest('.payment-method-row').remove();
 
-    // Si se eliminó el método que estaba seleccionado, selecciona otro o "nueva tarjeta"
+    // If the deleted method was the selected one, select another one or "new card"
     const selected = document.querySelector(
       'input[name="payment-method"]:checked'
     );
@@ -293,7 +293,7 @@ async function handleDeletePaymentMethod(event) {
   }
 }
 
-// --- Funciones de UI (sin cambios) ---
+// --- UI Functions (no changes) ---
 function setLoading(isLoading) {
   errorMessage.classList.add('hidden');
   spinner.classList.toggle('hidden', !isLoading);

@@ -1,15 +1,15 @@
 /**
- * Este archivo es el ÚNICO responsable de toda la lógica
- * del modal de login: mostrar, ocultar y procesar el envío.
+ * This file is SOLELY responsible for all the logic
+ * of the login modal: showing, hiding, and processing the submission.
  */
 
 // --- DOM Elements ---
 const loginModal = document.getElementById('login-modal');
 const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
-const showLoginBtn = document.getElementById('show-login-btn'); // El botón del mensaje inicial
+const showLoginBtn = document.getElementById('show-login-btn'); // The button from the initial message
 
-// --- Funciones para Mostrar/Ocular el Modal ---
+// --- Functions to Show/Hide the Modal ---
 
 function showLoginModal() {
   if (loginModal) {
@@ -30,7 +30,7 @@ function hideLoginModal() {
   }
 }
 
-// --- Petición a la API de Login ---
+// --- Login API Request ---
 
 async function handleLogin(email, password) {
   try {
@@ -43,34 +43,34 @@ async function handleLogin(email, password) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Error al iniciar sesión.');
+      throw new Error(data.message || 'Error logging in.');
     }
 
     if (data.token) {
       localStorage.setItem('authToken', data.token);
       return { success: true };
     } else {
-      throw new Error('No se recibió un token de autenticación.');
+      throw new Error('Authentication token not received.');
     }
   } catch (error) {
     return { success: false, message: error.message };
   }
 }
 
-// --- Conexión de Event Listeners ---
+// --- Event Listener Connections ---
 
-// 1. Conectar el botón del mensaje inicial para que muestre el modal.
+// 1. Connect the button from the initial message to show the modal.
 if (showLoginBtn) {
   showLoginBtn.addEventListener('click', showLoginModal);
 }
 
-// 2. Conectar el evento SUBMIT del formulario DENTRO del modal.
+// 2. Connect the SUBMIT event of the form INSIDE the modal.
 if (loginForm) {
   loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Prevenir que la página se recargue
+    event.preventDefault(); // Prevent the page from reloading
     const button = loginForm.querySelector('button');
     button.disabled = true;
-    button.textContent = 'Ingresando...';
+    button.textContent = 'Logging in...';
 
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
@@ -78,11 +78,11 @@ if (loginForm) {
     const result = await handleLogin(email, password);
 
     button.disabled = false;
-    button.textContent = 'Ingresar';
+    button.textContent = 'Login';
 
     if (result.success) {
       hideLoginModal();
-      // ¡Clave! Notifica al resto de la aplicación que el login fue exitoso.
+      // Key! Notify the rest of the application that the login was successful.
       document.dispatchEvent(new CustomEvent('loginSuccess'));
     } else {
       loginError.textContent = result.message;

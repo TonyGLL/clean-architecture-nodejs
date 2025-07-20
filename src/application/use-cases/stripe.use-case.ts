@@ -103,11 +103,11 @@ export class CreatePaymentIntentUseCase {
         const poolClient = await this.pool.connect();
 
         try {
-            //* Validar si el cliente existe
+            // Validate if the client exists
             const client = await this.stripePaymentRepository.findClientById(dto.clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
-            //* Validar si el cliente tiene un carrito activo
+            // Validate if the client has an active cart
             const cart = await this.cartRepository.getCartDetails(dto.clientId);
             if (!cart) throw new HttpError(HttpStatusCode.NOT_FOUND, "Cart not found");
             if (cart.status !== 'active') throw new HttpError(HttpStatusCode.CONFLICT, "Cart is not active. Cannot create payment intent.");
@@ -115,10 +115,10 @@ export class CreatePaymentIntentUseCase {
             await poolClient.query('BEGIN');
 
             let customerId = client.external_customer_id;
-            //* Si el cliente no tiene un customer_id de Stripe, crearlo
-            //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
+            // If the client does not have a Stripe customer_id, create one
+            // This is necessary to be able to create a PaymentIntent associated with a client
             if (!customerId) {
-                //* Crear un nuevo cliente en Stripe
+                // Create a new customer in Stripe
                 const createCustomerParams: Stripe.CustomerCreateParams = {
                     email: client.email,
                     name: client.name,
@@ -126,16 +126,16 @@ export class CreatePaymentIntentUseCase {
                 };
                 const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
-                //* Actualizar el cliente en la base de datos con el customer_id de Stripe
+                // Update the client in the database with the Stripe customer_id
                 await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id);
                 customerId = id;
             }
 
-            //* Si el cliente tiene un PaymentIntent activo, intentar recuperarlo
+            // If the client has an active PaymentIntent, try to retrieve it
             let paymentIntent: Stripe.Response<Stripe.PaymentIntent>;
 
             if (cart.activePaymentIntentId) {
-                //* Obtener el intento de pago si es que el mismo existe
+                // Get the payment intent if it exists
                 const existingPayment = await this.stripePaymentRepository.findPaymentByIntentId(cart.activePaymentIntentId || '');
 
                 if (existingPayment?.stripePaymentIntentId && (existingPayment.status === 'pending' || existingPayment.status === 'requires_action')) {
@@ -151,7 +151,7 @@ export class CreatePaymentIntentUseCase {
                 }
             }
 
-            //* Crear intento de pago en stripe
+            // Create payment intent in Stripe
             const createPaymentIntentParams: Stripe.PaymentIntentCreateParams = {
                 amount: Math.round(cart.total * 100),
                 currency: dto.currency,
@@ -174,7 +174,7 @@ export class CreatePaymentIntentUseCase {
             };
             paymentIntent = await this.stripeService.createPaymentIntent(createPaymentIntentParams);
 
-            //* Crear orden en dn en estado pending
+            // Create order in db in pending status
             const createOrderParams: CreateOrderParams = {
                 clientId: dto.clientId,
                 cart,
@@ -184,7 +184,7 @@ export class CreatePaymentIntentUseCase {
             }
             const order = await this.orderRepository.createOrder(createOrderParams, poolClient);
 
-            //* Crear pago en db
+            // Create payment in db
             const createPaymentParams: Omit<Payment, "id" | "createdAt" | "updatedAt"> = {
                 cartId: cart.id,
                 clientId: dto.clientId,
@@ -226,15 +226,15 @@ export class CreateSetupIntentUseCase {
 
         try {
             await poolClient.query('BEGIN');
-            //* Validar si el cliente existe
+            // Validate if the client exists
             const client = await this.stripePaymentRepository.findClientById(clientId);
             if (!client) throw new HttpError(HttpStatusCode.NOT_FOUND, "Client not found");
 
             let customerId = client.external_customer_id;
-            //* Si el cliente no tiene un customer_id de Stripe, crearlo
-            //* Esto es necesario para poder crear un PaymentIntent asociado a un cliente
+            // If the client does not have a Stripe customer_id, create one
+            // This is necessary to be able to create a PaymentIntent associated with a client
             if (!customerId) {
-                //* Crear un nuevo cliente en Stripe
+                // Create a new customer in Stripe
                 const createCustomerParams: Stripe.CustomerCreateParams = {
                     email: client.email,
                     name: client.name,
@@ -242,7 +242,7 @@ export class CreateSetupIntentUseCase {
                 };
                 const { id } = await this.stripeService.createCustomer(createCustomerParams);
 
-                //* Actualizar el cliente en la base de datos con el customer_id de Stripe
+                // Update the client in the database with the Stripe customer_id
                 await this.stripePaymentRepository.updateClientStripeCustomerId(client.id, id);
                 customerId = id;
             }
