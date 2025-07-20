@@ -21,3 +21,7 @@ export interface DeletePaymentMethodDTO {
     clientId: number;
     paymentMethodId: string; // This is the Stripe PaymentMethod ID (pm_xxx)
 }
+
+export interface CreatePaypalOrderDTO {
+    clientId: number;
+}

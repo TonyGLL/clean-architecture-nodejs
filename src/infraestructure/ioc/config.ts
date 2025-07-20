@@ -60,6 +60,12 @@ import { CartController } from '../http/controllers/cart.ctrl';
 import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl';
 import { StripeController } from '../http/controllers/stripe.ctrl';
 import { AddressController } from '../http/controllers/address.ctrl';
+import { PaypalController } from '../http/controllers/paypal.ctrl';
+import { IPaypalPaymentRepository } from '../../domain/repositories/paypal.payment.repository';
+import { PaypalPaymentRepository } from '../database/postgres/paypal.payment.repository';
+import { IPaypalService } from '../../domain/services/paypal.service';
+import { PaypalService } from '../driven/services/paypal.service';
+import { CreatePaypalOrderUseCase, CapturePaypalOrderUseCase } from '../../application/use-cases/paypal.use-case';
 
 const container = new Container();
 
@@ -77,6 +83,7 @@ container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRep
 container.bind<IStripePaymentRepository>(DOMAIN_TYPES.IStripePaymentRepository).to(PostgresStripePaymentRepository);
 container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository);
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
+container.bind<IPaypalPaymentRepository>(DOMAIN_TYPES.IPaypalPaymentRepository).to(PaypalPaymentRepository);
 
 //* Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
@@ -84,6 +91,7 @@ container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 container.bind<IStripeService>(DOMAIN_TYPES.IStripeService).to(StripePaymentService);
+container.bind<IPaypalService>(DOMAIN_TYPES.IPaypalService).to(PaypalService);
 
 //* Use Cases (Concrete classes)
 // AUTH
@@ -128,6 +136,8 @@ container.bind<DeletePaymentMethodUseCase>(DeletePaymentMethodUseCase).toSelf();
 container.bind<CreatePaymentIntentUseCase>(CreatePaymentIntentUseCase).toSelf();
 container.bind<CreateSetupIntentUseCase>(CreateSetupIntentUseCase).toSelf();
 container.bind<AddPaymentMethodUseCase>(AddPaymentMethodUseCase).toSelf();
+container.bind<CreatePaypalOrderUseCase>(CreatePaypalOrderUseCase).toSelf();
+container.bind<CapturePaypalOrderUseCase>(CapturePaypalOrderUseCase).toSelf();
 // Order
 container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf();
 container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf();
@@ -152,5 +162,6 @@ container.bind<CartController>(CartController).toSelf();
 container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 container.bind<AddressController>(AddressController).toSelf();
+container.bind<PaypalController>(PaypalController).toSelf();
 
 export { container };
