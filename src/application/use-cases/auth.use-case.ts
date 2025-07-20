@@ -1,4 +1,5 @@
 import { inject, injectable } from "inversify";
+import { logger } from "../../infraestructure/config/winston";
 import { AuthClientResponseDTO, LoginClientDTO, RegisterClientDTO, RestorePasswordDTO } from "../dtos/auth.client.dto";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { APPLICATION_TYPES } from "../ioc.types";
@@ -29,6 +30,7 @@ export class LoginUseCase {
     ) { }
 
     public async execute(dto: LoginClientDTO, type: ServiceType): Promise<[number, AuthClientResponseDTO | object]> {
+        logger.info(`[LoginUseCase] - Starting login for ${type} with email: ${dto.email}`);
         const client = await this.pool.connect();
 
         try {
@@ -69,7 +71,7 @@ export class LoginUseCase {
             return [HttpStatusCode.OK, response];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in Login:', error);
+            logger.error(`[LoginUseCase] - Error during login for ${type} with email: ${dto.email}`, { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
@@ -87,6 +89,7 @@ export class RegisterClientUseCase {
     ) { }
 
     public async execute(dto: RegisterClientDTO): Promise<[number, object]> {
+        logger.info(`[RegisterClientUseCase] - Starting registration for email: ${dto.email}`);
         const client = await this.pool.connect();
 
         try {
@@ -113,7 +116,7 @@ export class RegisterClientUseCase {
             return [HttpStatusCode.CREATED, { token, userClient: newUser }];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in CreateUser:', error);
+            logger.error(`[RegisterClientUseCase] - Error during registration for email: ${dto.email}`, { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
@@ -131,6 +134,7 @@ export class SendEmailUseCase {
     ) { }
 
     public async execute(email: string, type: ServiceType): Promise<[number, object]> {
+        logger.info(`[SendEmailUseCase] - Starting send email for ${type} with email: ${email}`);
         const client = await this.pool.connect();
 
         try {
@@ -148,7 +152,7 @@ export class SendEmailUseCase {
             return [HttpStatusCode.OK, { message: 'Email sended successfully.' }];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in SendEmail:', error);
+            logger.error(`[SendEmailUseCase] - Error during send email for ${type} with email: ${email}`, { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
@@ -166,6 +170,7 @@ export class RestorePasswordUseCase {
     ) { }
 
     public async execute(dto: RestorePasswordDTO, type: ServiceType): Promise<[number, object]> {
+        logger.info(`[RestorePasswordUseCase] - Starting restore password for ${type} with email: ${dto.email}`);
         const client = await this.pool.connect();
 
         try {
@@ -185,7 +190,7 @@ export class RestorePasswordUseCase {
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in RestorePasswordUseCase:', error);
+            logger.error(`[RestorePasswordUseCase] - Error during restore password for ${type} with email: ${dto.email}`, { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
