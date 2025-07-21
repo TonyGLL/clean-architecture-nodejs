@@ -1,4 +1,5 @@
 import { inject, injectable } from "inversify";
+import { logger } from "../../infraestructure/config/winston";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
 import { Cart } from "../../domain/entities/cart";
@@ -14,11 +15,17 @@ export class GetCartUseCase {
     ) { }
 
     public async execute(dto: number): Promise<[number, Cart]> {
-        let cartDetails = await this.cartRepository.getCartDetails(dto);
+        logger.info(`[GetCartUseCase] - Starting to get cart for client: ${dto}`);
+        try {
+            let cartDetails = await this.cartRepository.getCartDetails(dto);
 
-        if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
+            if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
 
-        return [HttpStatusCode.OK, cartDetails];
+            return [HttpStatusCode.OK, cartDetails];
+        } catch (error) {
+            logger.error(`[GetCartUseCase] - Error getting cart for client: ${dto}`, { error });
+            throw error;
+        }
     }
 }
 
@@ -30,21 +37,27 @@ export class AddProductToCartUseCase {
     ) { }
 
     public async execute(dto: AddProductToCartDTO): Promise<[number, object]> {
-        const product = await this.productsRepository.getProductDetails(dto.productId.toString());
-        if (!product) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Product not found');
+        logger.info(`[AddProductToCartUseCase] - Starting to add product ${dto.productId} to cart for client: ${dto.clientId}`);
+        try {
+            const product = await this.productsRepository.getProductDetails(dto.productId.toString());
+            if (!product) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Product not found');
 
-        if (product.stock < dto.quantity) {
-            throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Insufficient stock for the product');
+            if (product.stock < dto.quantity) {
+                throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Insufficient stock for the product');
+            }
+
+            await this.cartRepository.addProductToCart({
+                clientId: dto.clientId,
+                productId: dto.productId,
+                quantity: dto.quantity,
+                unitPrice: product.price
+            });
+
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            logger.error(`[AddProductToCartUseCase] - Error adding product ${dto.productId} to cart for client: ${dto.clientId}`, { error });
+            throw error;
         }
-
-        await this.cartRepository.addProductToCart({
-            clientId: dto.clientId,
-            productId: dto.productId,
-            quantity: dto.quantity,
-            unitPrice: product.price
-        });
-
-        return [HttpStatusCode.NO_CONTENT, {}];
     }
 }
 
@@ -55,8 +68,14 @@ export class DeleteProductFromCartUseCase {
     ) { }
 
     public async deleteProductFromCart(clientId: number, productId: number): Promise<[number, object]> {
-        await this.cartRepository.deleteProductFromCart(clientId, productId)
-        return [HttpStatusCode.NO_CONTENT, {}];
+        logger.info(`[DeleteProductFromCartUseCase] - Starting to delete product ${productId} from cart for client: ${clientId}`);
+        try {
+            await this.cartRepository.deleteProductFromCart(clientId, productId)
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            logger.error(`[DeleteProductFromCartUseCase] - Error deleting product ${productId} from cart for client: ${clientId}`, { error });
+            throw error;
+        }
     }
 }
 
@@ -67,8 +86,14 @@ export class ClearCartUseCase {
     ) { }
 
     public async execute(clientId: number): Promise<[number, object]> {
-        await this.cartRepository.clearCart(clientId);
-        return [HttpStatusCode.NO_CONTENT, {}];
+        logger.info(`[ClearCartUseCase] - Starting to clear cart for client: ${clientId}`);
+        try {
+            await this.cartRepository.clearCart(clientId);
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            logger.error(`[ClearCartUseCase] - Error clearing cart for client: ${clientId}`, { error });
+            throw error;
+        }
     }
 }
 
@@ -79,7 +104,13 @@ export class LinkAddressToCartUseCase {
     ) { }
 
     public async execute(addressId: number, clientId: number): Promise<[number, object]> {
-        await this.cartRepository.linkAddressToCart(addressId, clientId);
-        return [HttpStatusCode.NO_CONTENT, {}];
+        logger.info(`[LinkAddressToCartUseCase] - Starting to link address ${addressId} to cart for client: ${clientId}`);
+        try {
+            await this.cartRepository.linkAddressToCart(addressId, clientId);
+            return [HttpStatusCode.NO_CONTENT, {}];
+        } catch (error) {
+            logger.error(`[LinkAddressToCartUseCase] - Error linking address ${addressId} to cart for client: ${clientId}`, { error });
+            throw error;
+        }
     }
 }
