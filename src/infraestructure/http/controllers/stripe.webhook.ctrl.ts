@@ -74,16 +74,16 @@ export class StripeWebhookController {
         try {
             await poolClient.query('BEGIN');
 
-            //* Cambiar status del pago a pagado
+            // Change payment status to paid
             const updatePaymentStatusResponse = await this.stripePaymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
 
-            //* Cambiar status de la orden
+            // Change order status
             await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.order_id!, intent.status, poolClient);
 
-            //* Cambiar status de carrito activo a completed
+            // Change active cart status to completed
             await this.cartRepository.updateCartStatus(updatePaymentStatusResponse?.cart_id!, 'completed', poolClient);
 
-            //* Crear un nuevo carrito al usuario en curso
+            // Create a new cart for the current user
             await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.client_id!, poolClient);
 
             await poolClient.query('COMMIT');

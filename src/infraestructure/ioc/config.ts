@@ -6,7 +6,7 @@ import { APPLICATION_TYPES } from '../../application/ioc.types';
 import { INFRASTRUCTURE_TYPES } from './types';
 import pool from '../database/postgres/config';
 
-//* Repos
+// Repos
 import { IAuthRepository } from '../../domain/repositories/auth.repository';
 import { IRoleRepository } from "../../domain/repositories/role.repository";
 import { IUserRoleRepository } from "../../domain/repositories/userRole.repository";
@@ -28,7 +28,7 @@ import { PostgresOrderRepository } from '../database/postgres/repositories/order
 import { IAddressRepository } from '../../domain/repositories/address.repository';
 import { PostgresAddressRepository } from '../database/postgres/repositories/address.repository';
 
-//* Services
+// Services
 import { IHashingService } from './../../domain/services/hashing.service';
 import { IJwtService } from '../../application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
@@ -38,7 +38,7 @@ import { BcryptService } from '../driven/services/bcrypt.service';
 import { IStripeService } from '../../domain/services/stripe.service';
 import { StripePaymentService } from '../driven/services/stripe.payment.service';
 
-//* Use Cases
+// Use Cases
 import { LoginUseCase, RegisterClientUseCase, SendEmailUseCase, RestorePasswordUseCase } from '../../application/use-cases/auth.use-case';
 import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, DeleteRoleUseCase, UpdateRoleUseCase } from "../../application/use-cases/role.use-case";
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
@@ -49,7 +49,7 @@ import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentU
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 
-//* Controllers
+// Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
 import { RoleController } from "../http/controllers/role.ctrl";
 import { UserController } from '../http/controllers/user.ctrl';
@@ -69,10 +69,10 @@ import { CreatePaypalOrderUseCase, CapturePaypalOrderUseCase } from '../../appli
 
 const container = new Container();
 
-//* DB
+// DB
 container.bind<Pool>(INFRASTRUCTURE_TYPES.PostgresPool).toConstantValue(pool);
 
-//* Respositories (Inteface -> Implementation)
+// Respositories (Inteface -> Implementation)
 container.bind<IAuthRepository>(DOMAIN_TYPES.IAuthRepository).to(PostgresAuthRepository);
 container.bind<IRoleRepository>(DOMAIN_TYPES.IRoleRepository).to(PostgresRoleRepository);
 container.bind<IUserRoleRepository>(DOMAIN_TYPES.IUserRoleRepository).to(PostgresUserRoleRepository);
@@ -85,7 +85,7 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 container.bind<IPaypalPaymentRepository>(DOMAIN_TYPES.IPaypalPaymentRepository).to(PaypalPaymentRepository);
 
-//* Services (Interface -> Implementation)
+// Services (Interface -> Implementation)
 // Assuming BcryptService is the concrete implementation for IHashingService
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
@@ -93,7 +93,7 @@ container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
 container.bind<IStripeService>(DOMAIN_TYPES.IStripeService).to(StripePaymentService);
 container.bind<IPaypalService>(DOMAIN_TYPES.IPaypalService).to(PaypalService);
 
-//* Use Cases (Concrete classes)
+// Use Cases (Concrete classes)
 // AUTH
 container.bind<LoginUseCase>(LoginUseCase).toSelf();
 container.bind<RegisterClientUseCase>(RegisterClientUseCase).toSelf();
@@ -151,7 +151,7 @@ container.bind<UpdateAddressUseCase>(UpdateAddressUseCase).toSelf();
 container.bind<DeleteAddressUseCase>(DeleteAddressUseCase).toSelf();
 container.bind<SetDefaultAddressUseCase>(SetDefaultAddressUseCase).toSelf();
 
-//* Controllers (Concrete classes)
+// Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
 container.bind<AuthAdminController>(AuthAdminController).toSelf();
 container.bind<RoleController>(RoleController).toSelf();

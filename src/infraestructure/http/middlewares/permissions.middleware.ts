@@ -8,8 +8,8 @@ import { IRoleRepository } from "../../../domain/repositories/role.repository";
 import { IModulesRepository } from "../../../domain/repositories/modules.repository";
 
 /**
- * @description Mapa que convierte los métodos HTTP a nombres de permisos.
- * Esto permite determinar qué tipo de permiso se requiere según el método de la petición (GET, POST, PUT, DELETE).
+ * @description Map that converts HTTP methods to permission names.
+ * This allows determining what type of permission is required according to the request method (GET, POST, PUT, DELETE).
  * @type {Record<string, keyof Omit<RolePermissions, 'module_id' | 'module_name'>>}
  */
 const methodToPermissionMap: Record<string, keyof Omit<RolePermissions, 'module_id' | 'module_name'>> = {
@@ -21,70 +21,70 @@ const methodToPermissionMap: Record<string, keyof Omit<RolePermissions, 'module_
 };
 
 /**
- * @description Middleware para verificar los permisos de un usuario antes de permitir el acceso a un recurso.
- * Este middleware se encarga de:
- * 1. Validar que el usuario tenga roles asignados.
- * 2. Extraer el nombre del módulo de la URL.
- * 3. Determinar el permiso requerido basado en el método HTTP.
- * 4. Obtener el módulo de la base de datos.
- * 5. Consultar los permisos del rol del usuario para ese módulo.
- * 6. Permitir o denegar el acceso según los permisos.
- * @param {Request} req - El objeto de la petición de Express.
- * @param {Response} _ - El objeto de la respuesta de Express (no se utiliza directamente).
- * @param {NextFunction} next - La función para pasar al siguiente middleware.
+ * @description Middleware to check a user's permissions before allowing access to a resource.
+ * This middleware is responsible for:
+ * 1. Validating that the user has assigned roles.
+ * 2. Extracting the module name from the URL.
+ * 3. Determining the required permission based on the HTTP method.
+ * 4. Getting the module from the database.
+ * 5. Querying the user's role permissions for that module.
+ * 6. Allowing or denying access based on permissions.
+ * @param {Request} req - The Express request object.
+ * @param {Response} _ - The Express response object (not used directly).
+ * @param {NextFunction} next - The function to pass to the next middleware.
  */
 export const permissionsMiddleware = async (req: Request, _: Response, next: NextFunction) => {
     try {
-        // 1. Extraer la información del usuario y sus roles desde el objeto `req.user`, que es añadido por el `auth.middleware`.
+        // 1. Extract user information and their roles from the `req.user` object, which is added by the `auth.middleware`.
         const user = req.user as { id: string; roles: number[] };
         if (!user || !user.roles || user.roles.length === 0) throw new HttpError(HttpStatusCode.UNAUTHORIZED, "Unauthorized: User not found or no roles assigned");
 
-        // 2. Obtener el nombre del módulo desde la URL. Se asume que la URL sigue un formato como `/moduleName/...`.
+        // 2. Get the module name from the URL. It is assumed that the URL follows a format like `/moduleName/...`.
         const pathParts = req.path.split('/');
         const [_, moduleName] = pathParts;
         if (!moduleName) throw new HttpError(HttpStatusCode.BAD_REQUEST, "Bad Request: Module name not found in URL");
 
-        // 3. Determinar el permiso requerido basado en el método HTTP de la petición.
+        // 3. Determine the required permission based on the HTTP method of the request.
         const httpMethod = req.method.toUpperCase();
         const requiredPermission = methodToPermissionMap[httpMethod];
         if (!requiredPermission) throw new HttpError(HttpStatusCode.METHOD_NOT_ALLOWED, `Method ${httpMethod} not supported for permission checking`);
 
-        // 4. Obtener la información del módulo desde la base de datos para asegurar que existe.
+        // 4. Get the module information from the database to ensure it exists.
         const modulesRepository = container.get<IModulesRepository>(DOMAIN_TYPES.IModulesRepository);
         const module = await modulesRepository.getModuleByName(moduleName);
         if (!module || !module.id) throw new HttpError(HttpStatusCode.NOT_FOUND, `Module ${moduleName} not found`);
 
-        // 5. Verificar los permisos para todos los roles del usuario de forma concurrente.
+        // 5. Verify the permissions for all user roles concurrently.
         const roleRepository = container.get<IRoleRepository>(DOMAIN_TYPES.IRoleRepository);
 
-        // Crear una lista de promesas. Cada promesa se resuelve si el rol tiene el permiso y se rechaza si no lo tiene.
+        // Create a list of promises. Each promise resolves if the role has the permission and is rejected if it does not.
         const permissionChecks = user.roles.map(roleId => {
             return new Promise<void>((resolve, reject) => {
                 roleRepository.getPermissionByRoleAndModule({ roleId, moduleId: Number.parseInt(module.id!) })
                     .then(permissions => {
                         if (permissions && permissions[requiredPermission]) {
-                            resolve(); // Permiso encontrado, la promesa se cumple.
+                            resolve(); // Permission found, the promise is fulfilled.
                         } else {
-                            reject(); // Permiso no encontrado o nulo, la promesa se rechaza.
+                            reject(); // Permission not found or null, the promise is rejected.
                         }
                     })
-                    .catch(reject); // Propagar errores de la consulta.
+                    .catch(reject); // Propagate query errors.
             });
         });
 
         try {
-            // Promise.all() se resolverá tan pronto como todas las promesas de verificación de permisos se cumpla.
+            // Promise.all() will resolve as soon as all permission verification promises are fulfilled.
             await Promise.all(permissionChecks);
             next();
         } catch (error) {
-            // Si Promise.all() se rechaza, significa que NINGUNA de las promesas se cumplió.
-            // Es decir, al menos 1 rol no tenía el permiso requerido.
-            // El error de Promise.all es un AggregateError, pero no necesitamos sus detalles aquí.
+            // If Promise.all() is rejected, it means that NONE of the promises were fulfilled.
+            // That is, at least 1 role did not have the required permission.
+            // The Promise.all error is an AggregateError, but we do not need its details here.
             next(new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`));
         }
 
     } catch (error) {
-        // Si ocurre cualquier error durante el proceso, se pasa al siguiente middleware de manejo de errores.
+        // If any error occurs during the process, it is passed to the next error handling middleware.
         next(error);
     }
 }

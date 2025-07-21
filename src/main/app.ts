@@ -1,9 +1,9 @@
 import express, { Request, Response, type Application } from "express";
 import mainRouter from "../infraestructure/http/routes";
 import viewsRouter from "../infraestructure/http/routes/views.routes";
-import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
 import { productsJob } from "../cron/products";
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';

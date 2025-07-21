@@ -1,28 +1,28 @@
-<%- include('partials/header', { title: 'Agregar Método de Pago' }) %>
+<%- include('partials/header', { title: 'Add Payment Method' }) %>
 
 <body data-stripe-key="<%= stripePublicKey %>">
   <div class="container">
-    <h1>Agregar Método de Pago</h1>
+    <h1>Add Payment Method</h1>
 
-    <!-- Si el usuario no está logueado -->
+    <!-- If the user is not logged in -->
     <div id="login-prompt">
-      <h2>Por favor, inicia sesión para continuar</h2>
-      <p>Debes iniciar sesión para poder agregar una tarjeta.</p>
-      <button id="show-login-btn">Iniciar Sesión</button>
+      <h2>Please log in to continue</h2>
+      <p>You must be logged in to add a card.</p>
+      <button id="show-login-btn">Log In</button>
     </div>
 
-    <!-- Si el usuario está autenticado -->
+    <!-- If the user is authenticated -->
     <div id="add-card-content" class="hidden">
       <div id="payment-element">
-        <!-- Stripe montará el formulario aquí -->
+        <!-- Stripe will mount the form here -->
       </div>
 
       <div id="default-card-option">
         <input type="checkbox" id="default-card-checkbox" />
-        <label for="default-card-checkbox">Establecer como método de pago predeterminado</label>
+        <label for="default-card-checkbox">Set as default payment method</label>
       </div>
 
-      <button id="add-card-btn">Agregar Tarjeta</button>
+      <button id="add-card-btn">Add Card</button>
     </div>
 
     <!-- UI feedback -->

@@ -11,7 +11,7 @@ router
     .get('/payment-methods', controller.getClientPaymentMethods)
     .delete('/payment-methods/:paymentMethodId', DeletePaymentMethodValidator, controller.deletePaymentMethod)
 
-    //* Verifica algunas condiciones necesarias para proceder al pago
+    // Verify some necessary conditions to proceed with the payment
     .use(checkCartMiddleware)
     .post('/create-payment-intent', CreatePaymentIntentValidator, controller.createPaymentIntent)
     .post('/create-setup-intent', controller.createSetupIntent)
