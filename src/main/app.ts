@@ -3,8 +3,8 @@ import mainRouter from "../infraestructure/http/routes";
 import viewsRouter from "../infraestructure/http/routes/views.routes";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
-import { loggingMiddleware } from "../infraestructure/http/middlewares/logging.middleware";
 import { productsJob } from "../cron/products";
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 import path from 'path';
@@ -32,7 +32,7 @@ class App {
         };
         this.express.use(cors(corsOptions));
         this.express.use(express.urlencoded({ extended: true }));
-        this.express.use(loggingMiddleware);
+        this.express.use(morgan('dev'));
         this.express.use(helmet({
             contentSecurityPolicy: false
         }));

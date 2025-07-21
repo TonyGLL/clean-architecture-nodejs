@@ -1,37 +1,62 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
+import fs from 'fs';
 
-const logDir = path.join(__dirname, '../../../logs');
+// Carpeta de logs (fuera de src)
+const logDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
 
-const fileTransport = new DailyRotateFile({
-  filename: 'app-%DATE%.log',
+// Format común
+const fileFormat = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.json()
+);
+
+// Error logs
+const errorTransport = new DailyRotateFile({
+  filename: 'error-%DATE%.log',
   dirname: logDir,
   datePattern: 'YYYY-MM-DD',
   zippedArchive: true,
-  maxSize: '20m',
-  maxFiles: '14d', // Keep logs for 14 days
-  level: 'info',
+  maxSize: '10m',
+  maxFiles: '14d',
+  level: 'error',
+  format: fileFormat,
 });
 
+// API/info logs
+const apiTransport = new DailyRotateFile({
+  filename: 'api-%DATE%.log',
+  dirname: logDir,
+  datePattern: 'YYYY-MM-DD',
+  zippedArchive: true,
+  maxSize: '10m',
+  maxFiles: '7d',
+  level: 'http', // o 'info', depende cómo lo uses
+  format: fileFormat,
+});
+
+// Consola en desarrollo
 const consoleTransport = new winston.transports.Console({
+  level: 'debug',
   format: winston.format.combine(
     winston.format.colorize(),
-    winston.format.timestamp(),
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
-      return `[${timestamp}] ${level}: ${message} ${
-        Object.keys(meta).length ? JSON.stringify(meta) : ''
-      }`;
+      const extras = Object.keys(meta).length ? JSON.stringify(meta) : '';
+      return `[${timestamp}] ${level}: ${message} ${extras}`;
     })
   ),
 });
 
+// Logger con niveles personalizados
 export const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'user-service' },
-  transports: [fileTransport, consoleTransport],
+  levels: winston.config.npm.levels, // default: error, warn, info, http, verbose, debug, silly
+  level: 'debug',
+  transports: [
+    errorTransport,
+    apiTransport,
+    consoleTransport,
+  ],
 });

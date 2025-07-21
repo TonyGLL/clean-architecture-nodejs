@@ -5,7 +5,8 @@
     "ext": "*",
     "ignore": [
         "src/**/*.spec.ts",
-        "node_modules"
+        "node_modules",
+        "logs/*"
     ],
     "exec": "ts-node ./src/main/server.ts"
 }
