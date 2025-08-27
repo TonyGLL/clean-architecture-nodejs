@@ -48,6 +48,7 @@ import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
+import { GetClientWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -60,6 +61,7 @@ import { CartController } from '../http/controllers/cart.ctrl';
 import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl';
 import { StripeController } from '../http/controllers/stripe.ctrl';
 import { AddressController } from '../http/controllers/address.ctrl';
+import { WishlistController } from '../http/controllers/wishlist.ctrl';
 
 const container = new Container();
 
@@ -79,7 +81,6 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 
 // Services (Interface -> Implementation)
-// Assuming BcryptService is the concrete implementation for IHashingService
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
 container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
@@ -140,6 +141,8 @@ container.bind<GetAddressByIdUseCase>(GetAddressByIdUseCase).toSelf();
 container.bind<UpdateAddressUseCase>(UpdateAddressUseCase).toSelf();
 container.bind<DeleteAddressUseCase>(DeleteAddressUseCase).toSelf();
 container.bind<SetDefaultAddressUseCase>(SetDefaultAddressUseCase).toSelf();
+// Wishlist
+container.bind<GetClientWishlistUseCase>(GetClientWishlistUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -152,5 +155,6 @@ container.bind<CartController>(CartController).toSelf();
 container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 container.bind<AddressController>(AddressController).toSelf();
+container.bind<WishlistController>(WishlistController).toSelf();
 
 export { container };
