@@ -62,7 +62,7 @@ export class PostgresCartRepository implements ICartRepository {
                 sc.status,
                 pm.external_payment_id,
 
-                // Shipping address (can be NULL if it does not exist)
+                -- Shipping address (can be NULL if it does not exist)
                 json_build_object(
                     'id', a.id,
                     'address_line1', a.address_line1,
@@ -74,7 +74,7 @@ export class PostgresCartRepository implements ICartRepository {
                     'is_default', a.is_default
                 ) AS address,
 
-                // Products in the cart
+                -- Products in the cart
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -83,7 +83,7 @@ export class PostgresCartRepository implements ICartRepository {
                             'unit_price', ci.unit_price,
                             'added_at', ci.added_at,
 
-                            // Product data
+                            -- Product data
                             'name', p.name,
                             'description', p.description,
                             'price', p.price,
@@ -91,13 +91,14 @@ export class PostgresCartRepository implements ICartRepository {
                             'sku', p.sku,
                             'image', p.image,
 
-                            // Category data
+                            -- Category data
                             'category_id', c.id,
                             'category_name', c.name,
                             'category_description', c.description
                         )
+                    ORDER BY ci.added_at
                     ) FILTER (WHERE ci.id IS NOT NULL),
-                    '[]'
+                    '[]'::json
                 ) AS items
             FROM shopping_carts sc
             LEFT JOIN cart_items ci ON ci.cart_id = sc.id
@@ -107,7 +108,7 @@ export class PostgresCartRepository implements ICartRepository {
             LEFT JOIN payments pm ON pm.cart_id = sc.id
             LEFT JOIN addresses a ON sc.shipping_address_id = a.id
             WHERE sc.client_id = $1 AND sc.status = 'active'
-            GROUP BY sc.id, pm.external_payment_id, a.id;
+            GROUP BY sc.id, sc.client_id, sc.created_at, sc.status, pm.external_payment_id, a.id;
         `;
         const query = {
             text,
