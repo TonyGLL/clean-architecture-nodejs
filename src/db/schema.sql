@@ -232,3 +232,22 @@ CREATE TABLE payment_provider_events (
 
 ALTER TABLE cart_items
 ADD CONSTRAINT unique_cart_product UNIQUE (cart_id, product_id);
+
+-- Tabla principal de wishlists
+CREATE TABLE wishlists (
+    id SERIAL PRIMARY KEY,
+    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    name VARCHAR(100) DEFAULT 'Mi lista', -- opcional: para permitir varias listas con nombre
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (client_id, name) -- evita que un cliente cree dos listas con el mismo nombre
+);
+
+-- Relación entre wishlist y productos
+CREATE TABLE wishlist_items (
+    id SERIAL PRIMARY KEY,
+    wishlist_id INT NOT NULL REFERENCES wishlists(id) ON DELETE CASCADE,
+    product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (wishlist_id, product_id) -- asegura que no se repita el producto en la misma lista
+);
