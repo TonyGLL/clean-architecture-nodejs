@@ -27,6 +27,8 @@ import { IOrderRepository } from '../../domain/repositories/order.repository';
 import { PostgresOrderRepository } from '../database/postgres/repositories/order.repository';
 import { IAddressRepository } from '../../domain/repositories/address.repository';
 import { PostgresAddressRepository } from '../database/postgres/repositories/address.repository';
+import { IWishlistRepository } from '../../domain/repositories/wishlist.repository';
+import { PostgresWishlistRepository } from '../database/postgres/repositories/wishlist.repository';
 
 // Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -48,7 +50,7 @@ import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
-import { GetClientWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
+import { GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase } from '../../application/use-cases/wishlist.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -79,6 +81,7 @@ container.bind<ICartRepository>(DOMAIN_TYPES.ICartRepository).to(PostgresCartRep
 container.bind<IStripePaymentRepository>(DOMAIN_TYPES.IStripePaymentRepository).to(PostgresStripePaymentRepository);
 container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository);
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
+container.bind<IWishlistRepository>(DOMAIN_TYPES.IWishlistRepository).to(PostgresWishlistRepository);
 
 // Services (Interface -> Implementation)
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
@@ -142,7 +145,8 @@ container.bind<UpdateAddressUseCase>(UpdateAddressUseCase).toSelf();
 container.bind<DeleteAddressUseCase>(DeleteAddressUseCase).toSelf();
 container.bind<SetDefaultAddressUseCase>(SetDefaultAddressUseCase).toSelf();
 // Wishlist
-container.bind<GetClientWishlistUseCase>(GetClientWishlistUseCase).toSelf();
+container.bind<GetClientWishlistsUseCase>(GetClientWishlistsUseCase).toSelf();
+container.bind<GetClientWishlistDetailsUseCase>(GetClientWishlistDetailsUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();

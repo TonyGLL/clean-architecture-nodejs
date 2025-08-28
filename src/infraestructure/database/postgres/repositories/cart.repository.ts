@@ -54,76 +54,89 @@ export class PostgresCartRepository implements ICartRepository {
     }
 
     public async getCartDetails(clientId: number): Promise<Cart> {
-        const text = `
-            SELECT
-                sc.id AS cart_id,
-                sc.client_id,
-                sc.created_at AS cart_created_at,
-                sc.status,
-                pm.external_payment_id,
+        try {
+            const text = `
+                SELECT
+                    sc.id AS cart_id,
+                    sc.client_id,
+                    sc.created_at AS cart_created_at,
+                    sc.status,
+                    pm.external_payment_id,
 
-                -- Shipping address (can be NULL if it does not exist)
-                json_build_object(
-                    'id', a.id,
-                    'address_line1', a.address_line1,
-                    'address_line2', a.address_line2,
-                    'city', a.city,
-                    'state', a.state,
-                    'postal_code', a.postal_code,
-                    'country', a.country,
-                    'is_default', a.is_default
-                ) AS address,
+                    -- Shipping address (can be NULL if it does not exist)
+                    json_build_object(
+                        'id', a.id,
+                        'address_line1', a.address_line1,
+                        'address_line2', a.address_line2,
+                        'city', a.city,
+                        'state', a.state,
+                        'postal_code', a.postal_code,
+                        'country', a.country,
+                        'is_default', a.is_default
+                    ) AS address,
 
-                -- Products in the cart
-                COALESCE(
-                    json_agg(
-                        json_build_object(
-                            'id', ci.product_id,
-                            'quantity', ci.quantity,
-                            'unit_price', ci.unit_price,
-                            'added_at', ci.added_at,
+                    -- Products in the cart
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', ci.product_id,
+                                'quantity', ci.quantity,
+                                'unit_price', ci.unit_price,
+                                'added_at', ci.added_at,
 
-                            -- Product data
-                            'name', p.name,
-                            'description', p.description,
-                            'price', p.price,
-                            'stock', p.stock,
-                            'sku', p.sku,
-                            'image', p.image,
+                                -- Product data
+                                'name', p.name,
+                                'description', p.description,
+                                'price', p.price,
+                                'stock', p.stock,
+                                'sku', p.sku,
+                                'image', p.image,
 
-                            -- Category data
-                            'category_id', c.id,
-                            'category_name', c.name,
-                            'category_description', c.description
-                        )
-                    ORDER BY ci.added_at
-                    ) FILTER (WHERE ci.id IS NOT NULL),
-                    '[]'::json
-                ) AS items
-            FROM shopping_carts sc
-            LEFT JOIN cart_items ci ON ci.cart_id = sc.id
-            LEFT JOIN products p ON ci.product_id = p.id
-            LEFT JOIN product_categories pc ON pc.product_id = p.id
-            LEFT JOIN categories c ON pc.category_id = c.id
-            LEFT JOIN payments pm ON pm.cart_id = sc.id
-            LEFT JOIN addresses a ON sc.shipping_address_id = a.id
-            WHERE sc.client_id = $1 AND sc.status = 'active'
-            GROUP BY sc.id, sc.client_id, sc.created_at, sc.status, pm.external_payment_id, a.id;
-        `;
-        const query = {
-            text,
-            values: [clientId]
-        };
-        const result = await this.pool.query(query);
-        const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address } = result.rows[0];
-        const cart = new Cart(cart_id, client_id, status, cart_created_at, items || [], address);
-        cart.setActivePaymentIntenId(external_payment_id);
-        if (items.length) {
-            cart.calculateSubTotal(items);
-            cart.calculateTaxes();
-            cart.calculateTotal();
+                                -- Category data
+                                'category_id', c.id,
+                                'category_name', c.name,
+                                'category_description', c.description,
+
+                                -- Wishlisted status
+                                'wishlisted', EXISTS (
+                                    SELECT 1
+                                    FROM wishlists w
+                                    JOIN wishlist_items wi ON w.id = wi.wishlist_id
+                                    WHERE w.client_id = sc.client_id
+                                    AND wi.product_id = ci.product_id
+                                )
+                            )
+                        ORDER BY ci.added_at
+                        ) FILTER (WHERE ci.id IS NOT NULL),
+                        '[]'::json
+                    ) AS items
+                FROM shopping_carts sc
+                LEFT JOIN cart_items ci ON ci.cart_id = sc.id
+                LEFT JOIN products p ON ci.product_id = p.id
+                LEFT JOIN product_categories pc ON pc.product_id = p.id
+                LEFT JOIN categories c ON pc.category_id = c.id
+                LEFT JOIN payments pm ON pm.cart_id = sc.id
+                LEFT JOIN addresses a ON sc.shipping_address_id = a.id
+                WHERE sc.client_id = $1 AND sc.status = 'active'
+                GROUP BY sc.id, sc.client_id, sc.created_at, sc.status, pm.external_payment_id, a.id;
+            `;
+            const query = {
+                text,
+                values: [clientId]
+            };
+            const result = await this.pool.query(query);
+            const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address, wishlisted } = result.rows[0];
+            const cart = new Cart(cart_id, client_id, status, cart_created_at, items || [], address, wishlisted);
+            cart.setActivePaymentIntenId(external_payment_id);
+            if (items.length) {
+                cart.calculateSubTotal(items);
+                cart.calculateTaxes();
+                cart.calculateTotal();
+            }
+            return cart;
+        } catch (error) {
+            throw error;
         }
-        return cart;
     }
 
     public async createCartFromLogin(clientId: number, client: PoolClient): Promise<void> {

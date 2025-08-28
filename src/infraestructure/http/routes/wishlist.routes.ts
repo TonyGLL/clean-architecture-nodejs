@@ -6,7 +6,8 @@ const router = Router();
 const controller = container.get<WishlistController>(WishlistController);
 
 router
-    .get('/', controller.getWishlist)
+    .get('/', controller.getWishlists)
+    .get('/:id', controller.getWishlist)
     ;
 
 export default router;
