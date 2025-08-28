@@ -10,11 +10,12 @@ export class Cart {
         public createdAt: Date = new Date(),
         public items: Product[] = [],
         public address: Address | null,
+        public wishlisted?: boolean,
         public subTotal: number = 0,
         public taxes: number = 0,
         public shipping: number = 40,
         public total: number = 0,
-        public activePaymentIntentId?: string | null
+        public activePaymentIntentId?: string | null,
     ) { }
 
     public setActivePaymentIntenId(id: string): void {

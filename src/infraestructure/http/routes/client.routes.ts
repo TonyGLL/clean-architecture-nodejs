@@ -4,11 +4,12 @@ import productsRouter from './products.routes';
 import paymentRouter from './payment.routes';
 import addressRouter from './address.routes';
 import cartRouter from './cart.routes';
+import wishlistRouter from './wishlist.routes';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
-const mainAuthRouter = Router();
+const mainClientRouter = Router();
 
-mainAuthRouter
+mainClientRouter
     .use('/auth', authClientRouter)
 
     // Protected routes
@@ -17,6 +18,7 @@ mainAuthRouter
     .use('/cart', cartRouter)
     .use('/products', productsRouter)
     .use('/payments', paymentRouter)
-    .use('/address', addressRouter);
+    .use('/address', addressRouter)
+    .use('/wishlist', wishlistRouter);
 
-export default mainAuthRouter;
+export default mainClientRouter;

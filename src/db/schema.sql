@@ -240,6 +240,7 @@ CREATE TABLE wishlists (
     name VARCHAR(100) DEFAULT 'Mi lista', -- opcional: para permitir varias listas con nombre
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted BOOLEAN DEFAULT FALSE,
     UNIQUE (client_id, name) -- evita que un cliente cree dos listas con el mismo nombre
 );
 
