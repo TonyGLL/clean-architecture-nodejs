@@ -50,7 +50,7 @@ import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
-import { GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase } from '../../application/use-cases/wishlist.use-case';
+import { CreateWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase } from '../../application/use-cases/wishlist.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -147,6 +147,7 @@ container.bind<SetDefaultAddressUseCase>(SetDefaultAddressUseCase).toSelf();
 // Wishlist
 container.bind<GetClientWishlistsUseCase>(GetClientWishlistsUseCase).toSelf();
 container.bind<GetClientWishlistDetailsUseCase>(GetClientWishlistDetailsUseCase).toSelf();
+container.bind<CreateWishlistUseCase>(CreateWishlistUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
