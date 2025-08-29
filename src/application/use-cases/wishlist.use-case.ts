@@ -43,3 +43,16 @@ export class CreateWishlistUseCase {
         return [HttpStatusCode.OK, { message: 'Wishlist created successfully' }];
     }
 }
+
+@injectable()
+export class DeleteWishlistUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IWishlistRepository) private wishlistRepository: IWishlistRepository
+    ) { }
+
+    public async execute(dto: GetWishlistDetailsDTO): Promise<[number, object]> {
+        await this.wishlistRepository.deleteWishlist(dto.clientId, dto.wishlistId);
+
+        return [HttpStatusCode.OK, { message: 'Wishlist deleted successfully' }];
+    }
+}

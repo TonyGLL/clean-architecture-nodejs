@@ -35,4 +35,13 @@ export interface IWishlistRepository {
      * @desc Find a wishlist by its name for a specific client
      */
     findByName(clientId: number, name: string): Promise<Wishlist | null>;
+
+    /**
+     * @method deleteWishlist
+     * @param {number} clientId
+     * @param {number} wishlistId
+     * @returns {Promise<void>}
+     * @desc Soft delete a wishlist by its ID
+     */
+    deleteWishlist(clientId: number, wishlistId: number): Promise<void>;
 }

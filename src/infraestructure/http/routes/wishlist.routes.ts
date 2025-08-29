@@ -9,9 +9,9 @@ router
     .get('/', controller.getWishlists)
     .post('/', controller.createWishlist)
     /* .post('/add/:id', controller.getWishlist)
-    .delete('/delete/:id', controller.getWishlist) */
-    .patch('/:id', controller.getWishlist)
-    .delete('/:id', controller.getWishlist)
+    .delete('/delete/:id', controller.getWishlist) 
+    .patch('/:id', controller.getWishlist) */
+    .delete('/:id', controller.deleteWishlist)
     .get('/:id', controller.getWishlist)
     ;
 
