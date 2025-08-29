@@ -1,13 +1,15 @@
 import { inject, injectable } from "inversify";
-import { GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase } from "../../../application/use-cases/wishlist.use-case";
+import { CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase } from "../../../application/use-cases/wishlist.use-case";
 import { NextFunction, Request, Response } from "express";
-import { GetWishlistDetailsDTO } from "../../../application/dtos/wishlist.dto";
+import { CreateWishlistDTO, GetWishlistDetailsDTO } from "../../../application/dtos/wishlist.dto";
 
 @injectable()
 export class WishlistController {
     constructor(
         @inject(GetClientWishlistsUseCase) private getClienWishlistsUseCase: GetClientWishlistsUseCase,
-        @inject(GetClientWishlistDetailsUseCase) private getClienWishlistDetailsUseCase: GetClientWishlistDetailsUseCase,
+        @inject(GetClientWishlistDetailsUseCase) private getClientWishlistDetailsUseCase: GetClientWishlistDetailsUseCase,
+        @inject(CreateWishlistUseCase) private createWishlistUseCase: CreateWishlistUseCase,
+        @inject(DeleteWishlistUseCase) private deleteWishlistUseCase: DeleteWishlistUseCase,
     ) { }
 
     public getWishlists = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -27,7 +29,35 @@ export class WishlistController {
                 clientId,
                 wishlistId: parseInt(req.params.id)
             };
-            const [status, data] = await this.getClienWishlistDetailsUseCase.execute(dto);
+            const [status, data] = await this.getClientWishlistDetailsUseCase.execute(dto);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public createWishlist = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user.id;
+            const dto: CreateWishlistDTO = {
+                clientId,
+                name: req.body.name
+            };
+            const [status, data] = await this.createWishlistUseCase.execute(dto);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public deleteWishlist = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const clientId = req.user.id;
+            const dto: GetWishlistDetailsDTO = {
+                clientId,
+                wishlistId: Number(req.params.id)
+            };
+            const [status, data] = await this.deleteWishlistUseCase.execute(dto);
             res.status(status).json(data);
         } catch (error) {
             next(error);

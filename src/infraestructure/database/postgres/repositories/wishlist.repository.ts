@@ -10,6 +10,46 @@ export class PostgresWishlistRepository implements IWishlistRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
+    public async deleteWishlist(clientId: number, wishlistId: number): Promise<void> {
+        try {
+            const query = {
+                text: 'UPDATE wishlists SET deleted = TRUE WHERE id = $1 AND client_id = $2',
+                values: [wishlistId, clientId]
+            };
+
+            await this.pool.query(query);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async createWishlist(clientId: number, name: string): Promise<void> {
+        try {
+            const query = {
+                text: 'INSERT INTO wishlists (client_id, name) VALUES ($1, $2)',
+                values: [clientId, name]
+            };
+
+            await this.pool.query(query);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async findByName(clientId: number, name: string): Promise<Wishlist | null> {
+        try {
+            const query = {
+                text: 'SELECT w.id FROM wishlists w WHERE w.client_id = $1 AND w.name = $2 AND w.deleted IS FALSE',
+                values: [clientId, name]
+            };
+
+            const { rows } = await this.pool.query<Wishlist>(query);
+            return rows.length ? rows[0] : null;
+        } catch (error) {
+            throw error;
+        }
+    }
+
     public async getWishlistDetails(clientId: number, wishlistId: number): Promise<Wishlist | null> {
         try {
             const query = {
