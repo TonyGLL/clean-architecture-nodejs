@@ -11,3 +11,9 @@ export interface CreateWishlistDTO {
 export interface UpdateWishlistDTO extends CreateWishlistDTO {
     wishlistId: number;
 }
+
+export interface AddProductToWishlistDTO {
+    clientId: number;
+    wishlistId: number;
+    productId: number;
+}

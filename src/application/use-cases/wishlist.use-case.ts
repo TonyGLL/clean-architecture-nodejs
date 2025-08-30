@@ -3,7 +3,7 @@ import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { Wishlist } from "../../domain/entities/wishlist";
 import { IWishlistRepository } from "../../domain/repositories/wishlist.repository";
 import { HttpStatusCode } from "../../domain/shared/http.status";
-import { CreateWishlistDTO, GetWishlistDetailsDTO, UpdateWishlistDTO } from "../dtos/wishlist.dto";
+import { AddProductToWishlistDTO, CreateWishlistDTO, GetWishlistDetailsDTO, UpdateWishlistDTO } from "../dtos/wishlist.dto";
 import { HttpError } from "../../domain/errors/http.error";
 
 @injectable()
@@ -67,5 +67,31 @@ export class UpdateWishlistUseCase {
         await this.wishlistRepository.updateWishlist(dto.clientId, dto.wishlistId, dto.name);
 
         return [HttpStatusCode.OK, { message: 'Wishlist updated successfully' }];
+    }
+}
+
+@injectable()
+export class AddProductToWishlistUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IWishlistRepository) private wishlistRepository: IWishlistRepository
+    ) { }
+
+    public async execute(dto: AddProductToWishlistDTO): Promise<[number, object]> {
+        await this.wishlistRepository.addProductToWishlist(dto.wishlistId, dto.productId);
+
+        return [HttpStatusCode.OK, { message: 'Wishlist product added successfully' }];
+    }
+}
+
+@injectable()
+export class RemoveProductFromWishlistUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IWishlistRepository) private wishlistRepository: IWishlistRepository
+    ) { }
+
+    public async execute(dto: AddProductToWishlistDTO): Promise<[number, object]> {
+        await this.wishlistRepository.removeProductFromWishlist(dto.wishlistId, dto.productId);
+
+        return [HttpStatusCode.OK, { message: 'Wishlist product removed successfully' }];
     }
 }
