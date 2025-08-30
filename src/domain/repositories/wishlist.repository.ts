@@ -44,4 +44,14 @@ export interface IWishlistRepository {
      * @desc Soft delete a wishlist by its ID
      */
     deleteWishlist(clientId: number, wishlistId: number): Promise<void>;
+
+    /**
+     * @method updateWishlist
+     * @param {number} clientId
+     * @param {number} wishlistId
+     * @param {string} name
+     * @returns {Promise<void>}
+     * @desc Update a wishlist's name by its ID
+     */
+    updateWishlist(clientId: number, wishlistId: number, name: string): Promise<void>;
 }

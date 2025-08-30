@@ -63,4 +63,12 @@ export class WishlistController {
             next(error);
         }
     }
+
+    public updateWishlist = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            res.status(200).json({ message: "Not implemented yet" });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
