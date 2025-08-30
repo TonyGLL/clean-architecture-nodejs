@@ -54,4 +54,22 @@ export interface IWishlistRepository {
      * @desc Update a wishlist's name by its ID
      */
     updateWishlist(clientId: number, wishlistId: number, name: string): Promise<void>;
+
+    /**
+     * @method addProductToWishlist
+     * @param {number} wishlistId
+     * @param {number} productId
+     * @returns {Promise<void>}
+     * @desc Add a product to a wishlist
+     */
+    addProductToWishlist(wishlistId: number, productId: number): Promise<void>;
+
+    /**
+     * @method removeProductFromWishlist
+     * @param {number} wishlistId
+     * @param {number} productId
+     * @returns {Promise<void>}
+     * @desc Remove a product from a wishlist
+     */
+    removeProductFromWishlist(wishlistId: number, productId: number): Promise<void>;
 }
