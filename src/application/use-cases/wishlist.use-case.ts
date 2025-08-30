@@ -3,7 +3,7 @@ import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { Wishlist } from "../../domain/entities/wishlist";
 import { IWishlistRepository } from "../../domain/repositories/wishlist.repository";
 import { HttpStatusCode } from "../../domain/shared/http.status";
-import { CreateWishlistDTO, GetWishlistDetailsDTO } from "../dtos/wishlist.dto";
+import { CreateWishlistDTO, GetWishlistDetailsDTO, UpdateWishlistDTO } from "../dtos/wishlist.dto";
 import { HttpError } from "../../domain/errors/http.error";
 
 @injectable()
@@ -54,5 +54,18 @@ export class DeleteWishlistUseCase {
         await this.wishlistRepository.deleteWishlist(dto.clientId, dto.wishlistId);
 
         return [HttpStatusCode.OK, { message: 'Wishlist deleted successfully' }];
+    }
+}
+
+@injectable()
+export class UpdateWishlistUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IWishlistRepository) private wishlistRepository: IWishlistRepository
+    ) { }
+
+    public async execute(dto: UpdateWishlistDTO): Promise<[number, object]> {
+        await this.wishlistRepository.updateWishlist(dto.clientId, dto.wishlistId, dto.name);
+
+        return [HttpStatusCode.OK, { message: 'Wishlist updated successfully' }];
     }
 }
