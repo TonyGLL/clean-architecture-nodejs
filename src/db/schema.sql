@@ -252,3 +252,23 @@ CREATE TABLE wishlist_items (
     added_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (wishlist_id, product_id) -- asegura que no se repita el producto en la misma lista
 );
+
+-- Tabla reviews
+CREATE TABLE reviews (
+    id SERIAL PRIMARY KEY,
+    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    title VARCHAR(255),
+    body TEXT,
+    approved BOOLEAN DEFAULT TRUE, -- si quieres moderación, pon DEFAULT FALSE
+    deleted BOOLEAN DEFAULT FALSE, -- soft delete
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (client_id, product_id) -- 1 reseña por cliente/producto
+);
+
+-- Índices útiles
+CREATE INDEX idx_reviews_product_created_at ON reviews (product_id, created_at DESC);
+CREATE INDEX idx_reviews_product_rating ON reviews (product_id, rating);
+CREATE INDEX idx_reviews_client ON reviews (client_id);
