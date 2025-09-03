@@ -11,9 +11,8 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
+    "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.10",
@@ -32,7 +31,7 @@
     "cors": "^2.8.5",
     "cron": "^4.3.1",
     "ejs": "^3.1.10",
-    "express": "^5.1.0",
+    "express": "^4.19.2",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "inversify": "^7.5.2",
