@@ -2,7 +2,6 @@ export const DOMAIN_TYPES = {
     IAuthRepository: Symbol.for('IAuthRepository'),
     IUserRepository: Symbol.for('IUserRepository'),
     IHashingService: Symbol.for('IHashingService'),
-    // Considering IMailService based on previous analysis, let's add it.
     IMailService: Symbol.for('IMailService'),
     IRoleRepository: Symbol.for('IRoleRepository'),
     IUserRoleRepository: Symbol.for('IUserRoleRepository'),
@@ -11,7 +10,8 @@ export const DOMAIN_TYPES = {
     ICartRepository: Symbol.for('ICartRepository'),
     IStripePaymentRepository: Symbol.for("IStripePaymentRepository"),
     IStripeService: Symbol.for("IStripeService"),
-    IOrderRepository: Symbol.for("IOrderRepository"), // Added
+    IOrderRepository: Symbol.for("IOrderRepository"),
     IAddressRepository: Symbol.for("IAddressRepository"),
     IWishlistRepository: Symbol.for("IWishlistRepository"),
+    IReviewsRepository: Symbol.for("IReviewsRepository"),
 };

@@ -29,6 +29,8 @@ import { IAddressRepository } from '../../domain/repositories/address.repository
 import { PostgresAddressRepository } from '../database/postgres/repositories/address.repository';
 import { IWishlistRepository } from '../../domain/repositories/wishlist.repository';
 import { PostgresWishlistRepository } from '../database/postgres/repositories/wishlist.repository';
+import { IReviewsRepository } from '../../domain/repositories/reviews.repository';
+import { PostgresReviewsRepository } from '../database/postgres/repositories/reviews.repository';
 
 // Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -64,6 +66,8 @@ import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl
 import { StripeController } from '../http/controllers/stripe.ctrl';
 import { AddressController } from '../http/controllers/address.ctrl';
 import { WishlistController } from '../http/controllers/wishlist.ctrl';
+import { GetProductReviewsUseCase } from '../../application/use-cases/review.user-case';
+import { ReviewsController } from '../http/controllers/reviews.ctrl';
 
 const container = new Container();
 
@@ -82,6 +86,7 @@ container.bind<IStripePaymentRepository>(DOMAIN_TYPES.IStripePaymentRepository).
 container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrderRepository);
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 container.bind<IWishlistRepository>(DOMAIN_TYPES.IWishlistRepository).to(PostgresWishlistRepository);
+container.bind<IReviewsRepository>(DOMAIN_TYPES.IReviewsRepository).to(PostgresReviewsRepository);
 
 // Services (Interface -> Implementation)
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
@@ -152,6 +157,8 @@ container.bind<DeleteWishlistUseCase>(DeleteWishlistUseCase).toSelf();
 container.bind<UpdateWishlistUseCase>(UpdateWishlistUseCase).toSelf();
 container.bind<AddProductToWishlistUseCase>(AddProductToWishlistUseCase).toSelf();
 container.bind<RemoveProductFromWishlistUseCase>(RemoveProductFromWishlistUseCase).toSelf();
+// Reviews
+container.bind<GetProductReviewsUseCase>(GetProductReviewsUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -165,5 +172,6 @@ container.bind<StripeController>(StripeController).toSelf();
 container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 container.bind<AddressController>(AddressController).toSelf();
 container.bind<WishlistController>(WishlistController).toSelf();
+container.bind<ReviewsController>(ReviewsController).toSelf();
 
 export { container };
