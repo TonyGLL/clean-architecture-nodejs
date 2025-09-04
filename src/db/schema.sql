@@ -259,7 +259,6 @@ CREATE TABLE reviews (
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    title VARCHAR(255),
     body TEXT,
     approved BOOLEAN DEFAULT TRUE, -- si quieres moderación, pon DEFAULT FALSE
     deleted BOOLEAN DEFAULT FALSE, -- soft delete
