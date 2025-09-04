@@ -12,12 +12,12 @@ const mainClientRouter = Router();
 
 mainClientRouter
     .use('/auth', authClientRouter)
+    .use('/products', productsRouter)
 
     // Protected routes
     .use(authMiddleware)
 
     .use('/cart', cartRouter)
-    .use('/products', productsRouter)
     .use('/payments', paymentRouter)
     .use('/address', addressRouter)
     .use('/wishlist', wishlistRouter)

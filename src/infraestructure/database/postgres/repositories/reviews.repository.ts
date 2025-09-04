@@ -28,8 +28,17 @@ export class PostgresReviewsRepository implements IReviewsRepository {
         }
     }
 
-    public async createReview(review: CreateReviewDTO, client: PoolClient): Promise<Review> {
-        throw new Error("Method not implemented.");
+    public async createReview(review: CreateReviewDTO): Promise<void> {
+        try {
+            const text = `
+                INSERT INTO reviews (product_id, client_id, rating, body)
+                VALUES ($1, $2, $3, $4)
+            `;
+            const values = [review.product_id, review.client_id, review.rating, review.body];
+            await this.pool.query(text, values);
+        } catch (error) {
+            throw error;
+        }
     }
 
     public async updateReview(review_id: string, review: Partial<Review>, client: PoolClient): Promise<void> {
