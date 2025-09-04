@@ -24,10 +24,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Create log directory and set permissions
+# Create log directory and set strict permissions
 RUN mkdir -p /app/logs && \
-    chown -R root:root /app/logs && \
-    chmod -R 700 /app/logs
+    chown root:root /app/logs && \
+    chmod 700 /app/logs
 
 # Copy build output and production dependencies
 COPY --from=builder /app/dist ./dist
