@@ -142,32 +142,27 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 **Note on the Database with Docker Compose:**
-If you use `docker-compose.yml`, it defines a PostgreSQL service with user `root`, password `secret`, and database `ca_nodejs`. The application connects to this database through the `DB_SOURCE` environment variable defined in `docker-compose.yml`.
+If you use `docker-compose.yml`, it defines a PostgreSQL service with default credentials (`user: root`, `password: secret`). **These are insecure and should not be used in a production environment.** It is strongly recommended to change these credentials in your `docker-compose.yml` file and use a secure password. The application connects to this database through the `DB_SOURCE` environment variable defined in `docker-compose.yml`.
 
 ### 4. Initialize the Database
 
-The scripts to initialize the database are located in `src/db/`. They should be executed in the following order:
+A script is provided to automate the database initialization process. This script will create the necessary tables, insert initial data, and create stored procedures.
 
-1.  `src/db/schema.sql` (create tables)
-2.  `src/db/inserts.sql` (insert initial data)
-3.  Scripts in `src/db/stored-procedures/` (create stored procedures)
+**To initialize the database:**
 
-**If you use Docker Compose (Recommended):**
+1.  Make sure your Docker container for the database is running (`docker-compose up -d db`).
+2.  Run the initialization script:
+    ```bash
+    ./scripts/init-db.sh
+    ```
+    The script uses the following default environment variables for the database connection, which match the `docker-compose.yml` setup:
+    *   `POSTGRES_HOST=localhost`
+    *   `POSTGRES_PORT=5432`
+    *   `POSTGRES_USER=root`
+    *   `POSTGRES_PASSWORD=secret`
+    *   `POSTGRES_DB=ca_nodejs`
 
-1.  Make sure the database container is running: `docker-compose up -d db`.
-2.  Connect to the database using a PostgreSQL client (like `psql` or a graphical tool) with the following credentials:
-    *   **Host:** `localhost`
-    *   **Port:** `5432`
-    *   **User:** `root`
-    *   **Password:** `secret`
-    *   **Database:** `ca_nodejs`
-3.  Execute the SQL scripts in the mentioned order.
-
-**If you use PostgreSQL manually:**
-
-1.  Make sure your PostgreSQL server is running.
-2.  Use `psql` or another client to connect to your database.
-3.  Execute the SQL scripts in the correct order.
+    If you are not using Docker or have different credentials, you can set these environment variables before running the script.
 
 ### 5. Run the Development Server (without Docker)
 
