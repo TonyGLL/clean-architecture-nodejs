@@ -13,12 +13,11 @@ export interface IReviewsRepository {
 
     /**
      * @method createReview
-     * @param {Review} review
-     * @param {PoolClient} client
-     * @returns {Promise<Review>}
+     * @param {CreateReviewDTO} review
+     * @returns {Promise<void>}
      * @desc Create a new review
      */
-    createReview(review: CreateReviewDTO, client: PoolClient): Promise<Review>;
+    createReview(review: CreateReviewDTO): Promise<void>;
 
     /**
      * @method updateReview

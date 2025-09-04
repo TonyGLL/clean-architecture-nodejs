@@ -6,4 +6,4 @@ export interface GetProductReviewsDTO {
     page: number;
 }
 
-export interface CreateReviewDTO extends Pick<Review, 'client_id' | 'rating' | 'title' | 'body' | 'title'> { }
+export interface CreateReviewDTO extends Pick<Review, 'product_id' | 'client_id' | 'rating' | 'body'> { }

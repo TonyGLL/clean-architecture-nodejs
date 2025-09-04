@@ -4,7 +4,6 @@ export class Review {
         public client_id: number,
         public product_id: number,
         public rating: number,
-        public title: string,
         public body: string,
         public approved: boolean,
         public deleted: boolean,
