@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy package.json and lock file, then install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --force
 
 # Copy the rest of the source code and build it
 COPY . .
@@ -24,24 +24,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Create a non-root user and group
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 # Create log directory and set permissions
 RUN mkdir -p /app/logs && \
-    chown -R appuser:appgroup /app/logs && \
-    chmod -R 750 /app/logs
+    chown -R root:root /app/logs && \
+    chmod -R 700 /app/logs
 
 # Copy build output and production dependencies
 COPY --from=builder /app/dist ./dist
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-
-# Change ownership of the app directory
-RUN chown -R appuser:appgroup /app
-
-# Switch to non-root user
-USER appuser
 
 # Simple healthcheck
 HEALTHCHECK --interval=30s --timeout=3s \
