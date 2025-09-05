@@ -28,3 +28,15 @@ export class CreateReviewUseCase {
         return [HttpStatusCode.OK, { message: 'Review created successfully' }];
     }
 }
+
+@injectable()
+export class DeleteReviewUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IReviewsRepository) private reviewsRepository: IReviewsRepository
+    ) { }
+
+    public async execute(review_id: number, client_id: number): Promise<[number, { message: string }]> {
+        await this.reviewsRepository.deleteReview(review_id, client_id);
+        return [HttpStatusCode.OK, { message: 'Review deleted successfully' }];
+    }
+}

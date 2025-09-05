@@ -250,7 +250,7 @@ CREATE TABLE wishlist_items (
     wishlist_id INT NOT NULL REFERENCES wishlists(id) ON DELETE CASCADE,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     added_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (wishlist_id, product_id) -- asegura que no se repita el producto en la misma lista
+    UNIQUE (wishlist_id, product_id)
 );
 
 -- Tabla reviews
@@ -260,11 +260,11 @@ CREATE TABLE reviews (
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
     body TEXT,
-    approved BOOLEAN DEFAULT TRUE, -- si quieres moderación, pon DEFAULT FALSE
-    deleted BOOLEAN DEFAULT FALSE, -- soft delete
+    approved BOOLEAN DEFAULT TRUE,
+    deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (client_id, product_id) -- 1 reseña por cliente/producto
+    UNIQUE (client_id, product_id)
 );
 
 -- Índices útiles

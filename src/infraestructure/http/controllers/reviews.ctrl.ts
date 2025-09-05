@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { CreateReviewUseCase, GetProductReviewsUseCase } from "../../../application/use-cases/review.user-case";
+import { CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase } from "../../../application/use-cases/review.user-case";
 import { NextFunction, Request, Response } from "express";
 import { CreateReviewDTO, GetProductReviewsDTO } from "../../../application/dtos/review.dto";
 
@@ -7,7 +7,8 @@ import { CreateReviewDTO, GetProductReviewsDTO } from "../../../application/dtos
 export class ReviewsController {
     constructor(
         @inject(GetProductReviewsUseCase) private getProductReviewsUseCase: GetProductReviewsUseCase,
-        @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase
+        @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
+        @inject(DeleteReviewUseCase) private deleteReviewUseCase: DeleteReviewUseCase
     ) { }
 
     public getProductReviews = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -38,6 +39,17 @@ export class ReviewsController {
                 client_id
             };
             const [status, data] = await this.createReviewUseCase.execute(dto);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public deleteReview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const client_id = req.user.id;
+            const { reviewId } = req.params as { reviewId: string };
+            const [status, data] = await this.deleteReviewUseCase.execute(+reviewId, client_id);
             res.status(status).json(data);
         } catch (error) {
             next(error);

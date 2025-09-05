@@ -20,21 +20,11 @@ export interface IReviewsRepository {
     createReview(review: CreateReviewDTO): Promise<void>;
 
     /**
-     * @method updateReview
-     * @param {string} review_id
-     * @param {Partial<Review>} review
-     * @param {PoolClient} client
-     * @returns {Promise<void>}
-     * @desc Update a review
-     */
-    updateReview(review_id: string, review: Partial<Review>, client: PoolClient): Promise<void>;
-
-    /**
      * @method deleteReview
-     * @param {string} review_id
-     * @param {PoolClient} client
+     * @param {number} review_id
+     * @param {number} client_id
      * @returns {Promise<void>}
      * @desc Delete a review
      */
-    deleteReview(review_id: string, client: PoolClient): Promise<void>;
+    deleteReview(review_id: number, client_id: number): Promise<void>;
 }

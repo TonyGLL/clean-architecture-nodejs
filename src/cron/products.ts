@@ -30,7 +30,9 @@ export const fetchExternalData = async () => {
                 category: sanitizeText(item.category),
                 sku: sanitizeText(`${item.id.toString().padStart(6, '0')}`),
                 stock: 100,
-                quantity: 0
+                quantity: 0,
+                reviews: 0,
+                rating: 0
             })
         );
 

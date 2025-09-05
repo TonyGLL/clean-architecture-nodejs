@@ -37,3 +37,13 @@ export const CreateReviewValidator = [
         .bail()
         .trim()
 ];
+
+export const DeleteReviewValidator = [
+    param('reviewId')
+        .exists().withMessage('Param `reviewId` is required')
+        .bail()
+        .notEmpty().withMessage('Param `reviewId` cannot be empty')
+        .bail()
+        .isInt({ min: 1 }).withMessage('Param `reviewId` must be a positive integer')
+        .toInt(),
+]
