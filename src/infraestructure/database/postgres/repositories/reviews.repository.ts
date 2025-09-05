@@ -45,7 +45,17 @@ export class PostgresReviewsRepository implements IReviewsRepository {
         throw new Error("Method not implemented.");
     }
 
-    public async deleteReview(review_id: string, client: PoolClient): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async deleteReview(review_id: string): Promise<void> {
+        try {
+            const text = `
+                UPDATE reviews
+                SET deleted = TRUE
+                WHERE id = $1
+            `;
+            const values = [review_id];
+            await this.pool.query(text, values);
+        } catch (error) {
+            throw error;
+        }
     }
 }

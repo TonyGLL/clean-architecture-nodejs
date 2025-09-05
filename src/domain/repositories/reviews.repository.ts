@@ -36,5 +36,5 @@ export interface IReviewsRepository {
      * @returns {Promise<void>}
      * @desc Delete a review
      */
-    deleteReview(review_id: string, client: PoolClient): Promise<void>;
+    deleteReview(review_id: string): Promise<void>;
 }
