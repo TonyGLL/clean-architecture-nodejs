@@ -36,7 +36,7 @@ export class DeleteReviewUseCase {
     ) { }
 
     public async execute(review_id: number, client_id: number): Promise<[number, { message: string }]> {
-        await this.reviewsRepository.deleteReview(review_id);
+        await this.reviewsRepository.deleteReview(review_id, client_id);
         return [HttpStatusCode.OK, { message: 'Review deleted successfully' }];
     }
 }
