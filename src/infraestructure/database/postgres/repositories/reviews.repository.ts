@@ -16,7 +16,7 @@ export class PostgresReviewsRepository implements IReviewsRepository {
             const text = `
                 SELECT id, product_id, client_id, rating, body, created_at, updated_at
                 FROM reviews
-                WHERE product_id = $1
+                WHERE product_id = $1 AND deleted = FALSE
                 ORDER BY created_at DESC
                 LIMIT $2 OFFSET $3
             `;
@@ -39,10 +39,6 @@ export class PostgresReviewsRepository implements IReviewsRepository {
         } catch (error) {
             throw error;
         }
-    }
-
-    public async updateReview(review_id: string, review: Partial<Review>, client: PoolClient): Promise<void> {
-        throw new Error("Method not implemented.");
     }
 
     public async deleteReview(review_id: number, client_id: number): Promise<void> {
