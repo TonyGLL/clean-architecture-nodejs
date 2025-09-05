@@ -66,7 +66,7 @@ import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl
 import { StripeController } from '../http/controllers/stripe.ctrl';
 import { AddressController } from '../http/controllers/address.ctrl';
 import { WishlistController } from '../http/controllers/wishlist.ctrl';
-import { CreateReviewUseCase, GetProductReviewsUseCase } from '../../application/use-cases/review.user-case';
+import { CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase } from '../../application/use-cases/review.user-case';
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
 
 const container = new Container();
@@ -160,6 +160,7 @@ container.bind<RemoveProductFromWishlistUseCase>(RemoveProductFromWishlistUseCas
 // Reviews
 container.bind<GetProductReviewsUseCase>(GetProductReviewsUseCase).toSelf();
 container.bind<CreateReviewUseCase>(CreateReviewUseCase).toSelf();
+container.bind<DeleteReviewUseCase>(DeleteReviewUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
