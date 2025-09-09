@@ -4,6 +4,8 @@ import { IReviewsRepository } from "../../../../domain/repositories/reviews.repo
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
 import { GetProductReviewsDTO, CreateReviewDTO } from "../../../../application/dtos/review.dto";
 import { Review } from "../../../../domain/entities/review";
+import { HttpStatusCode } from "../../../../domain/shared/http.status";
+import { HttpError } from "../../../../domain/errors/http.error";
 
 @injectable()
 export class PostgresReviewsRepository implements IReviewsRepository {
@@ -11,12 +13,40 @@ export class PostgresReviewsRepository implements IReviewsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
+    public async moderateReviewByAdmin(review_id: number, status: boolean): Promise<void> {
+        try {
+            const text = `
+                UPDATE reviews
+                SET approved = $1
+                WHERE id = $2
+            `;
+            const values = [status, review_id];
+            await this.pool.query(text, values);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error moderating review');
+        }
+    }
+
+    public async deleteReviewByAdmin(review_id: number): Promise<void> {
+        try {
+            const text = `
+                UPDATE reviews
+                SET deleted = TRUE
+                WHERE id = $1
+            `;
+            const values = [review_id];
+            await this.pool.query(text, values);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error deleting review');
+        }
+    }
+
     public async getProductReviews(filters: GetProductReviewsDTO): Promise<Review[]> {
         try {
             const text = `
                 SELECT id, product_id, client_id, rating, body, created_at, updated_at
                 FROM reviews
-                WHERE product_id = $1 AND deleted = FALSE
+                WHERE product_id = $1 AND deleted = FALSE AND approved = TRUE
                 ORDER BY created_at DESC
                 LIMIT $2 OFFSET $3
             `;
@@ -24,7 +54,7 @@ export class PostgresReviewsRepository implements IReviewsRepository {
             const { rows } = await this.pool.query<Review>(text, values);
             return rows;
         } catch (error) {
-            throw error;
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting product reviews');
         }
     }
 
@@ -37,7 +67,7 @@ export class PostgresReviewsRepository implements IReviewsRepository {
             const values = [review.product_id, review.client_id, review.rating, review.body];
             await this.pool.query(text, values);
         } catch (error) {
-            throw error;
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error creating review');
         }
     }
 

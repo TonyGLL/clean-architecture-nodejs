@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase } from "../../../application/use-cases/review.user-case";
+import { ModerateReviewByAdminUseCase, CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, DeleteReviewByAdminUseCase } from "../../../application/use-cases/review.user-case";
 import { NextFunction, Request, Response } from "express";
 import { CreateReviewDTO, GetProductReviewsDTO } from "../../../application/dtos/review.dto";
 
@@ -8,7 +8,9 @@ export class ReviewsController {
     constructor(
         @inject(GetProductReviewsUseCase) private getProductReviewsUseCase: GetProductReviewsUseCase,
         @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
-        @inject(DeleteReviewUseCase) private deleteReviewUseCase: DeleteReviewUseCase
+        @inject(DeleteReviewUseCase) private deleteReviewUseCase: DeleteReviewUseCase,
+        @inject(ModerateReviewByAdminUseCase) private moderateReviewByAdminUseCase: ModerateReviewByAdminUseCase,
+        @inject(DeleteReviewByAdminUseCase) private deleteReviewByAdminUseCase: DeleteReviewByAdminUseCase
     ) { }
 
     public getProductReviews = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -50,6 +52,28 @@ export class ReviewsController {
             const client_id = req.user.id;
             const { reviewId } = req.params as { reviewId: string };
             const [status, data] = await this.deleteReviewUseCase.execute(+reviewId, client_id);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public moderateReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { productId } = req.params as { productId: string };
+            const { status } = req.params as { status: string };
+            const approved = status === 'approved' ? true : false;
+            const [statusCode, data] = await this.moderateReviewByAdminUseCase.execute(+productId, approved);
+            res.status(statusCode).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public deleteReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { reviewId } = req.params as { reviewId: string };
+            const [status, data] = await this.deleteReviewByAdminUseCase.execute(+reviewId);
             res.status(status).json(data);
         } catch (error) {
             next(error);

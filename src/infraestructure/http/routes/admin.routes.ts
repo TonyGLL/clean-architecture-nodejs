@@ -5,6 +5,7 @@ import { permissionsMiddleware } from '../middlewares/permissions.middleware';
 import userRoutes from './user.routes';
 import catalogsRoutes from './catalogs.routes';
 import authAdminRouter from './auth.admin.routes';
+import reviewsAdminRoutes from './reviews.admin.routes';
 
 const mainAdminRouter = Router();
 
@@ -19,6 +20,7 @@ mainAdminRouter
     // Protected routes for admin
     .use('/roles', roleRoutes)
     .use('/catalogs', catalogsRoutes)
-    .use('/users', userRoutes);
+    .use('/users', userRoutes)
+    .use('/reviews', reviewsAdminRoutes);
 
 export default mainAdminRouter;

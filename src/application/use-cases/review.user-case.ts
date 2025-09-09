@@ -40,3 +40,27 @@ export class DeleteReviewUseCase {
         return [HttpStatusCode.OK, { message: 'Review deleted successfully' }];
     }
 }
+
+@injectable()
+export class ModerateReviewByAdminUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IReviewsRepository) private reviewsRepository: IReviewsRepository
+    ) { }
+
+    public async execute(review_id: number, status: boolean): Promise<[number, { message: string }]> {
+        await this.reviewsRepository.moderateReviewByAdmin(review_id, status);
+        return [HttpStatusCode.OK, { message: 'Review status changed successfully' }];
+    }
+}
+
+@injectable()
+export class DeleteReviewByAdminUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IReviewsRepository) private reviewsRepository: IReviewsRepository
+    ) { }
+
+    public async execute(review_id: number): Promise<[number, { message: string }]> {
+        await this.reviewsRepository.deleteReviewByAdmin(review_id);
+        return [HttpStatusCode.OK, { message: 'Review deleted successfully by admin' }];
+    }
+}

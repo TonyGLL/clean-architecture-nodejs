@@ -66,7 +66,7 @@ import { StripeWebhookController } from '../http/controllers/stripe.webhook.ctrl
 import { StripeController } from '../http/controllers/stripe.ctrl';
 import { AddressController } from '../http/controllers/address.ctrl';
 import { WishlistController } from '../http/controllers/wishlist.ctrl';
-import { CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase } from '../../application/use-cases/review.user-case';
+import { CreateReviewUseCase, DeleteReviewByAdminUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, ModerateReviewByAdminUseCase } from '../../application/use-cases/review.user-case';
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
 
 const container = new Container();
@@ -157,6 +157,8 @@ container.bind<DeleteWishlistUseCase>(DeleteWishlistUseCase).toSelf();
 container.bind<UpdateWishlistUseCase>(UpdateWishlistUseCase).toSelf();
 container.bind<AddProductToWishlistUseCase>(AddProductToWishlistUseCase).toSelf();
 container.bind<RemoveProductFromWishlistUseCase>(RemoveProductFromWishlistUseCase).toSelf();
+container.bind<ModerateReviewByAdminUseCase>(ModerateReviewByAdminUseCase).toSelf();
+container.bind<DeleteReviewByAdminUseCase>(DeleteReviewByAdminUseCase).toSelf();
 // Reviews
 container.bind<GetProductReviewsUseCase>(GetProductReviewsUseCase).toSelf();
 container.bind<CreateReviewUseCase>(CreateReviewUseCase).toSelf();

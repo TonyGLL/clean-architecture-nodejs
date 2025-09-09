@@ -27,4 +27,21 @@ export interface IReviewsRepository {
      * @desc Delete a review
      */
     deleteReview(review_id: number, client_id: number): Promise<void>;
+
+    /**
+     * @method moderateReviewByAdmin
+     * @param {number} review_id
+     * @param {boolean} status
+     * @returns {Promise<void>}
+     * @desc Change the status of a review by admin
+     */
+    moderateReviewByAdmin(review_id: number, status: boolean): Promise<void>;
+
+    /**
+     * @method deleteReviewByAdmin
+     * @param {number} review_id
+     * @returns {Promise<void>}
+     * @desc Delete a review by admin
+     */
+    deleteReviewByAdmin(review_id: number): Promise<void>;
 }
