@@ -40,3 +40,15 @@ export class DeleteReviewUseCase {
         return [HttpStatusCode.OK, { message: 'Review deleted successfully' }];
     }
 }
+
+@injectable()
+export class ChangeStatusReviewByAdminUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.IReviewsRepository) private reviewsRepository: IReviewsRepository
+    ) { }
+
+    public async execute(review_id: number, status: boolean): Promise<[number, { message: string }]> {
+        await this.reviewsRepository.changeStatusReviewByAdmin(review_id, status);
+        return [HttpStatusCode.OK, { message: 'Review status changed successfully' }];
+    }
+}
