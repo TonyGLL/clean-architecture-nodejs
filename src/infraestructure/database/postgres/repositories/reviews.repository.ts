@@ -11,6 +11,14 @@ export class PostgresReviewsRepository implements IReviewsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
+    public async moderateReviewByAdmin(review_id: number, status: boolean): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async deleteReviewByAdmin(review_id: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
     public async getProductReviews(filters: GetProductReviewsDTO): Promise<Review[]> {
         try {
             const text = `

@@ -47,3 +47,28 @@ export const DeleteReviewValidator = [
         .isInt({ min: 1 }).withMessage('Param `reviewId` must be a positive integer')
         .toInt(),
 ]
+
+export const ModerateReviewByAdminValidator = [
+    param('productId')
+        .exists().withMessage('Param `productId` is required')
+        .bail()
+        .notEmpty().withMessage('Param `productId` cannot be empty')
+        .bail()
+        .isInt({ min: 1 }).withMessage('Param `productId` must be a positive integer')
+        .toInt(),
+    param('status')
+        .exists().withMessage('Param `status` is required')
+        .bail()
+        .notEmpty().withMessage('Param `status` cannot be empty')
+        .bail()
+        .isIn(['approved', 'rejected']).withMessage('Param `status` must be either "approved" or "rejected"')
+]
+export const DeleteReviewByAdminValidator = [
+    param('reviewId')
+        .exists().withMessage('Param `reviewId` is required')
+        .bail()
+        .notEmpty().withMessage('Param `reviewId` cannot be empty')
+        .bail()
+        .isInt({ min: 1 }).withMessage('Param `reviewId` must be a positive integer')
+        .toInt(),
+]

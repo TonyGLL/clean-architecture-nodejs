@@ -42,7 +42,7 @@ export class DeleteReviewUseCase {
 }
 
 @injectable()
-export class moderateReviewByAdminUseCase {
+export class ModerateReviewByAdminUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IReviewsRepository) private reviewsRepository: IReviewsRepository
     ) { }

@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { moderateReviewByAdminUseCase, CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, DeleteReviewByAdminUseCase } from "../../../application/use-cases/review.user-case";
+import { ModerateReviewByAdminUseCase, CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, DeleteReviewByAdminUseCase } from "../../../application/use-cases/review.user-case";
 import { NextFunction, Request, Response } from "express";
 import { CreateReviewDTO, GetProductReviewsDTO } from "../../../application/dtos/review.dto";
 
@@ -9,7 +9,7 @@ export class ReviewsController {
         @inject(GetProductReviewsUseCase) private getProductReviewsUseCase: GetProductReviewsUseCase,
         @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
         @inject(DeleteReviewUseCase) private deleteReviewUseCase: DeleteReviewUseCase,
-        @inject(moderateReviewByAdminUseCase) private moderateReviewByAdminUseCase: moderateReviewByAdminUseCase,
+        @inject(ModerateReviewByAdminUseCase) private moderateReviewByAdminUseCase: ModerateReviewByAdminUseCase,
         @inject(DeleteReviewByAdminUseCase) private deleteReviewByAdminUseCase: DeleteReviewByAdminUseCase
     ) { }
 
