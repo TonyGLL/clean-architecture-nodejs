@@ -61,8 +61,9 @@ export class ReviewsController {
     public moderateReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { productId } = req.params as { productId: string };
-            const { status } = req.body as { status: boolean };
-            const [statusCode, data] = await this.moderateReviewByAdminUseCase.execute(+productId, status);
+            const { status } = req.params as { status: string };
+            const approved = status === 'approved' ? true : false;
+            const [statusCode, data] = await this.moderateReviewByAdminUseCase.execute(+productId, approved);
             res.status(statusCode).json(data);
         } catch (error) {
             next(error);
