@@ -9,7 +9,7 @@ const controller = container.get<ReviewsController>(ReviewsController);
 
 router
     .get('/:productId', GetProductReviewsValidator, expressValidatorErrors, controller.getProductReviews)
-    .post('/:productId', CreateReviewValidator, expressValidatorErrors, controller.changeStatusReviewByAdmin)
+    .post('/:productId', CreateReviewValidator, expressValidatorErrors, controller.moderateReviewByAdmin)
     .delete('/:reviewId', DeleteReviewValidator, expressValidatorErrors, controller.deleteReviewByAdmin)
     ;
 

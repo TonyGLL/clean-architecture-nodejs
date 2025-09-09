@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { ChangeStatusReviewByAdminUseCase, CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase } from "../../../application/use-cases/review.user-case";
+import { moderateReviewByAdminUseCase, CreateReviewUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, DeleteReviewByAdminUseCase } from "../../../application/use-cases/review.user-case";
 import { NextFunction, Request, Response } from "express";
 import { CreateReviewDTO, GetProductReviewsDTO } from "../../../application/dtos/review.dto";
 
@@ -9,7 +9,8 @@ export class ReviewsController {
         @inject(GetProductReviewsUseCase) private getProductReviewsUseCase: GetProductReviewsUseCase,
         @inject(CreateReviewUseCase) private createReviewUseCase: CreateReviewUseCase,
         @inject(DeleteReviewUseCase) private deleteReviewUseCase: DeleteReviewUseCase,
-        @inject(ChangeStatusReviewByAdminUseCase) private changeStatusReviewUseCase: ChangeStatusReviewByAdminUseCase
+        @inject(moderateReviewByAdminUseCase) private moderateReviewByAdminUseCase: moderateReviewByAdminUseCase,
+        @inject(DeleteReviewByAdminUseCase) private deleteReviewByAdminUseCase: DeleteReviewByAdminUseCase
     ) { }
 
     public getProductReviews = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -57,11 +58,11 @@ export class ReviewsController {
         }
     }
 
-    public changeStatusReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public moderateReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { productId } = req.params as { productId: string };
             const { status } = req.body as { status: boolean };
-            const [statusCode, data] = await this.changeStatusReviewUseCase.execute(+productId, status);
+            const [statusCode, data] = await this.moderateReviewByAdminUseCase.execute(+productId, status);
             res.status(statusCode).json(data);
         } catch (error) {
             next(error);
@@ -71,7 +72,7 @@ export class ReviewsController {
     public deleteReviewByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { reviewId } = req.params as { reviewId: string };
-            const [status, data] = await this.deleteReviewUseCase.execute(+reviewId);
+            const [status, data] = await this.deleteReviewByAdminUseCase.execute(+reviewId);
             res.status(status).json(data);
         } catch (error) {
             next(error);
