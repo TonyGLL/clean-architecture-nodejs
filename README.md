@@ -2,41 +2,31 @@
 
 ## Description
 
-This project is a RESTful API built with Node.js, Express.js, and TypeScript, following the principles of Clean Architecture. It provides a solid foundation for building scalable and maintainable backend services, with a primary focus on user authentication and management, product catalog, shopping cart, and payment processing. The architecture emphasizes separation of concerns, making the codebase modular, testable, and easy to evolve.
+This project is a comprehensive e-commerce platform built with Node.js, Express.js, and TypeScript, following the principles of Clean Architecture. It features a robust RESTful API for backend management and includes a server-side rendered client interface using EJS. The platform covers everything from user authentication and product catalogs to a shopping cart and payment processing with Stripe. Its architecture emphasizes a clear separation of concerns, making the codebase modular, testable, and easy to maintain.
 
 ## Features
 
-*   **Dual Authentication System:**
-    *   **Client Authentication:** Allows new customers (shoppers) to register, log in, and manage their accounts (e.g., reset password via email).
-    *   **Admin Authentication:** Separate authentication for admin users with JWT-based session tokens.
-*   **Secure Password Management:** Uses `bcryptjs` to hash the passwords of both clients and admin users.
-*   **Role-Based Access Control (RBAC) for the Admin Panel:** Secures the admin API endpoints using JSON Web Tokens and role-based permissions.
-*   **Admin User and Role Management:** Provides CRUD operations to manage admin users and their roles/permissions.
-*   **Module Management (Admin):** Allows admins to perform CRUD operations on system modules, which are used to define permissions.
-*   **Product Catalog Management:**
-    *   Admins can insert or update products and their categories through a stored procedure.
-    *   Clients can search for products, view product details, and list products by category.
-*   **Shopping Cart Functionality (Client):**
-    *   Clients can add products to their cart.
-    *   View cart details.
-    *   Remove products from the cart.
-    *   Empty the entire cart.
-*   **Payment Integration with Stripe:**
-    *   Management of client payment methods.
-    *   Creation of Payment Intents to process transactions.
-    *   Handling of Stripe webhooks to update the status of payments and orders.
-*   **Order Management:**
-    *   Creation of orders after a successful payment.
-    *   Viewing order history for clients.
-    *   Updating the status of orders (e.g., pending, shipped, delivered).
-*   **Health Check:** A dedicated endpoint (`/health`) to monitor the API's status.
+*   **Dual Authentication System:** Separate, secure authentication for both clients (shoppers) and administrators, including password recovery flows.
+*   **Complete Admin Panel:** A comprehensive set of endpoints for administrators to manage users, roles, permissions (modules), and products.
+*   **Role-Based Access Control (RBAC):** Secure admin endpoints using JWTs and a granular role/permission system.
+*   **Full Product Catalog:** Endpoints for clients to search, view, and filter products by category.
+*   **Shopping Cart:** Persistent shopping cart functionality for clients.
+*   **Wishlist Management:** Allows clients to create and manage wishlists of their favorite products.
+*   **Address Management:** Clients can save and manage multiple shipping addresses.
+*   **Product Reviews:** Clients can leave reviews and ratings for products.
+*   **Stripe Payment Integration:** A complete payment flow including saving payment methods, creating payments, and handling webhooks for order confirmation.
+*   **Order Management:** Endpoints for creating and viewing order history.
+*   **Automated Product Sync:** A daily cron job automatically fetches product data from an external API (`fakestoreapi.com`) to keep the catalog populated.
+*   **Server-Side Views:** Includes EJS templates for client-facing pages like checkout and payment forms.
+*   **Health Check Endpoint:** A `/health` endpoint to monitor the application's status and cron job activity.
 
 ## Technologies Used
 
-*   **Core:**
+*   **Core Frameworks and Libraries:**
     *   Node.js
     *   Express.js
     *   TypeScript
+    *   EJS (View Engine)
 *   **Database:**
     *   PostgreSQL
 *   **Architecture and Design:**
@@ -51,11 +41,13 @@ This project is a RESTful API built with Node.js, Express.js, and TypeScript, fo
     *   `express-validator`
 *   **Email:**
     *   Nodemailer
-*   **Development and Tools:**
+*   **Development and Automation:**
     *   Docker and Docker Compose
-    *   Nodemon (for live reloading during development)
+    *   Nodemon (Live Reloading)
     *   `ts-node`
-*   **Security and Logging:**
+    *   Cron (for scheduled tasks)
+*   **Logging and Security:**
+    *   Winston (Application Logging)
     *   Helmet (Security Headers)
     *   Morgan (HTTP Request Logging)
     *   CORS
@@ -90,11 +82,12 @@ The project adheres to the principles of Clean Architecture, dividing the codeba
 
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
+Before you begin, make sure you have the following installed on your system:
 
-*   Node.js (v18.x or higher recommended)
-*   npm (or yarn)
-*   Docker (optional, for running with Docker Compose)
+*   **Node.js**: `v18.x` or higher is recommended.
+*   **npm**: Comes with Node.js.
+*   **Docker and Docker Compose**: Required for the containerized setup.
+*   **PostgreSQL Client (`psql`)**: Required to run the database initialization script (`init-db.sh`) from your local machine.
 
 ## Getting Started
 
@@ -113,136 +106,184 @@ npm install
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the project root. You can use the `dev.env` file as a template.
+Create a `.env` file in the project root. This file is essential for configuring the application, including database connections, JWT secrets, and external services like Stripe.
 
-**Example content for `.env`:**
 ```env
 PORT=3000
 
-# JWT
-JWT_SECRET=your_very_secret_jwt_key_here
+# JWT Secrets
+JWT_SECRET_CLIENT=your_very_secret_jwt_key_for_clients
+JWT_SECRET_ADMIN=your_very_secret_jwt_key_for_admins
 
-# PostgreSQL Database (if not using Docker)
+# PostgreSQL Database
+# Note: These are the defaults for the Docker Compose setup.
 PSQL_HOST=localhost
 PSQL_PORT=5432
-PSQL_USER=your_db_user
-PSQL_PASSWORD=your_db_password
-PSQL_DB=your_db_name
+PSQL_USER=root
+PSQL_PASSWORD=secret
+PSQL_DB=ca_nodejs
 
-# Email Configuration (e.g., Mailtrap.io)
+# Email Configuration
 SMTP_HOST=your_smtp_host
 SMTP_PORT=your_smtp_port
 SMTP_USER=your_smtp_user
 SMTP_PASS=your_smtp_password
 EMAIL_FROM=noreply@example.com
 
-# Stripe
+# Stripe Configuration
+STRIPE_PUBLIC_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-**Note on the Database with Docker Compose:**
-If you use `docker-compose.yml`, it defines a PostgreSQL service with default credentials (`user: root`, `password: secret`). **These are insecure and should not be used in a production environment.** It is strongly recommended to change these credentials in your `docker-compose.yml` file and use a secure password. The application connects to this database through the `DB_SOURCE` environment variable defined in `docker-compose.yml`.
+### 4. Running the Application with Docker Compose (Recommended)
 
-### 4. Initialize the Database
+This is the simplest way to get the entire stack—Node.js application and PostgreSQL database—running.
 
-A script is provided to automate the database initialization process. This script will create the necessary tables, insert initial data, and create stored procedures.
-
-**To initialize the database:**
-
-1.  Make sure your Docker container for the database is running (`docker-compose up -d db`).
-2.  Run the initialization script:
-    ```bash
-    ./scripts/init-db.sh
-    ```
-    The script uses the following default environment variables for the database connection, which match the `docker-compose.yml` setup:
-    *   `POSTGRES_HOST=localhost`
-    *   `POSTGRES_PORT=5432`
-    *   `POSTGRES_USER=root`
-    *   `POSTGRES_PASSWORD=secret`
-    *   `POSTGRES_DB=ca_nodejs`
-
-    If you are not using Docker or have different credentials, you can set these environment variables before running the script.
-
-### 5. Run the Development Server (without Docker)
-
-```bash
-npm run dev
-```
-The server will start at `http://localhost:3000`.
-
-### 6. Run with Docker Compose
-
-1.  Make sure Docker is running.
-2.  Create your `.env` file as described in step 3.
-3.  Build and start the services:
+1.  **Start the services:**
     ```bash
     docker-compose up --build -d
     ```
-    This will start the Node.js application and the PostgreSQL database. The application will be available at `http://localhost:3000`.
-4.  **Initialize the database** as described in step 4.
+    This command builds the images and starts the containers in detached mode. The application will be accessible at `http://localhost:3000`.
+
+2.  **Initialize the Database:**
+    With the database container running, execute the initialization script. This only needs to be done once.
+    ```bash
+    ./scripts/init-db.sh
+    ```
+    *   **Note for Windows Users**: This is a bash script. You can run it using Git Bash, WSL (Windows Subsystem for Linux), or by executing the `psql` commands inside the script manually.
+
+    The script will create all necessary tables, insert initial data (like admin roles), and set up stored procedures.
+
+### 5. Running the Application Manually (without Docker)
+
+If you prefer to run the application outside of Docker, follow these steps:
+
+1.  **Start your own PostgreSQL instance** and ensure it is accessible to the application.
+2.  **Update your `.env` file** with the correct connection details for your database.
+3.  **Initialize the database** using the `./scripts/init-db.sh` script as described above.
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The server will start with live reloading at `http://localhost:3000`.
+
+### Building for Production
+
+To compile the TypeScript code to JavaScript (output to the `dist` folder), run:
+```bash
+npm run build
+```
+
+## Automated Tasks (Cron Jobs)
+
+This project includes automated tasks that run on a schedule.
+
+*   **Product Catalog Synchronization:**
+    *   **Schedule:** Runs daily at midnight (`0 0 * * *`).
+    *   **Action:** Fetches product data from the public `https://fakestoreapi.com/products` API and upserts it into the database.
+    *   **Purpose:** This keeps the product catalog populated with sample data automatically. The job is started when the application boots up.
 
 ## API Endpoints
 
 All API endpoints are prefixed with `/api/v1`.
 
-### Client Authentication (`/client/auth`)
+### Health Check
 
-*   `POST /client/auth/register`: Register a new client.
-*   `POST /client/auth/login`: Log in as a client.
-*   `POST /client/auth/send-email`: Request an email to reset the password.
-*   `POST /client/auth/restore-password`: Reset the password with a token.
+*   `GET /health`: Checks the application's status and the status of the cron job.
 
-### Product Catalog (`/products`)
+### Client-Facing Endpoints
 
-*   `GET /products/search?q=<query>`: Search for products.
-*   `GET /products/:id`: Get details of a product.
-*   `GET /products/categories/:id`: Get products by category.
+#### Client Authentication (`/client/auth`)
+*   `POST /register`: Register a new client.
+*   `POST /login`: Log in as a client.
+*   `POST /send-email`: Request an email to reset password.
+*   `POST /restore-password`: Reset password with a token.
 
-### Client Shopping Cart (`/client/cart`)
+#### Product Catalog (`/products`)
+*   `GET /search`: Search for products (e.g., `/search?q=shirt`).
+*   `GET /:id`: Get details of a specific product.
+*   `GET /categories/:id`: Get all products belonging to a specific category.
 
-*   `GET /client/cart`: Get the client's cart.
-*   `POST /client/cart/add/:id`: Add a product to the cart.
-*   `DELETE /client/cart/delete/:id`: Remove a product from the cart.
-*   `DELETE /client/cart/clear`: Empty the cart.
+#### Shopping Cart (`/client/cart`)
+*   `GET /`: Get the client's current cart.
+*   `POST /add/:id`: Add a product to the cart.
+*   `POST /address/:id`: Link a shipping address to the cart.
+*   `DELETE /delete/:id`: Remove a product from the cart.
+*   `DELETE /clear`: Empty the entire cart.
 
-### Payments with Stripe (`/client/stripe`)
+#### Address Management (`/client/address`)
+*   `GET /`: Get all of the client's saved addresses.
+*   `POST /`: Create a new address.
+*   `GET /:id`: Get a specific address by ID.
+*   `PUT /:id`: Update an address.
+*   `DELETE /:id`: Delete an address.
+*   `PATCH /default/:id`: Set an address as the default shipping address.
 
-*   `POST /client/stripe/create-setup-intent`: Create a setup intent to save a card.
-*   `POST /client/stripe/payment-methods`: Add a payment method.
-*   `GET /client/stripe/payment-methods`: Get the client's payment methods.
-*   `DELETE /client/stripe/payment-methods/:paymentMethodId`: Delete a payment method.
-*   `POST /client/stripe/create-payment-intent`: Create a payment intent to process a purchase.
+#### Wishlist Management (`/client/wishlist`)
+*   `GET /`: Get all of the client's wishlists.
+*   `POST /`: Create a new wishlist.
+*   `GET /:id`: Get a specific wishlist by ID.
+*   `PATCH /:id`: Update a wishlist's details (e.g., name).
+*   `DELETE /:id`: Delete a wishlist.
+*   `POST /add/:id`: Add a product to the default wishlist.
+*   `DELETE /delete/:id`: Remove a product from the default wishlist.
 
-### Stripe Webhooks (`/stripe/webhook`)
+#### Product Reviews (`/reviews`)
+*   `GET /:productId`: Get all reviews for a specific product.
+*   `POST /:productId`: Create a new review for a product (requires client authentication).
+*   `DELETE /:reviewId`: Delete a review (requires client or admin authentication).
 
-*   `POST /stripe/webhook`: Handle Stripe webhook events (e.g., `payment_intent.succeeded`).
+#### Payments with Stripe (`/client/stripe`)
+*   `GET /payment-methods`: Get the client's saved payment methods.
+*   `POST /payment-methods`: Add a new payment method.
+*   `DELETE /payment-methods/:paymentMethodId`: Delete a saved payment method.
+*   `POST /create-setup-intent`: Create a Stripe Setup Intent to save a card for future use.
+*   `POST /create-payment-intent`: Create a Stripe Payment Intent to process a purchase.
 
-### Admin Panel (`/admin`)
+### Stripe Webhooks
 
-All endpoints under `/admin` require admin authentication.
+*   `POST /stripe-webhooks`: Handles incoming webhook events from Stripe to confirm payment status and update orders. Note: This endpoint has a different prefix for technical reasons related to Stripe's requirements.
+
+### Admin Panel Endpoints (`/admin`)
+
+All endpoints under `/admin` require admin authentication and appropriate role-based permissions.
 
 #### Admin Authentication (`/admin/auth`)
-*   `POST /admin/auth/login`: Log in as an admin.
+*   `POST /login`: Log in as an admin.
+*   `POST /send-email`: Request an email to reset an admin's password.
+*   `POST /restore-password`: Reset an admin's password with a token.
 
 #### Admin User Management (`/admin/users`)
-*   `GET /admin/users`: Get a list of admin users.
-*   `POST /admin/users`: Create a new admin user.
-*   ... (full CRUD)
+*   `GET /`: Get a list of all admin users.
+*   `POST /`: Create a new admin user.
+*   `GET /:id`: Get details for a specific admin user.
+*   `PATCH /:id`: Update an admin user's details.
+*   `DELETE /:id`: Delete an admin user.
+*   `PATCH /:id/password`: Change an admin user's password.
+*   `POST /:id/roles`: Assign a role to an admin user.
 
 #### Role Management (`/admin/roles`)
-*   `GET /admin/roles`: Get a list of roles.
-*   `POST /admin/roles`: Create a new role.
-*   ... (full CRUD)
+*   `GET /`: Get a list of all roles.
+*   `POST /`: Create a new role.
+*   `GET /:id`: Get permissions associated with a specific role.
+*   `PUT /:id`: Update a role's details.
+*   `DELETE /:id`: Delete a role.
 
-#### Module Management (`/admin/modules`)
-*   `GET /admin/modules`: Get a list of modules.
-*   `POST /admin/modules`: Create a new module.
-*   ... (full CRUD)
+#### Module (Permission) Management (`/admin/modules`)
+*   `GET /`: Get a list of all available modules (permissions).
+*   `POST /`: Create a new module.
+*   `GET /:id`: Get details for a specific module.
+*   `PUT /:id`: Update a module.
+*   `DELETE /:id`: Delete a module.
 
-### Health Check (`/health`)
+## Server-Side Views (EJS)
 
-*   `GET /health`: Check the API's status.
+In addition to the REST API, the project serves several client-facing pages using EJS templates. These pages are designed to provide a simple user interface for key parts of the e-commerce flow.
+
+*   `GET /checkout`: A page that displays the shopping cart and allows the user to select a payment method to proceed with a purchase.
+*   `GET /add-card`: A form for securely adding a new credit card using Stripe Elements.
+*   `GET /success`: A simple page shown to the user after a successful purchase, displaying the order confirmation details.
 
 ## Run Tests
 
