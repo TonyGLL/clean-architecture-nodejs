@@ -271,3 +271,30 @@ CREATE TABLE reviews (
 CREATE INDEX idx_reviews_product_created_at ON reviews (product_id, created_at DESC);
 CREATE INDEX idx_reviews_product_rating ON reviews (product_id, rating);
 CREATE INDEX idx_reviews_client ON reviews (client_id);
+
+-- Tabla de cupones
+CREATE TABLE coupons (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL, -- Ej: "WELCOME10"
+    discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed_amount')),
+    discount_value DECIMAL(10,2) NOT NULL CHECK (discount_value > 0),
+    min_order_amount DECIMAL(10,2) CHECK (min_order_amount >= 0), -- opcional
+    max_discount DECIMAL(10,2), -- límite de descuento en caso de porcentaje
+    usage_limit INT DEFAULT 1, -- cuántas veces puede usarse en total
+    per_client_limit INT DEFAULT 1, -- cuántas veces lo puede usar un cliente
+    valid_from TIMESTAMPTZ DEFAULT NOW(),
+    valid_until TIMESTAMPTZ,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Historial de uso de cupones (por cliente y pedido)
+CREATE TABLE coupon_redemptions (
+    id SERIAL PRIMARY KEY,
+    coupon_id INT NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+    client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    order_id INT REFERENCES orders(id) ON DELETE SET NULL,
+    used_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (coupon_id, client_id, order_id) -- evita duplicados
+);
