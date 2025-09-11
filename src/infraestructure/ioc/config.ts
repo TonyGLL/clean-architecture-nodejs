@@ -55,7 +55,7 @@ import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentU
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 import { AddProductToWishlistUseCase, CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase, RemoveProductFromWishlistUseCase, UpdateWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
-import { GetCouponsUseCase } from '../../application/use-cases/coupons.use-case';
+import { CreateCouponUseCase, GetCouponsUseCase, UpdateCouponUseCase } from '../../application/use-cases/coupons.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -170,6 +170,8 @@ container.bind<CreateReviewUseCase>(CreateReviewUseCase).toSelf();
 container.bind<DeleteReviewUseCase>(DeleteReviewUseCase).toSelf();
 // Coupons
 container.bind<GetCouponsUseCase>(GetCouponsUseCase).toSelf();
+container.bind<CreateCouponUseCase>(CreateCouponUseCase).toSelf();
+container.bind<UpdateCouponUseCase>(UpdateCouponUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();

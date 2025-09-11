@@ -17,18 +17,18 @@ export interface ICouponsRepository {
 
     /**
      * @method createCoupon
-     * @param {Coupon} coupon - The coupon entity to be created
+     * @param {Partial<Coupon>} coupon - The coupon entity to be created
      * @returns {Promise<void>}
      * @desc Creates a new coupon.
      */
-    createCoupon(coupon: Coupon): Promise<void>;
+    createCoupon(coupon: Partial<Coupon>): Promise<void>;
 
     /**
      * @method updateCoupon
-     * @param {string} couponId - The ID of the coupon to be updated
+     * @param {number} couponId - The ID of the coupon to be updated
      * @param {Partial<Coupon>} coupon - The coupon entity with updated fields
-     * @returns {Promise<Coupon>}
+     * @returns {Promise<void>}
      * @desc Updates an existing coupon.
      */
-    updateCoupon(couponId: string, coupon: Partial<Coupon>): Promise<Coupon>;
+    updateCoupon(couponId: number, coupon: Partial<Coupon>): Promise<void>;
 }

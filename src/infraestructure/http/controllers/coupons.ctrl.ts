@@ -1,12 +1,15 @@
 import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
-import { GetCouponsUseCase } from "../../../application/use-cases/coupons.use-case";
+import { CreateCouponUseCase, GetCouponsUseCase, UpdateCouponUseCase } from "../../../application/use-cases/coupons.use-case";
 import { GetCouponsDTO } from "../../../application/dtos/coupons.dto";
+import { Coupon } from "../../../domain/entities/coupon";
 
 @injectable()
 export class CouponsController {
     constructor(
         @inject(GetCouponsUseCase) private getCouponsUseCase: GetCouponsUseCase,
+        @inject(CreateCouponUseCase) private createCouponUseCase: CreateCouponUseCase,
+        @inject(UpdateCouponUseCase) private updateCouponUseCase: UpdateCouponUseCase
     ) { }
 
     public getCoupons = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -25,7 +28,9 @@ export class CouponsController {
 
     public createCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            res.status(201).json({ message: "Coupon created" });
+            const couponData: Partial<Coupon> = req.body;
+            const [status, data] = await this.createCouponUseCase.execute(couponData);
+            res.status(status).json(data);
         } catch (error) {
             next(error);
         }
@@ -33,8 +38,10 @@ export class CouponsController {
 
     public updateCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { couponId } = req.params;
-            res.status(200).json({ message: `Coupon ${couponId} updated` });
+            const { couponId } = req.params as { couponId: string };
+            const couponData: Partial<Coupon> = req.body;
+            const [status, data] = await this.updateCouponUseCase.execute(+couponId, couponData);
+            res.status(status).json(data);
         } catch (error) {
             next(error);
         }

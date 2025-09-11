@@ -25,9 +25,8 @@ export class PostgresCouponsRepository implements ICouponsRepository {
                     usage_limit,
                     per_client_limit,
                     valid_from,
-                    valid_until,
-                    active
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+                    valid_until
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
             `;
             const values = [
                 coupon.code,
@@ -38,8 +37,7 @@ export class PostgresCouponsRepository implements ICouponsRepository {
                 coupon.usage_limit,
                 coupon.per_client_limit,
                 coupon.valid_from,
-                coupon.valid_until,
-                coupon.active
+                coupon.valid_until
             ];
             await this.pool.query(query, values);
         } catch (error) {
@@ -47,8 +45,21 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         }
     }
 
-    public async updateCoupon(couponId: string, coupon: Partial<Coupon>): Promise<Coupon> {
-        throw new Error("Method not implemented.");
+    public async updateCoupon(couponId: number, coupon: Partial<Coupon>): Promise<void> {
+        try {
+            const fields = Object.keys(coupon);
+            const values = Object.values(coupon);
+            const setClause = fields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+
+            const query = `
+                UPDATE coupons
+                SET ${setClause}
+                WHERE id = $${fields.length + 1};
+            `;
+            await this.pool.query<Coupon>(query, [...values, couponId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error updating coupon');
+        }
     }
 
     public async getCoupons({ page = 0, limit = 10, search = '' }): Promise<CouponWithCount> {
