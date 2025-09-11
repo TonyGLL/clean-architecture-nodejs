@@ -31,6 +31,8 @@ import { IWishlistRepository } from '../../domain/repositories/wishlist.reposito
 import { PostgresWishlistRepository } from '../database/postgres/repositories/wishlist.repository';
 import { IReviewsRepository } from '../../domain/repositories/reviews.repository';
 import { PostgresReviewsRepository } from '../database/postgres/repositories/reviews.repository';
+import { ICouponsRepository } from '../../domain/repositories/coupons.repository';
+import { PostgresCouponsRepository } from '../database/postgres/repositories/coupons.repository';
 
 // Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -89,6 +91,7 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 container.bind<IWishlistRepository>(DOMAIN_TYPES.IWishlistRepository).to(PostgresWishlistRepository);
 container.bind<IReviewsRepository>(DOMAIN_TYPES.IReviewsRepository).to(PostgresReviewsRepository);
+container.bind<ICouponsRepository>(DOMAIN_TYPES.ICouponsRepository).to(PostgresCouponsRepository);
 
 // Services (Interface -> Implementation)
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
