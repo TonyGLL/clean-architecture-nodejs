@@ -16,3 +16,29 @@ export class GetCouponsUseCase {
         return [HttpStatusCode.OK, await this.couponsRepository.getCoupons(dto)];
     }
 }
+
+@injectable()
+export class CreateCouponUseCase {
+
+    constructor(
+        @inject(DOMAIN_TYPES.ICouponsRepository) private couponsRepository: ICouponsRepository
+    ) { }
+
+    public async execute(coupon: Coupon): Promise<[number, object]> {
+        await this.couponsRepository.createCoupon(coupon);
+        return [HttpStatusCode.CREATED, { message: 'Coupon created successfully' }];
+    }
+}
+
+@injectable()
+export class UpdateCouponUseCase {
+
+    constructor(
+        @inject(DOMAIN_TYPES.ICouponsRepository) private couponsRepository: ICouponsRepository
+    ) { }
+
+    public async execute(couponId: string, coupon: Partial<Coupon>): Promise<[number, object]> {
+        const updatedCoupon = await this.couponsRepository.updateCoupon(couponId, coupon);
+        return [HttpStatusCode.NO_CONTENT, updatedCoupon];
+    }
+}

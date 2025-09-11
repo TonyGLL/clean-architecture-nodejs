@@ -22,4 +22,21 @@ export class CouponsController {
             next(error);
         }
     }
+
+    public createCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            res.status(201).json({ message: "Coupon created" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public updateCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { couponId } = req.params;
+            res.status(200).json({ message: `Coupon ${couponId} updated` });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

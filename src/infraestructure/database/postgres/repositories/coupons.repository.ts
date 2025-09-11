@@ -13,6 +13,44 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    public async createCoupon(coupon: Coupon): Promise<void> {
+        try {
+            const query = `
+                INSERT INTO coupons (
+                    code,
+                    discount_type,
+                    discount_value,
+                    min_order_amount,
+                    max_discount,
+                    usage_limit,
+                    per_client_limit,
+                    valid_from,
+                    valid_until,
+                    active
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+            `;
+            const values = [
+                coupon.code,
+                coupon.discount_type,
+                coupon.discount_value,
+                coupon.min_order_amount,
+                coupon.max_discount,
+                coupon.usage_limit,
+                coupon.per_client_limit,
+                coupon.valid_from,
+                coupon.valid_until,
+                coupon.active
+            ];
+            await this.pool.query(query, values);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error creating coupon');
+        }
+    }
+
+    public async updateCoupon(couponId: string, coupon: Partial<Coupon>): Promise<Coupon> {
+        throw new Error("Method not implemented.");
+    }
+
     public async getCoupons({ page = 0, limit = 10, search = '' }): Promise<CouponWithCount> {
         try {
             const offset = (page - 1) * limit;

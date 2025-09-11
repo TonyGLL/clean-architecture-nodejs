@@ -8,6 +8,8 @@ const controller = container.get<CouponsController>(CouponsController);
 
 router
     .get('/', expressValidatorErrors, controller.getCoupons)
+    .post('/', expressValidatorErrors, controller.createCoupon)
+    .patch('/:couponId', expressValidatorErrors, controller.updateCoupon)
     ;
 
 export default router;
