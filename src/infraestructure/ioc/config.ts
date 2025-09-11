@@ -53,6 +53,7 @@ import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentU
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 import { AddProductToWishlistUseCase, CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase, RemoveProductFromWishlistUseCase, UpdateWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
+import { GetCouponsUseCase } from '../../application/use-cases/coupons.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -68,6 +69,7 @@ import { AddressController } from '../http/controllers/address.ctrl';
 import { WishlistController } from '../http/controllers/wishlist.ctrl';
 import { CreateReviewUseCase, DeleteReviewByAdminUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, ModerateReviewByAdminUseCase } from '../../application/use-cases/review.user-case';
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
+import { CouponsController } from '../http/controllers/coupons.ctrl';
 
 const container = new Container();
 
@@ -163,6 +165,8 @@ container.bind<DeleteReviewByAdminUseCase>(DeleteReviewByAdminUseCase).toSelf();
 container.bind<GetProductReviewsUseCase>(GetProductReviewsUseCase).toSelf();
 container.bind<CreateReviewUseCase>(CreateReviewUseCase).toSelf();
 container.bind<DeleteReviewUseCase>(DeleteReviewUseCase).toSelf();
+// Coupons
+container.bind<GetCouponsUseCase>(GetCouponsUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -177,5 +181,6 @@ container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 container.bind<AddressController>(AddressController).toSelf();
 container.bind<WishlistController>(WishlistController).toSelf();
 container.bind<ReviewsController>(ReviewsController).toSelf();
+container.bind<CouponsController>(CouponsController).toSelf();
 
 export { container };

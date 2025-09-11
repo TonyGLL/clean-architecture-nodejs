@@ -14,4 +14,5 @@ export const DOMAIN_TYPES = {
     IAddressRepository: Symbol.for("IAddressRepository"),
     IWishlistRepository: Symbol.for("IWishlistRepository"),
     IReviewsRepository: Symbol.for("IReviewsRepository"),
+    ICouponsRepository: Symbol.for("ICouponsRepository"),
 };
