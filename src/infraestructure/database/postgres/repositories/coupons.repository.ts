@@ -1,0 +1,65 @@
+import { inject, injectable } from "inversify";
+import { ICouponsRepository } from "../../../../domain/repositories/coupons.repository";
+import { Coupon } from "../../../../domain/entities/coupon";
+import { PoolClient } from "pg";
+import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
+import { HttpStatusCode } from "../../../../domain/shared/http.status";
+import { HttpError } from "../../../../domain/errors/http.error";
+import { CouponWithCount } from "../../../../application/dtos/coupons.dto";
+
+@injectable()
+export class PostgresCouponsRepository implements ICouponsRepository {
+    constructor(
+        @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
+    ) { }
+
+    public async getCoupons({ page = 0, limit = 10, search = '' }): Promise<CouponWithCount> {
+        try {
+            const offset = (page - 1) * limit;
+
+            const countQuery = `
+                SELECT COUNT(*) AS total
+                FROM coupons
+                WHERE code ILIKE '%' || $1 || '%'
+                OR discount_type ILIKE '%' || $1 || '%';
+            `;
+
+            const couponsQuery = `
+                SELECT
+                    id,
+                    code,
+                    discount_type,
+                    discount_value::float AS discount_value,
+                    min_order_amount::float AS min_order_amount,
+                    max_discount::float AS max_discount,
+                    usage_limit::int AS usage_limit,
+                    per_client_limit::int AS per_client_limit,
+                    valid_from,
+                    valid_until,
+                    active,
+                    created_at,
+                    updated_at
+                FROM coupons
+                WHERE code ILIKE '%' || $1 || '%'
+                OR discount_type ILIKE '%' || $1 || '%'
+                ORDER BY created_at DESC
+                LIMIT $2 OFFSET $3;
+            `;
+
+            // Ejecutar ambos queries en paralelo
+            const [countResult, couponsResult] = await Promise.all([
+                this.pool.query<{ total: string }>(countQuery, [search]),
+                this.pool.query<Coupon>(couponsQuery, [search, limit, offset])
+            ]);
+
+            const total = parseInt(countResult.rows[0].total, 10);
+
+            return {
+                coupons: couponsResult.rows,
+                total
+            };
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting coupons');
+        }
+    }
+}

@@ -31,6 +31,8 @@ import { IWishlistRepository } from '../../domain/repositories/wishlist.reposito
 import { PostgresWishlistRepository } from '../database/postgres/repositories/wishlist.repository';
 import { IReviewsRepository } from '../../domain/repositories/reviews.repository';
 import { PostgresReviewsRepository } from '../database/postgres/repositories/reviews.repository';
+import { ICouponsRepository } from '../../domain/repositories/coupons.repository';
+import { PostgresCouponsRepository } from '../database/postgres/repositories/coupons.repository';
 
 // Services
 import { IHashingService } from './../../domain/services/hashing.service';
@@ -53,6 +55,7 @@ import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentU
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 import { AddProductToWishlistUseCase, CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase, RemoveProductFromWishlistUseCase, UpdateWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
+import { GetCouponsUseCase } from '../../application/use-cases/coupons.use-case';
 
 // Controllers
 import { AuthClientsController } from '../http/controllers/auth.clients.ctrl';
@@ -68,6 +71,7 @@ import { AddressController } from '../http/controllers/address.ctrl';
 import { WishlistController } from '../http/controllers/wishlist.ctrl';
 import { CreateReviewUseCase, DeleteReviewByAdminUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, ModerateReviewByAdminUseCase } from '../../application/use-cases/review.user-case';
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
+import { CouponsController } from '../http/controllers/coupons.ctrl';
 
 const container = new Container();
 
@@ -87,6 +91,7 @@ container.bind<IOrderRepository>(DOMAIN_TYPES.IOrderRepository).to(PostgresOrder
 container.bind<IAddressRepository>(DOMAIN_TYPES.IAddressRepository).to(PostgresAddressRepository);
 container.bind<IWishlistRepository>(DOMAIN_TYPES.IWishlistRepository).to(PostgresWishlistRepository);
 container.bind<IReviewsRepository>(DOMAIN_TYPES.IReviewsRepository).to(PostgresReviewsRepository);
+container.bind<ICouponsRepository>(DOMAIN_TYPES.ICouponsRepository).to(PostgresCouponsRepository);
 
 // Services (Interface -> Implementation)
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
@@ -163,6 +168,8 @@ container.bind<DeleteReviewByAdminUseCase>(DeleteReviewByAdminUseCase).toSelf();
 container.bind<GetProductReviewsUseCase>(GetProductReviewsUseCase).toSelf();
 container.bind<CreateReviewUseCase>(CreateReviewUseCase).toSelf();
 container.bind<DeleteReviewUseCase>(DeleteReviewUseCase).toSelf();
+// Coupons
+container.bind<GetCouponsUseCase>(GetCouponsUseCase).toSelf();
 
 // Controllers (Concrete classes)
 container.bind<AuthClientsController>(AuthClientsController).toSelf();
@@ -177,5 +184,6 @@ container.bind<StripeWebhookController>(StripeWebhookController).toSelf();
 container.bind<AddressController>(AddressController).toSelf();
 container.bind<WishlistController>(WishlistController).toSelf();
 container.bind<ReviewsController>(ReviewsController).toSelf();
+container.bind<CouponsController>(CouponsController).toSelf();
 
 export { container };

@@ -140,6 +140,8 @@ CREATE TABLE shopping_carts (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     shipping_address_id INT REFERENCES addresses(id) ON DELETE SET NULL,
+    coupon_id INT REFERENCES coupons(id), -- cupón aplicado en la orden (nullable)
+    discount_amount DECIMAL(10,2) DEFAULT 0, -- descuento aplicado en la orden
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')), -- Added 'pending_payment'
