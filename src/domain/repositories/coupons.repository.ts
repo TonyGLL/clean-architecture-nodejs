@@ -1,4 +1,4 @@
-import { Coupon } from "../entities/coupon";
+import { CouponWithCount, GetCouponsDTO } from "../../application/dtos/coupons.dto";
 
 /**
  * @file coupons.repository.ts
@@ -8,8 +8,9 @@ export interface ICouponsRepository {
 
     /**
      * @method getCoupons
-     * @returns {Promise<Coupon[]>}
+     * @param {GetCouponsDTO} dto - Data transfer object containing pagination and filter information
+     * @returns {Promise<CouponWithCount>}
      * @desc Retrieves all available coupons.
      */
-    getCoupons(): Promise<Coupon[]>;
+    getCoupons(dto: GetCouponsDTO): Promise<CouponWithCount>;
 }
