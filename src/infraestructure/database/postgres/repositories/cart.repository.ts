@@ -4,6 +4,8 @@ import { ICartRepository } from "../../../../domain/repositories/cart.repository
 import { Cart } from "../../../../domain/entities/cart";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
 import { AddProductToCartDTOPayload } from "../../../../application/dtos/cart.dto";
+import { HttpStatusCode } from "../../../../domain/shared/http.status";
+import { HttpError } from "../../../../domain/errors/http.error";
 
 @injectable()
 export class PostgresCartRepository implements ICartRepository {
@@ -75,6 +77,11 @@ export class PostgresCartRepository implements ICartRepository {
                         'is_default', a.is_default
                     ) AS address,
 
+                    -- Coupon applied (can be NULL if it does not exist)
+                    cp.code AS coupon_code,
+                    cp.discount_type AS coupon_discount_type,
+                    cp.discount_value AS coupon_discount_value,
+
                     -- Products in the cart
                     COALESCE(
                         json_agg(
@@ -117,25 +124,27 @@ export class PostgresCartRepository implements ICartRepository {
                 LEFT JOIN categories c ON pc.category_id = c.id
                 LEFT JOIN payments pm ON pm.cart_id = sc.id
                 LEFT JOIN addresses a ON sc.shipping_address_id = a.id
+                LEFT JOIN coupons cp ON sc.coupon_id = cp.id
                 WHERE sc.client_id = $1 AND sc.status = 'active'
-                GROUP BY sc.id, sc.client_id, sc.created_at, sc.status, pm.external_payment_id, a.id;
+                GROUP BY sc.id, sc.client_id, sc.created_at, sc.status, pm.external_payment_id, a.id, cp.code, cp.discount_type, cp.discount_value;
             `;
             const query = {
                 text,
                 values: [clientId]
             };
             const result = await this.pool.query(query);
-            const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address, wishlisted } = result.rows[0];
+            const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address, wishlisted, coupon_code, coupon_discount_type, coupon_discount_value } = result.rows[0];
             const cart = new Cart(cart_id, client_id, status, cart_created_at, items || [], address, wishlisted);
             cart.setActivePaymentIntenId(external_payment_id);
             if (items.length) {
                 cart.calculateSubTotal(items);
                 cart.calculateTaxes();
+                if (coupon_code && coupon_discount_type && coupon_discount_value) cart.calculateDiscount(coupon_discount_value, coupon_discount_type);
                 cart.calculateTotal();
             }
             return cart;
         } catch (error) {
-            throw error;
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting cart details');
         }
     }
 

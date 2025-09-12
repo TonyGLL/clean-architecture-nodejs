@@ -1,8 +1,9 @@
+export type DiscountType = 'percentage' | 'fixed_amount';
 export class Coupon {
     private constructor(
         public id: string,
         public code: string,
-        public discount_type: string,
+        public discount_type: DiscountType,
         public discount_value: number,
         public min_order_amount: number,
         public max_discount: number,
@@ -18,7 +19,7 @@ export class Coupon {
     static create(
         id: string,
         code: string,
-        discount_type: string,
+        discount_type: DiscountType,
         discount_value: number,
         min_order_amount: number,
         max_discount: number,

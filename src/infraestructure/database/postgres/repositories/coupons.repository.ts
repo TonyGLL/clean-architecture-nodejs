@@ -13,6 +13,14 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    public async applyCouponToCart(couponCode: string, cartId: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async removeCouponFromCart(cartId: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
     public async createCoupon(coupon: Coupon): Promise<void> {
         try {
             const query = `

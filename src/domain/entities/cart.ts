@@ -1,5 +1,6 @@
 import { CartItemDTO } from "../../application/dtos/product.dto";
 import { Address } from "./address";
+import { DiscountType } from "./coupon";
 import { Product } from "./product";
 
 export class Cart {
@@ -15,7 +16,8 @@ export class Cart {
         public taxes: number = 0,
         public shipping: number = 40,
         public total: number = 0,
-        public activePaymentIntentId?: string | null,
+        public discount: number = 0,
+        public activePaymentIntentId?: string | null
     ) { }
 
     public setActivePaymentIntenId(id: string): void {
@@ -31,6 +33,14 @@ export class Cart {
     }
 
     public calculateTotal(): void {
-        this.total = this.subTotal + this.taxes + this.shipping;
+        this.total = this.subTotal + this.taxes + this.shipping - this.discount;
+    }
+
+    public calculateDiscount(discount_value: number, discount_type: DiscountType): void {
+        if (discount_type === 'percentage') {
+            this.discount = this.subTotal * (discount_value / 100);
+        } else {
+            this.discount = discount_value;
+        }
     }
 }
