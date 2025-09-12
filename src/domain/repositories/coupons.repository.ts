@@ -33,19 +33,10 @@ export interface ICouponsRepository {
     updateCoupon(couponId: number, coupon: Partial<Coupon>): Promise<void>;
 
     /**
-     * @method applyCouponToCart
-     * @param {string} couponCode - The code of the coupon to be applied
-     * @param {number} cartId - The ID of the cart to which the coupon will be applied
-     * @returns {Promise<void>}
-     * @desc Applies a coupon to a cart.
+     * @method getCouponByCode
+     * @param {string} code - The code of the coupon to be retrieved
+     * @returns {Promise<Coupon | null>}
+     * @desc Retrieves a coupon by its code.
      */
-    applyCouponToCart(couponCode: string, cartId: number): Promise<void>;
-
-    /**
-     * @method removeCouponFromCart
-     * @param {number} cartId - The ID of the cart from which the coupon will be removed
-     * @returns {Promise<void>}
-     * @desc Removes a coupon from a cart.
-     */
-    removeCouponFromCart(cartId: number): Promise<void>;
+    getCouponByCode(code: string): Promise<Coupon | null>;
 }

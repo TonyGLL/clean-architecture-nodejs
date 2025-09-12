@@ -13,12 +13,34 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
-    public async applyCouponToCart(couponCode: string, cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async removeCouponFromCart(cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async getCouponByCode(code: string): Promise<Coupon | null> {
+        try {
+            const query = `
+                SELECT
+                    id,
+                    code,
+                    discount_type,
+                    discount_value::float AS discount_value,
+                    min_order_amount::float AS min_order_amount,
+                    max_discount::float AS max_discount,
+                    usage_limit::int AS usage_limit,
+                    per_client_limit::int AS per_client_limit,
+                    valid_from,
+                    valid_until,
+                    active,
+                    created_at,
+                    updated_at
+                FROM coupons
+                WHERE code = $1;
+            `;
+            const { rows } = await this.pool.query<Coupon>(query, [code]);
+            if (rows.length === 0) {
+                return null;
+            }
+            return rows[0];
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting coupon by code');
+        }
     }
 
     public async createCoupon(coupon: Coupon): Promise<void> {

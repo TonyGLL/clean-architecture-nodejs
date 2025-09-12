@@ -94,4 +94,21 @@ export interface ICartRepository {
      * @desc Link a valid client address to his current cart
      */
     linkAddressToCart(addressId: number, clientId: number): Promise<void>;
+
+    /**
+     * @method applyCouponToCart
+     * @param {string} couponCode - The code of the coupon to be applied
+     * @param {number} cartId - The ID of the cart to which the coupon will be applied
+     * @returns {Promise<void>}
+     * @desc Applies a coupon to a cart.
+     */
+    applyCouponToCart(couponCode: string, cartId: number): Promise<void>;
+
+    /**
+     * @method removeCouponFromCart
+     * @param {number} cartId - The ID of the cart from which the coupon will be removed
+     * @returns {Promise<void>}
+     * @desc Removes a coupon from a cart.
+     */
+    removeCouponFromCart(cartId: number): Promise<void>;
 }

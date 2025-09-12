@@ -7,6 +7,7 @@ import { HttpStatusCode } from "../../domain/shared/http.status";
 import { HttpError } from "../../domain/errors/http.error";
 import { AddProductToCartDTO } from "../dtos/cart.dto";
 import { IProductsRepository } from "../../domain/repositories/products.repository";
+import { ICouponsRepository } from "../../domain/repositories/coupons.repository";
 
 @injectable()
 export class GetCartUseCase {
@@ -112,5 +113,23 @@ export class LinkAddressToCartUseCase {
             logger.error(`[LinkAddressToCartUseCase] - Error linking address ${addressId} to cart for client: ${clientId}`, { error });
             throw error;
         }
+    }
+}
+
+@injectable()
+export class ApplyCouponToCartUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
+        @inject(DOMAIN_TYPES.ICouponsRepository) private couponsRepository: ICouponsRepository
+    ) { }
+
+    public async execute(clientId: number, couponCode: string): Promise<[number, object]> {
+        const coupon = await this.couponsRepository.getCouponByCode(couponCode);
+        if (!coupon) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Coupon not found');
+        if (coupon.valid_until < new Date()) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Coupon has expired');
+
+        await this.cartRepository.applyCouponToCart(couponCode, clientId);
+
+        return [HttpStatusCode.NO_CONTENT, { message: 'Coupon applied successfully' }];
     }
 }

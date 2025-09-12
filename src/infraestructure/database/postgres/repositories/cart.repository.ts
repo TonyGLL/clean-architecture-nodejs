@@ -13,6 +13,14 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    public async applyCouponToCart(couponCode: string, cartId: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async removeCouponFromCart(cartId: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
     public async updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void> {
         const text = `
             UPDATE shopping_carts
