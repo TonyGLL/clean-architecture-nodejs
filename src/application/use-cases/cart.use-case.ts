@@ -143,3 +143,20 @@ export class ApplyCouponToCartUseCase {
         return [HttpStatusCode.NO_CONTENT, { message: 'Coupon applied successfully' }];
     }
 }
+
+@injectable()
+export class RemoveCouponFromCartUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository
+    ) { }
+
+    public async execute(clientId: number): Promise<[number, object]> {
+        let cartDetails = await this.cartRepository.getCartDetails(clientId);
+        if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
+        if (!cartDetails.coupon_id) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'No coupon applied to the cart');
+
+        await this.cartRepository.removeCouponFromCart(clientId);
+
+        return [HttpStatusCode.NO_CONTENT, { message: 'Coupon removed successfully' }];
+    }
+}

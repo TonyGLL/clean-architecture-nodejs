@@ -50,7 +50,7 @@ import { CreateRoleUseCase, GetRolesUseCase, GetPermissionsByRoleUseCase, Delete
 import { CreateUserUseCase, GetUsersUseCase, UpdateUserUseCase, DeleteUserUseCase, ChangePasswordUseCase, AssignRoleToUserUseCase, GetUserDetailsUseCase } from '../../application/use-cases/user.use-case';
 import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, UpdateModuleUseCase, DeleteModuleUseCase } from '../../application/use-cases/modules.use-case';
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
-import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase } from '../../application/use-cases/cart.use-case';
+import { AddProductToCartUseCase, ApplyCouponToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase, RemoveCouponFromCartUseCase } from '../../application/use-cases/cart.use-case';
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
 import { CreateOrderUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
@@ -136,6 +136,8 @@ container.bind<AddProductToCartUseCase>(AddProductToCartUseCase).toSelf();
 container.bind<DeleteProductFromCartUseCase>(DeleteProductFromCartUseCase).toSelf();
 container.bind<ClearCartUseCase>(ClearCartUseCase).toSelf();
 container.bind<LinkAddressToCartUseCase>(LinkAddressToCartUseCase).toSelf();
+container.bind<ApplyCouponToCartUseCase>(ApplyCouponToCartUseCase).toSelf();
+container.bind<RemoveCouponFromCartUseCase>(RemoveCouponFromCartUseCase).toSelf();
 // Payment
 container.bind<GetClientPaymentMethodsUseCase>(GetClientPaymentMethodsUseCase).toSelf();
 container.bind<DeletePaymentMethodUseCase>(DeletePaymentMethodUseCase).toSelf();
