@@ -97,12 +97,12 @@ export interface ICartRepository {
 
     /**
      * @method applyCouponToCart
-     * @param {string} couponCode - The code of the coupon to be applied
+     * @param {number} couponId - The id of the coupon to be applied
      * @param {number} cartId - The ID of the cart to which the coupon will be applied
      * @returns {Promise<void>}
      * @desc Applies a coupon to a cart.
      */
-    applyCouponToCart(couponCode: string, cartId: number): Promise<void>;
+    applyCouponToCart(couponId: number, cartId: number): Promise<void>;
 
     /**
      * @method removeCouponFromCart

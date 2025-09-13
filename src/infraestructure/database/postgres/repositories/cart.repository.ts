@@ -13,12 +13,30 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
-    public async applyCouponToCart(couponCode: string, cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async applyCouponToCart(couponId: number, cartId: number): Promise<void> {
+        try {
+            const query = `
+                UPDATE shopping_carts
+                SET coupon_id = $1
+                WHERE id = $2 AND status = 'active';
+            `;
+            await this.pool.query(query, [couponId, cartId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error applying coupon to cart');
+        }
     }
 
     public async removeCouponFromCart(cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
+        try {
+            const query = `
+                UPDATE shopping_carts
+                SET coupon_id = NULL
+                WHERE id = $1 AND status = 'active';
+            `;
+            await this.pool.query(query, [cartId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error removing coupon from cart');
+        }
     }
 
     public async updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void> {

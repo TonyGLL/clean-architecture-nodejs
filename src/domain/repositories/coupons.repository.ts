@@ -39,4 +39,21 @@ export interface ICouponsRepository {
      * @desc Retrieves a coupon by its code.
      */
     getCouponByCode(code: string): Promise<Coupon | null>;
+
+    /**
+     * @method getCouponRedemptionCount
+     * @param {number} couponId - The ID of the coupon
+     * @returns {Promise<number>}
+     * @desc Retrieves the total number of times a coupon has been redeemed.
+     */
+    getCouponRedemptionCount(couponId: number): Promise<number>;
+
+    /**
+     * @method getClientCouponRedemptionCount
+     * @param {number} couponId - The ID of the coupon
+     * @param {number} clientId - The ID of the client
+     * @returns {Promise<number>}
+     * @desc Retrieves the number of times a specific client has redeemed a specific coupon.
+     */
+    getClientCouponRedemptionCount(couponId: number, clientId: number): Promise<number>;
 }
