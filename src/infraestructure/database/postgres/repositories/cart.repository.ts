@@ -13,12 +13,30 @@ export class PostgresCartRepository implements ICartRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
-    public async applyCouponToCart(couponCode: string, cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async applyCouponToCart(couponId: number, cartId: number): Promise<void> {
+        try {
+            const query = `
+                UPDATE shopping_carts
+                SET coupon_id = $1
+                WHERE id = $2 AND status = 'active';
+            `;
+            await this.pool.query(query, [couponId, cartId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error applying coupon to cart');
+        }
     }
 
     public async removeCouponFromCart(cartId: number): Promise<void> {
-        throw new Error("Method not implemented.");
+        try {
+            const query = `
+                UPDATE shopping_carts
+                SET coupon_id = NULL
+                WHERE id = $1 AND status = 'active';
+            `;
+            await this.pool.query(query, [cartId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error removing coupon from cart');
+        }
     }
 
     public async updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void> {
@@ -71,6 +89,7 @@ export class PostgresCartRepository implements ICartRepository {
                     sc.client_id,
                     sc.created_at AS cart_created_at,
                     sc.status,
+                    sc.coupon_id,
                     pm.external_payment_id,
 
                     -- Shipping address (can be NULL if it does not exist)
@@ -141,9 +160,10 @@ export class PostgresCartRepository implements ICartRepository {
                 values: [clientId]
             };
             const result = await this.pool.query(query);
-            const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address, wishlisted, coupon_code, coupon_discount_type, coupon_discount_value } = result.rows[0];
+            const { cart_id, client_id, cart_created_at, items, status, external_payment_id, address, wishlisted, coupon_code, coupon_discount_type, coupon_discount_value, coupon_id } = result.rows[0];
             const cart = new Cart(cart_id, client_id, status, cart_created_at, items || [], address, wishlisted);
             cart.setActivePaymentIntenId(external_payment_id);
+            cart.setCoupon(coupon_id);
             if (items.length) {
                 cart.calculateSubTotal(items);
                 cart.calculateTaxes();

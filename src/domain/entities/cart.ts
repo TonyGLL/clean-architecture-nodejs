@@ -17,7 +17,8 @@ export class Cart {
         public shipping: number = 40,
         public total: number = 0,
         public discount: number = 0,
-        public activePaymentIntentId?: string | null
+        public activePaymentIntentId?: string | null,
+        public coupon_id?: number | null
     ) { }
 
     public setActivePaymentIntenId(id: string): void {
@@ -42,5 +43,9 @@ export class Cart {
         } else {
             this.discount = discount_value;
         }
+    }
+
+    public setCoupon(coupon_id: number | null): void {
+        this.coupon_id = coupon_id;
     }
 }

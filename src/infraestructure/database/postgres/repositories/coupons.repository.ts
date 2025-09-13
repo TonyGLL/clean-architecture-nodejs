@@ -13,6 +13,34 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    public async getCouponRedemptionCount(couponId: number): Promise<number> {
+        try {
+            const query = `
+                SELECT COUNT(*) AS redemption_count
+                FROM coupon_redemptions
+                WHERE coupon_id = $1;
+            `;
+            const { rows } = await this.pool.query<{ redemption_count: string }>(query, [couponId]);
+            return parseInt(rows[0].redemption_count, 10);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting coupon redemption count');
+        }
+    }
+
+    public async getClientCouponRedemptionCount(couponId: number, clientId: number): Promise<number> {
+        try {
+            const query = `
+                SELECT COUNT(*) AS redemption_count
+                FROM coupon_redemptions
+                WHERE coupon_id = $1 AND client_id = $2;
+            `;
+            const { rows } = await this.pool.query<{ redemption_count: string }>(query, [couponId, clientId]);
+            return parseInt(rows[0].redemption_count, 10);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error getting client coupon redemption count');
+        }
+    }
+
     public async getCouponByCode(code: string): Promise<Coupon | null> {
         try {
             const query = `
@@ -31,7 +59,7 @@ export class PostgresCouponsRepository implements ICouponsRepository {
                     created_at,
                     updated_at
                 FROM coupons
-                WHERE code = $1;
+                WHERE code = $1 AND active = TRUE;
             `;
             const { rows } = await this.pool.query<Coupon>(query, [code]);
             if (rows.length === 0) {

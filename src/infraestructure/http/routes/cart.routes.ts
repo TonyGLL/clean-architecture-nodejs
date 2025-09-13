@@ -10,6 +10,9 @@ router
     .post('/add/:id', controller.addProductToCart)
     .post('/address/:id', controller.linkAddressToCart)
     .delete('/delete/:id', controller.deleteProductFromCart)
-    .delete('/clear', controller.clearCart);
+    .delete('/clear', controller.clearCart)
+    .post('/coupons/:code', controller.clearCart)
+    .delete('/coupons', controller.clearCart)
+    ;
 
 export default router;

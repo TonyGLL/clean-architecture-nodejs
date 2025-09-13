@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { AddProductToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase } from "../../../application/use-cases/cart.use-case";
+import { AddProductToCartUseCase, ApplyCouponToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase, RemoveCouponFromCartUseCase } from "../../../application/use-cases/cart.use-case";
 import { AddProductToCartDTO } from "../../../application/dtos/cart.dto";
 
 @injectable()
@@ -10,7 +10,9 @@ export class CartController {
         @inject(AddProductToCartUseCase) private addProductToCartUseCase: AddProductToCartUseCase,
         @inject(DeleteProductFromCartUseCase) private deleteProductFromCartUseCase: DeleteProductFromCartUseCase,
         @inject(ClearCartUseCase) private clearCartUseCase: ClearCartUseCase,
-        @inject(LinkAddressToCartUseCase) private linkAddressToCartUseCase: LinkAddressToCartUseCase
+        @inject(LinkAddressToCartUseCase) private linkAddressToCartUseCase: LinkAddressToCartUseCase,
+        @inject(ApplyCouponToCartUseCase) private applyCouponToCartUseCase: ApplyCouponToCartUseCase,
+        @inject(RemoveCouponFromCartUseCase) private removeCouponFromCartUseCase: RemoveCouponFromCartUseCase
     ) { }
 
     public getCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -66,6 +68,27 @@ export class CartController {
             const { id: clientId } = req.user as { id: number };
             const { id: addressId } = req.params as { id: string };
             const [status, data] = await this.linkAddressToCartUseCase.execute(+addressId, clientId);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public applyCouponToCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { id: clientId } = req.user as { id: number };
+            const { code } = req.params as { code: string };
+            const [status, data] = await this.applyCouponToCartUseCase.execute(clientId, code);
+            res.status(status).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public removeCouponFromCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { id: clientId } = req.user as { id: number };
+            const [status, data] = await this.removeCouponFromCartUseCase.execute(clientId);
             res.status(status).json(data);
         } catch (error) {
             next(error);

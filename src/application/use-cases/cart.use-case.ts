@@ -128,8 +128,35 @@ export class ApplyCouponToCartUseCase {
         if (!coupon) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Coupon not found');
         if (coupon.valid_until < new Date()) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Coupon has expired');
 
-        await this.cartRepository.applyCouponToCart(couponCode, clientId);
+        const totalRedemptions = await this.couponsRepository.getCouponRedemptionCount(+coupon.id);
+        if (coupon.usage_limit !== null && totalRedemptions >= coupon.usage_limit) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Coupon usage limit reached');
+
+        const clientRedemptions = await this.couponsRepository.getClientCouponRedemptionCount(+coupon.id, clientId);
+        if (coupon.per_client_limit !== null && clientRedemptions >= coupon.per_client_limit) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'Client coupon usage limit reached');
+
+        let cartDetails = await this.cartRepository.getCartDetails(clientId);
+        if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
+        if (coupon.min_order_amount !== null && cartDetails.subTotal < coupon.min_order_amount) throw new HttpError(HttpStatusCode.BAD_REQUEST, `Minimum order amount for this coupon is ${coupon.min_order_amount}`);
+
+        await this.cartRepository.applyCouponToCart(+coupon.id, clientId);
 
         return [HttpStatusCode.NO_CONTENT, { message: 'Coupon applied successfully' }];
+    }
+}
+
+@injectable()
+export class RemoveCouponFromCartUseCase {
+    constructor(
+        @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository
+    ) { }
+
+    public async execute(clientId: number): Promise<[number, object]> {
+        let cartDetails = await this.cartRepository.getCartDetails(clientId);
+        if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
+        if (!cartDetails.coupon_id) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'No coupon applied to the cart');
+
+        await this.cartRepository.removeCouponFromCart(clientId);
+
+        return [HttpStatusCode.NO_CONTENT, { message: 'Coupon removed successfully' }];
     }
 }
