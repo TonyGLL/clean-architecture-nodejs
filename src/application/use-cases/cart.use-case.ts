@@ -138,7 +138,7 @@ export class ApplyCouponToCartUseCase {
         if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
         if (coupon.min_order_amount !== null && cartDetails.subTotal < coupon.min_order_amount) throw new HttpError(HttpStatusCode.BAD_REQUEST, `Minimum order amount for this coupon is ${coupon.min_order_amount}`);
 
-        await this.cartRepository.applyCouponToCart(+coupon.id, clientId);
+        await this.cartRepository.applyCouponToCart(+coupon.id, cartDetails.id);
 
         return [HttpStatusCode.NO_CONTENT, { message: 'Coupon applied successfully' }];
     }
@@ -155,7 +155,7 @@ export class RemoveCouponFromCartUseCase {
         if (!cartDetails) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Cart not found');
         if (!cartDetails.coupon_id) throw new HttpError(HttpStatusCode.BAD_REQUEST, 'No coupon applied to the cart');
 
-        await this.cartRepository.removeCouponFromCart(clientId);
+        await this.cartRepository.removeCouponFromCart(cartDetails.id);
 
         return [HttpStatusCode.NO_CONTENT, { message: 'Coupon removed successfully' }];
     }

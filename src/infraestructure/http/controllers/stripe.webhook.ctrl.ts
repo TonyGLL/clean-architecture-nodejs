@@ -10,6 +10,7 @@ import Stripe from "stripe";
 import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
 import { Pool } from "pg";
 import { IOrderRepository } from "../../../domain/repositories/order.repository";
+import { ICouponsRepository } from "../../../domain/repositories/coupons.repository";
 
 @injectable()
 export class StripeWebhookController {
@@ -20,6 +21,7 @@ export class StripeWebhookController {
         @inject(DOMAIN_TYPES.IStripePaymentRepository) private stripePaymentRepository: IStripePaymentRepository,
         @inject(DOMAIN_TYPES.ICartRepository) private cartRepository: ICartRepository,
         @inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+        @inject(DOMAIN_TYPES.ICouponsRepository) private couponRepository: ICouponsRepository,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) {
         this.webhookSecret = config.STRIPE_WEBHOOK_SECRET;
@@ -85,6 +87,8 @@ export class StripeWebhookController {
 
             // Create a new cart for the current user
             await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.client_id!, poolClient);
+
+            await this.couponRepository.addCouponRedemption(updatePaymentStatusResponse?.cart_id!, updatePaymentStatusResponse?.client_id!, updatePaymentStatusResponse?.order_id!);
 
             await poolClient.query('COMMIT');
         } catch (error) {
