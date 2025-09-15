@@ -13,6 +13,18 @@ export class PostgresCouponsRepository implements ICouponsRepository {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: PoolClient
     ) { }
 
+    public async addCouponRedemption(cartId: number, clientId: number, orderId: number): Promise<void> {
+        try {
+            const query = `
+                INSERT INTO coupon_redemptions (coupon_id, client_id, order_id)
+                VALUES (SELECT coupon_id FROM shopping_carts sc WHERE sc.id = $1, $2, $3);
+            `;
+            await this.pool.query(query, [cartId, clientId, orderId]);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error adding coupon redemption');
+        }
+    }
+
     public async getCouponRedemptionCount(couponId: number): Promise<number> {
         try {
             const query = `

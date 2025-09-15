@@ -56,4 +56,14 @@ export interface ICouponsRepository {
      * @desc Retrieves the number of times a specific client has redeemed a specific coupon.
      */
     getClientCouponRedemptionCount(couponId: number, clientId: number): Promise<number>;
+
+
+    /**     * @method addCouponRedemption
+     * @param {number} couponId - The ID of the coupon
+     * @param {number} clientId - The ID of the client
+     * @param {number} orderId - The ID of the order associated with the redemption
+     * @returns {Promise<void>}
+     * @desc Records a coupon redemption by a client for a specific order.
+     */
+    addCouponRedemption(couponId: number, clientId: number, orderId: number): Promise<void>;
 }
