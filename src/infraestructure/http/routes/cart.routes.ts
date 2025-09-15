@@ -11,8 +11,8 @@ router
     .post('/address/:id', controller.linkAddressToCart)
     .delete('/delete/:id', controller.deleteProductFromCart)
     .delete('/clear', controller.clearCart)
-    .post('/coupons/:code', controller.clearCart)
-    .delete('/coupons', controller.clearCart)
+    .post('/coupons/:code', controller.applyCouponToCart)
+    .delete('/coupons', controller.removeCouponFromCart)
     ;
 
 export default router;
