@@ -7,6 +7,7 @@ import catalogsRoutes from './catalogs.routes';
 import authAdminRouter from './auth.admin.routes';
 import reviewsAdminRoutes from './reviews.admin.routes';
 import couponsAdminRoutes from './coupons.admin.routes';
+import ordersRoutes from './orders.routes';
 
 const mainAdminRouter = Router();
 
@@ -23,6 +24,8 @@ mainAdminRouter
     .use('/catalogs', catalogsRoutes)
     .use('/users', userRoutes)
     .use('/reviews', reviewsAdminRoutes)
-    .use('/coupons', couponsAdminRoutes);
+    .use('/coupons', couponsAdminRoutes)
+    .use('/orders', ordersRoutes)
+    ;
 
 export default mainAdminRouter;

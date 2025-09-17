@@ -1,3 +1,4 @@
+import { query } from 'express-validator';
 import { Pool, PoolClient } from 'pg';
 import { inject, injectable } from 'inversify';
 import { IOrderRepository, CreateOrderParams } from '../../../../domain/repositories/order.repository';
@@ -5,10 +6,63 @@ import { Order, OrderItem } from '../../../../domain/entities/order';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { HttpError } from '../../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../../domain/shared/http.status';
+import { GetAllOrdersDTO, GetAllOrdersResponseDTO } from '../../../../application/dtos/order.dto';
 
 @injectable()
 export class PostgresOrderRepository implements IOrderRepository {
     constructor(@inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool) { }
+
+    public async getAllOrders(dto: GetAllOrdersDTO): Promise<GetAllOrdersResponseDTO> {
+        try {
+            const { page, limit, search, status, start_date, end_date } = dto;
+            const offset = (page - 1) * limit;
+            const client = await this.pool.connect();
+
+            let baseQuery = 'SELECT * FROM orders';
+            const conditions: string[] = [];
+            const values: any[] = [];
+            let valueIndex = 1;
+
+            if (search) {
+                conditions.push(`(order_number ILIKE $${valueIndex})`);
+                values.push(`%${search}%`);
+                valueIndex++;
+            }
+            if (status) {
+                conditions.push(`status = $${valueIndex}`);
+                values.push(status);
+                valueIndex++;
+            }
+            if (start_date) {
+                conditions.push(`created_at >= $${valueIndex}`);
+                values.push(start_date);
+                valueIndex++;
+            }
+            if (end_date) {
+                conditions.push(`created_at <= $${valueIndex}`);
+                values.push(end_date);
+                valueIndex++;
+            }
+
+            if (conditions.length > 0) {
+                baseQuery += ' WHERE ' + conditions.join(' AND ');
+            }
+
+            baseQuery += ' ORDER BY created_at DESC';
+            baseQuery += ` LIMIT $${valueIndex} OFFSET $${valueIndex + 1}`;
+
+            const queryTotal = `SELECT COUNT(*) FROM orders` + (conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '');
+            const totalResult = await client.query(queryTotal, values.slice(0, valueIndex - 1));
+            const total = parseInt(totalResult.rows[0].count, 10);
+
+            values.push(limit, offset);
+
+            const { rows } = await client.query<Order>(baseQuery, values);
+            return { total, orders: rows };
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error fetching orders: ${(error as Error).message}`);
+        }
+    }
 
     private generateOrderNumber(): string {
         // Simple order number generator, consider a more robust solution for production

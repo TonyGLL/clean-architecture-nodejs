@@ -1,6 +1,7 @@
 import { Order } from "../entities/order";
 import { Cart } from "../entities/cart";
 import { PoolClient } from "pg";
+import { GetAllOrdersDTO, GetAllOrdersResponseDTO } from "../../application/dtos/order.dto";
 
 /**
  * @interface CreateOrderParams
@@ -53,4 +54,12 @@ export interface IOrderRepository {
      * @desc Update the status of an order
      */
     updateOrderStatus(orderId: number, status: string, poolClient: PoolClient): Promise<Order | null>;
+
+
+    /** * @method getAllOrders
+     * @param {GetAllOrdersDTO} dto
+     * @returns {Promise<GetAllOrdersResponseDTO>}
+     * @desc Get all orders with pagination, filtering, and search
+     */
+    getAllOrders(dto: GetAllOrdersDTO): Promise<GetAllOrdersResponseDTO>;
 }
