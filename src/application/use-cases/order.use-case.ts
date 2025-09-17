@@ -3,7 +3,7 @@ import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { IOrderRepository } from "../../domain/repositories/order.repository";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
 import { IStripePaymentRepository } from "../../domain/repositories/stripe.payment.repository";
-import { CreateOrderDTO, GetAllOrdersDTO, GetClientOrdersDTO, GetOrderByIdDTO, UpdateOrderStatusDTO } from "../dtos/order.dto";
+import { CreateOrderDTO, GetAllOrdersDTO, GetAllOrdersResponseDTO, GetClientOrdersDTO, GetOrderByIdDTO, UpdateOrderStatusDTO } from "../dtos/order.dto";
 import { Order } from "../../domain/entities/order";
 import { HttpError } from "../../domain/errors/http.error";
 import { HttpStatusCode } from "../../domain/shared/http.status";
@@ -139,8 +139,8 @@ export class UpdateOrderStatusUseCase {
 export class GetAllOrdersUseCase {
     constructor(@inject(DOMAIN_TYPES.IOrderRepository) private orderRepository: IOrderRepository) { }
 
-    public async execute(dto: GetAllOrdersDTO): Promise<[number, Order[]]> {
-        const orders = await this.orderRepository.getAllOrders(dto);
-        return [HttpStatusCode.OK, orders];
+    public async execute(dto: GetAllOrdersDTO): Promise<[number, GetAllOrdersResponseDTO]> {
+        const response = await this.orderRepository.getAllOrders(dto);
+        return [HttpStatusCode.OK, response];
     }
 }

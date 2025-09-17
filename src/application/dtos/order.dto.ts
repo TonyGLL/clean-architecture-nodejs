@@ -1,4 +1,5 @@
 import { Cart } from "../../domain/entities/cart";
+import { Order } from "../../domain/entities/order";
 
 export interface CreateOrderDTO {
     clientId: number;
@@ -28,6 +29,11 @@ export interface GetAllOrdersDTO {
     limit: number;
     search?: string;
     status?: string;
-    start_date?: Date;
-    end_date?: Date;
+    start_date?: string;
+    end_date?: string;
+}
+
+export interface GetAllOrdersResponseDTO {
+    total: number;
+    orders: Order[];
 }
