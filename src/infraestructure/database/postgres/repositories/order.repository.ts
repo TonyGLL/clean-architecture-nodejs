@@ -24,7 +24,7 @@ export class PostgresOrderRepository implements IOrderRepository {
             let valueIndex = 1;
 
             if (search) {
-                conditions.push(`(order_number ILIKE $${valueIndex} OR id ILIKE $${valueIndex})`);
+                conditions.push(`(order_number ILIKE $${valueIndex})`);
                 values.push(`%${search}%`);
                 valueIndex++;
             }
