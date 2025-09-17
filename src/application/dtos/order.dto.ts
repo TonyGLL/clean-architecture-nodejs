@@ -22,3 +22,12 @@ export interface UpdateOrderStatusDTO {
     status: string;
     // Potentially add adminUserId for authorization if only admins can update status
 }
+
+export interface GetAllOrdersDTO {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    start_date?: Date;
+    end_date?: Date;
+}
