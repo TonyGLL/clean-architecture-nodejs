@@ -72,6 +72,7 @@ import { WishlistController } from '../http/controllers/wishlist.ctrl';
 import { CreateReviewUseCase, DeleteReviewByAdminUseCase, DeleteReviewUseCase, GetProductReviewsUseCase, ModerateReviewByAdminUseCase } from '../../application/use-cases/review.user-case';
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
 import { CouponsController } from '../http/controllers/coupons.ctrl';
+import { OrdersController } from '../http/controllers/orders.ctrl';
 
 const container = new Container();
 
@@ -190,5 +191,6 @@ container.bind<AddressController>(AddressController).toSelf();
 container.bind<WishlistController>(WishlistController).toSelf();
 container.bind<ReviewsController>(ReviewsController).toSelf();
 container.bind<CouponsController>(CouponsController).toSelf();
+container.bind<OrdersController>(OrdersController).toSelf();
 
 export { container };
