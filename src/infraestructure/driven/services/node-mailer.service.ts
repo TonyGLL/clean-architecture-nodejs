@@ -19,7 +19,7 @@ export class NodeMailerService implements IMailService {
         });
     }
 
-    public async sendRestorePasswordEmail(email: string, token: string): Promise<void> { // Added token parameter
+    public async sendRestorePasswordEmail(email: string, token: string): Promise<void> {
         const mailOptions = {
             from: config.EMAIL_FROM,
             to: email,
@@ -29,11 +29,23 @@ export class NodeMailerService implements IMailService {
 
         try {
             await this.transporter.sendMail(mailOptions);
-            console.log(`Password reset email sent to ${email}`);
         } catch (error) {
-            console.error("Error sending password reset email:", error);
-            // Consider re-throwing a domain-specific error or HttpError
             throw new Error("Failed to send password reset email.");
+        }
+    }
+
+    public async sendPasswordChangedEmail(email: string): Promise<void> {
+        const mailOptions = {
+            from: config.EMAIL_FROM,
+            to: email,
+            subject: 'Password Changed Successfully',
+            html: `<p>Your password has been changed successfully. If you did not perform this action, please contact support immediately.</p>`,
+        };
+
+        try {
+            await this.transporter.sendMail(mailOptions);
+        } catch (error) {
+            throw new Error("Failed to send password changed confirmation email.");
         }
     }
 }

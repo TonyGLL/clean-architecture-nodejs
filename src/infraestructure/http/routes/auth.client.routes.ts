@@ -11,7 +11,7 @@ router
     .post('/login', loginValidator, expressValidatorErrors, controller.login)
     .post('/register', registerValidator, expressValidatorErrors, controller.register)
     .post('/send-email', sendEmailValidator, expressValidatorErrors, controller.sendEmail)
-    .post('/restore-password', restorePasswordValidator, expressValidatorErrors, controller.restorePassword)
+    .post('/restore-password/:token', restorePasswordValidator, expressValidatorErrors, controller.restorePassword)
     ;
 
 export default router;

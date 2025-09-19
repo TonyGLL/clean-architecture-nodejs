@@ -44,7 +44,7 @@ export class PostgresAuthRepository implements IAuthRepository {
 
     public async updatePassword(clientId: number, password: string): Promise<void> {
         const query = {
-            text: "UPDATE passwords SET hash = $2 WHERE client_id = $1 AND deleted IS FALSE",
+            text: "UPDATE client_passwords SET hash = $2 WHERE client_id = $1",
             values: [clientId, password]
         }
         await this.pool.query(query);
