@@ -11,4 +11,16 @@ export interface IMailService {
      * await mailService.sendRestorePasswordEmail('user@example.com', 'restore-token');
      */
     sendRestorePasswordEmail(email: string, token: string): Promise<void>;
+
+    /**
+     * Sends a password changed confirmation email to the user.
+     *
+     * @name sendPasswordChangedEmail
+     * @param {string} email - The user's email address.
+     * @returns {Promise<void>} A promise that resolves when the email is sent.
+     *
+     * @example
+     * await mailService.sendPasswordChangedEmail('user@example.com');
+     */
+    sendPasswordChangedEmail(email: string): Promise<void>;
 }

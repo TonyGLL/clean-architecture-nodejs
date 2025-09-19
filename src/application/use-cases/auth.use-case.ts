@@ -166,6 +166,7 @@ export class RestorePasswordUseCase {
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
+        @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
 
@@ -186,6 +187,8 @@ export class RestorePasswordUseCase {
             await this.authClientRepository.updatePassword(existUser.id, password);
 
             await client.query('COMMIT');
+
+            await this.mailService.sendPasswordChangedEmail(dto.email);
 
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error) {

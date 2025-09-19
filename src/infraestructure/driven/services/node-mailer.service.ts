@@ -33,4 +33,19 @@ export class NodeMailerService implements IMailService {
             throw new Error("Failed to send password reset email.");
         }
     }
+
+    public async sendPasswordChangedEmail(email: string): Promise<void> {
+        const mailOptions = {
+            from: config.EMAIL_FROM,
+            to: email,
+            subject: 'Password Changed Successfully',
+            html: `<p>Your password has been changed successfully. If you did not perform this action, please contact support immediately.</p>`,
+        };
+
+        try {
+            await this.transporter.sendMail(mailOptions);
+        } catch (error) {
+            throw new Error("Failed to send password changed confirmation email.");
+        }
+    }
 }
