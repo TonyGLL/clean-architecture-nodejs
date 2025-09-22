@@ -40,7 +40,7 @@ export class AddProductToCartUseCase {
     public async execute(dto: AddProductToCartDTO): Promise<[number, object]> {
         logger.info(`[AddProductToCartUseCase] - Starting to add product ${dto.productId} to cart for client: ${dto.clientId}`);
         try {
-            const product = await this.productsRepository.getProductDetails(dto.productId.toString());
+            const product = await this.productsRepository.getProductDetails(dto.productId);
             if (!product) throw new HttpError(HttpStatusCode.NOT_FOUND, 'Product not found');
 
             if (product.stock < dto.quantity) {

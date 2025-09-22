@@ -1,3 +1,4 @@
+import { IGetProductsByCategoryDTO, ISearchProductsDTO, ISearchProductsResponseDTO } from "../../application/dtos/products.dto";
 import { Product } from "../entities/product";
 
 /**
@@ -15,25 +16,25 @@ export interface IProductsRepository {
 
     /**
      * @method searchProducts
-     * @param {string} term
-     * @returns {Promise<Product[]>}
+     * @param {ISearchProductsDTO} filters
+     * @returns {Promise<ISearchProductsResponseDTO>}
      * @desc Search products by a term
      */
-    searchProducts(term: string): Promise<Product[]>;
+    searchProducts(filters: ISearchProductsDTO): Promise<ISearchProductsResponseDTO>;
 
     /**
      * @method getProductsByCategory
-     * @param {number} categoryId
-     * @returns {Promise<Product[]>}
+     * @param {IGetProductsByCategoryDTO} filters
+     * @returns {Promise<ISearchProductsResponseDTO>}
      * @desc Get products by category
      */
-    getProductsByCategory(categoryId: number): Promise<Product[]>;
+    getProductsByCategory(filters: IGetProductsByCategoryDTO): Promise<ISearchProductsResponseDTO>;
 
     /**
      * @method getProductDetails
-     * @param {string} productId
+     * @param {number} productId
      * @returns {Promise<Product>}
      * @desc Get product details
      */
-    getProductDetails(productId: string): Promise<Product>;
+    getProductDetails(productId: number): Promise<Product>;
 }

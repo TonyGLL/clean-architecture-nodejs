@@ -4,6 +4,7 @@ import { Product } from "../../domain/entities/product";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
 import { IProductsRepository } from "../../domain/repositories/products.repository";
 import { HttpStatusCode } from "../../domain/shared/http.status";
+import { IGetProductsByCategoryDTO, ISearchProductsDTO, ISearchProductsResponseDTO } from "../dtos/products.dto";
 
 @injectable()
 export class UpsertProductsWithCategoriesUseCase {
@@ -28,12 +29,12 @@ export class SearchProductsUseCase {
         @inject(DOMAIN_TYPES.IProductsRepository) private productsRepository: IProductsRepository
     ) { }
 
-    public async execute(dto: string): Promise<[number, Product[]]> {
+    public async execute(dto: ISearchProductsDTO): Promise<[number, ISearchProductsResponseDTO]> {
         logger.info(`[SearchProductsUseCase] - Starting to search products with query: ${dto}`);
         try {
-            const products = await this.productsRepository.searchProducts(dto);
+            const response = await this.productsRepository.searchProducts(dto);
 
-            return [HttpStatusCode.OK, products];
+            return [HttpStatusCode.OK, response];
         } catch (error) {
             logger.error(`[SearchProductsUseCase] - Error searching products with query: ${dto}`, { error });
             throw error;
@@ -47,12 +48,12 @@ export class GetProductsByCategoryUseCase {
         @inject(DOMAIN_TYPES.IProductsRepository) private productsRepository: IProductsRepository
     ) { }
 
-    public async execute(categoryId: number): Promise<[number, Product[]]> {
-        logger.info(`[GetProductsByCategoryUseCase] - Starting to get products for category: ${categoryId}`);
+    public async execute(filters: IGetProductsByCategoryDTO): Promise<[number, ISearchProductsResponseDTO]> {
+        logger.info(`[GetProductsByCategoryUseCase] - Starting to get products for category: ${filters.categoryId}`);
         try {
-            return [HttpStatusCode.OK, await this.productsRepository.getProductsByCategory(categoryId)];
+            return [HttpStatusCode.OK, await this.productsRepository.getProductsByCategory(filters)];
         } catch (error) {
-            logger.error(`[GetProductsByCategoryUseCase] - Error getting products for category: ${categoryId}`, { error });
+            logger.error(`[GetProductsByCategoryUseCase] - Error getting products for category: ${filters.categoryId}`, { error });
             throw error;
         }
     }
@@ -64,7 +65,7 @@ export class GetProductDetailsUseCase {
         @inject(DOMAIN_TYPES.IProductsRepository) private productsRepository: IProductsRepository
     ) { }
 
-    public async execute(productId: string): Promise<[number, Product]> {
+    public async execute(productId: number): Promise<[number, Product]> {
         logger.info(`[GetProductDetailsUseCase] - Starting to get details for product: ${productId}`);
         try {
             return [HttpStatusCode.OK, await this.productsRepository.getProductDetails(productId)];
