@@ -28,11 +28,11 @@ export class CartController {
     public addProductToCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id: clientId } = req.user as { id: number };
-            const { id: productIdIn } = req.params as { id: string };
+            const { productId } = req.params as { productId: string };
             const { quantity } = req.body as { quantity: number };
             const dto: AddProductToCartDTO = {
                 clientId,
-                productId: Number.parseInt(productIdIn),
+                productId: +productId,
                 quantity
             };
             const [status, data] = await this.addProductToCartUseCase.execute(dto);
@@ -45,8 +45,8 @@ export class CartController {
     public deleteProductFromCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id: clientId } = req.user as { id: number };
-            const { id: productIdIn } = req.params as { id: string };
-            const [status, data] = await this.deleteProductFromCartUseCase.deleteProductFromCart(clientId, parseInt(productIdIn));
+            const { productId } = req.params as { productId: string };
+            const [status, data] = await this.deleteProductFromCartUseCase.deleteProductFromCart(clientId, +productId);
             res.status(status).json(data);
         } catch (error) {
             next(error);
