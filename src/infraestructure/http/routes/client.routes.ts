@@ -6,7 +6,7 @@ import addressRouter from './address.routes';
 import cartRouter from './cart.routes';
 import wishlistRouter from './wishlist.routes';
 import reviewsRouter from './reviews.routes';
-import { authMiddleware } from '../middlewares/auth.middleware';
+import { clientAuthMiddleware } from '../middlewares/auth.middleware';
 
 const mainClientRouter = Router();
 
@@ -15,7 +15,7 @@ mainClientRouter
     .use('/products', productsRouter)
 
     // Protected routes
-    .use(authMiddleware)
+    .use(clientAuthMiddleware)
 
     .use('/cart', cartRouter)
     .use('/payments', paymentRouter)
