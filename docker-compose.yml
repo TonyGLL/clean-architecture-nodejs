@@ -37,6 +37,8 @@ services:
     container_name: nginx_proxy
     ports:
       - '80:80'
+    volumes:
+      - ./public:/var/www/html/public:ro
     depends_on:
       - app_dev
     networks:
