@@ -34,7 +34,17 @@ class App {
         this.express.use(express.urlencoded({ extended: true }));
         this.express.use(morgan('dev'));
         this.express.use(helmet({
-            contentSecurityPolicy: false
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "https://js.stripe.com/v3/"],
+                    styleSrc: ["'self'", "'unsafe-inline'"], // EJS/inline styles might require this
+                    frameSrc: ["'self'", "https://js.stripe.com/v3/"],
+                    connectSrc: ["'self'", "https://api.stripe.com"],
+                    imgSrc: ["'self'", "data:"], // Allow data URIs for images
+                    fontSrc: ["'self'"],
+                },
+            },
         }));
     }
 

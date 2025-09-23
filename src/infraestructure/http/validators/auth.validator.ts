@@ -36,7 +36,15 @@ export const registerValidator = [
         .bail()
         .notEmpty().withMessage('Field `password` cannot be empty')
         .bail()
-        .isString().withMessage('Field `password` must be a string'),
+        .isString().withMessage('Field `password` must be a string')
+        .bail()
+        .isStrongPassword({
+            minLength: 8,
+            minLowercase: 1,
+            minUppercase: 1,
+            minNumbers: 1,
+            minSymbols: 1,
+        }).withMessage('Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one number, and one symbol'),
 
     //* Optional
     body('birth_date')
@@ -79,4 +87,12 @@ export const restorePasswordValidator = [
         .notEmpty().withMessage('Field `password` cannot be empty')
         .bail()
         .isString().withMessage('Field `password` must be a string')
+        .bail()
+        .isStrongPassword({
+            minLength: 8,
+            minLowercase: 1,
+            minUppercase: 1,
+            minNumbers: 1,
+            minSymbols: 1,
+        }).withMessage('Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one number, and one symbol')
 ];
