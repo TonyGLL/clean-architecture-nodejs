@@ -21,9 +21,7 @@ class App {
     }
 
     public startCronJobs(): void {
-        // Iniciar cron jobs cuando la aplicación esté lista
         productsJob.start();
-        console.log('Cron jobs started');
     }
 
     private middlewares(): void {
@@ -53,11 +51,9 @@ class App {
         this.express.set('view engine', 'ejs');
 
         const viewsPath = path.join(__dirname, '../views');
-        console.log('RUTA DE VISTAS CONFIGURADA:', viewsPath);
         this.express.set('views', viewsPath);
 
         const publicPath = path.join(__dirname, '../../public');
-        console.log('RUTA DE PUBLIC CONFIGURADA:', publicPath);
         this.express.use(express.static(publicPath));
 
         this.express.use('/', viewsRouter);
