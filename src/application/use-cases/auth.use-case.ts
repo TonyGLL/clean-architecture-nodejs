@@ -108,7 +108,7 @@ export class RegisterClientUseCase {
 
             await client.query('COMMIT');
 
-            const token = this.jwtService.generateToken({ id: userClientSaved.id }, '1h', 'admin');
+            const token = this.jwtService.generateToken({ id: userClientSaved.id }, '1h', 'client');
 
             const newUser = new Client(userClientSaved.id, userClientSaved.name, userClientSaved.last_name, userClientSaved.email, userClientSaved.birth_date, userClientSaved.phone);
             if (!userClientSaved.id) throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Saved Client ID missing');
@@ -128,6 +128,7 @@ export class RegisterClientUseCase {
 export class SendEmailUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
@@ -140,10 +141,16 @@ export class SendEmailUseCase {
         try {
             await client.query('BEGIN');
 
-            const existUser = await this.authClientRepository.findByEmail(email, client);
+            let existUser: User | Client | null = null;
+            if (type === 'admin') {
+                existUser = await this.userRepository.findByEmail(email);
+            } else {
+                existUser = await this.authClientRepository.findByEmail(email, client);
+            }
+
             if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-            const token = this.jwtService.generateToken({ id: existUser.id }, '2m', type);
+            const token = this.jwtService.generateToken({ id: existUser.id }, '15m', type);
 
             await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
 
@@ -164,6 +171,7 @@ export class SendEmailUseCase {
 export class RestorePasswordUseCase {
     constructor(
         @inject(DOMAIN_TYPES.IAuthRepository) private authClientRepository: IAuthRepository,
+        @inject(DOMAIN_TYPES.IUserRepository) private userRepository: IUserRepository,
         @inject(APPLICATION_TYPES.IJwtService) private jwtService: IJwtService,
         @inject(DOMAIN_TYPES.IHashingService) private hashingService: IHashingService,
         @inject(DOMAIN_TYPES.IMailService) private mailService: IMailService,
@@ -177,14 +185,24 @@ export class RestorePasswordUseCase {
         try {
             await client.query('BEGIN');
 
-            const existUser = await this.authClientRepository.findByEmail(dto.email, client);
+            let existUser: User | Client | null = null;
+            if (type === 'admin') {
+                existUser = await this.userRepository.findByEmail(dto.email);
+            } else {
+                existUser = await this.authClientRepository.findByEmail(dto.email, client);
+            }
+
             if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
             this.jwtService.validateToken(dto.token, type);
 
             const password = await this.hashingService.hash(dto.password);
 
-            await this.authClientRepository.updatePassword(existUser.id, password);
+            if (type === 'admin') {
+                await this.userRepository.updatePassword(existUser.id, password, client);
+            } else {
+                await this.authClientRepository.updatePassword(existUser.id, password);
+            }
 
             await client.query('COMMIT');
 
