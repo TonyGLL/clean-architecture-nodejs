@@ -1,4 +1,4 @@
-import { Role } from './role';
+
 import { HttpStatusCode } from "../shared/http.status";
 import { HttpError } from "../errors/http.error";
 import { IHashingService } from "../services/hashing.service";

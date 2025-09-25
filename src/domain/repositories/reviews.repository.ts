@@ -1,4 +1,4 @@
-import { PoolClient } from "pg";
+
 import { CreateReviewDTO, GetProductReviewsDTO } from "../../application/dtos/review.dto";
 import { Review } from "../entities/review";
 

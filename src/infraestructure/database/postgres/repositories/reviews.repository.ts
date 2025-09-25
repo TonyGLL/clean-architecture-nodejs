@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { Pool, PoolClient } from "pg";
+import { Pool } from "pg";
 import { IReviewsRepository } from "../../../../domain/repositories/reviews.repository";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
 import { GetProductReviewsDTO, CreateReviewDTO } from "../../../../application/dtos/review.dto";
