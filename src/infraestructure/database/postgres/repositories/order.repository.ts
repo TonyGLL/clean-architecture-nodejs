@@ -1,4 +1,4 @@
-import { query } from 'express-validator';
+
 import { Pool, PoolClient } from 'pg';
 import { inject, injectable } from 'inversify';
 import { IOrderRepository, CreateOrderParams } from '../../../../domain/repositories/order.repository';

@@ -1,4 +1,4 @@
-import { Cart } from "../../domain/entities/cart";
+
 import { Order } from "../../domain/entities/order";
 
 export interface CreateOrderDTO {

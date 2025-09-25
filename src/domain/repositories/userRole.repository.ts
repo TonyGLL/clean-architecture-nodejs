@@ -1,5 +1,5 @@
 import { UserRole } from '../entities/userRole';
-import { Role } from '../entities/role';
+
 import { PoolClient } from 'pg';
 
 /**
