@@ -15,8 +15,6 @@ const sanitizeText = (text: string): string => {
 
 export const fetchExternalData = async () => {
     try {
-        console.log('Iniciando petición HTTP...');
-
         // Hacer una única petición GET a un sitio externo
         const { data } = await axios.get<IFakeStoreAPIProduct[]>('https://fakestoreapi.com/products');
 

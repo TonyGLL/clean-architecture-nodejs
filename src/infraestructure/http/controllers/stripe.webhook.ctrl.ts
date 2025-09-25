@@ -55,16 +55,14 @@ export class StripeWebhookController {
         switch (event.type) {
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
-                console.log(`PaymentIntent succeeded: ${paymentIntentSucceeded.id}`);
                 await this.handlePaymentIntentSucceeded(paymentIntentSucceeded);
                 break;
             case 'payment_intent.payment_failed':
                 const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
-                console.log(`PaymentIntent failed: ${paymentIntentFailed.id}`);
                 await this.handlePaymentIntentFailed(paymentIntentFailed);
                 break;
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                console.error(`Unhandled event type ${event.type}`);
         }
 
         res.status(HttpStatusCode.OK).json({ received: true });
@@ -113,6 +111,5 @@ export class StripeWebhookController {
             await this.cartRepository.updateCartStatus(cart.id, 'active');
             await this.cartRepository.updateCartPaymentIntent(cart.id, null);
         } */
-        console.log(`Payment intent ${intent.id} failed. Status updated in DB and cart reactivated.`);
     }
 }
