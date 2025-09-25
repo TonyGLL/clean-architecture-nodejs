@@ -3,24 +3,24 @@ import { pageLimitQueryValidator } from './general.validator';
 
 export const GetUsersValidator = [
     ...pageLimitQueryValidator,
-    query('search').optional().isString().withMessage('Search must be a string')
+    query('search').optional().isString().withMessage('Search must be a string').trim().escape()
 ];
 
 export const CreateUserValidator = [
-    body('name').isString().notEmpty().withMessage('Name is required'),
-    body('lastName').isString().notEmpty().withMessage('Last name is required'),
+    body('name').isString().notEmpty().withMessage('Name is required').trim().escape(),
+    body('lastName').isString().notEmpty().withMessage('Last name is required').trim().escape(),
     body('email').isEmail().withMessage('Must be a valid email'),
     body('password').isString().isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
     body('birth_date').optional().isISO8601().toDate().withMessage('Must be a valid date'),
-    body('phone').optional().isString().withMessage('Phone must be a string')
+    body('phone').optional().isString().withMessage('Phone must be a string').trim().escape()
 ];
 
 export const UpdateUserValidator = [
     param('id').isInt({ min: 1 }).withMessage('ID must be a positive integer'),
-    body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
-    body('lastName').optional().isString().notEmpty().withMessage('Last name must be a non-empty string'),
+    body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string').trim().escape(),
+    body('lastName').optional().isString().notEmpty().withMessage('Last name must be a non-empty string').trim().escape(),
     body('birth_date').optional().isISO8601().toDate().withMessage('Must be a valid date'),
-    body('phone').optional().isString().withMessage('Phone must be a string')
+    body('phone').optional().isString().withMessage('Phone must be a string').trim().escape()
 ];
 
 export const UserIdValidator = [

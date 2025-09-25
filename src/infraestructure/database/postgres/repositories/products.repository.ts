@@ -25,8 +25,8 @@ export class PostgresProductsRepository implements IProductsRepository {
             let whereClause = '';
             const baseParams: any[] = [];
             if (searchStr.length > 0) {
-                whereClause = `WHERE (p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%')`;
-                baseParams.push(search);
+                whereClause = `WHERE to_tsvector('spanish', p.name || ' ' || p.description) @@ to_tsquery('spanish', $1)`;
+                baseParams.push(searchStr.split(' ').join(' & ')); // Convierte "tenis nike" a "tenis & nike" para buscar ambas palabras
             }
 
             // COUNT query (sin LIMIT/OFFSET)

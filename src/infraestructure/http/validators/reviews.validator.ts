@@ -35,7 +35,7 @@ export const CreateReviewValidator = [
         .bail()
         .notEmpty().withMessage('Field `body` cannot be empty if provided')
         .bail()
-        .trim()
+        .trim().escape()
 ];
 
 export const DeleteReviewValidator = [

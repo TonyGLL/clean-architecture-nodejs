@@ -8,7 +8,7 @@ export const GetRolesValidator = [
     //* Optional
     query('search')
         .optional()
-        .trim()
+        .trim().escape()
 ];
 
 export const GetPermissionsByRoleValidator = [
@@ -23,11 +23,13 @@ export const CreateRoleValidator = [
         .bail()
         .isString().withMessage('Field `name` must be a string')
         .bail()
-        .notEmpty().withMessage('Field `name` cannot be empty'),
+        .notEmpty().withMessage('Field `name` cannot be empty')
+        .trim().escape(),
     body('description')
         .exists().withMessage('Field `description` is required')
         .bail()
-        .isString().withMessage('Field `description` must be a string'),
+        .isString().withMessage('Field `description` must be a string')
+        .trim().escape(),
     body('permissions')
         .exists().withMessage('Field `permissions` is required')
         .bail()
@@ -42,7 +44,8 @@ export const CreateRoleValidator = [
         .bail()
         .isString().withMessage('Field `module_name` must be a string')
         .bail()
-        .notEmpty().withMessage('Field `module_name` cannot be empty'),
+        .notEmpty().withMessage('Field `module_name` cannot be empty')
+        .trim().escape(),
     body('permissions.*.can_write')
         .exists().withMessage('Field `can_write` is required')
         .bail()
@@ -73,11 +76,13 @@ export const UpdateRoleValidator = [
         .bail()
         .isString().withMessage('Field `name` must be a string')
         .bail()
-        .notEmpty().withMessage('Field `name` cannot be empty'),
+        .notEmpty().withMessage('Field `name` cannot be empty')
+        .trim().escape(),
     body('description')
         .exists().withMessage('Field `description` is required')
         .bail()
-        .isString().withMessage('Field `description` must be a string'),
+        .isString().withMessage('Field `description` must be a string')
+        .trim().escape(),
     body('permissions')
         .exists().withMessage('Field `permissions` is required')
         .bail()
@@ -92,7 +97,8 @@ export const UpdateRoleValidator = [
         .bail()
         .isString().withMessage('Field `module_name` must be a string')
         .bail()
-        .notEmpty().withMessage('Field `module_name` cannot be empty'),
+        .notEmpty().withMessage('Field `module_name` cannot be empty')
+        .trim().escape(),
     body('permissions.*.can_write')
         .exists().withMessage('Field `can_write` is required')
         .bail()

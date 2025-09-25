@@ -7,6 +7,7 @@ export const createWishlistValidator = [
         .notEmpty().withMessage('Body `name` cannot be empty')
         .bail()
         .isString().withMessage('Body `name` must be a string')
+        .trim().escape()
 ];
 
 export const updateWishlistValidator = [
@@ -21,6 +22,7 @@ export const updateWishlistValidator = [
         .notEmpty().withMessage('Body `name` cannot be empty')
         .bail()
         .isString().withMessage('Body `name` must be a string')
+        .trim().escape()
 ];
 
 export const addProductToWishlistValidator = [

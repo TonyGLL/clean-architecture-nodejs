@@ -7,5 +7,5 @@ export const expressValidatorErrors = (req: Request, res: Response, next: NextFu
     if (errors.isEmpty()) {
         return next();
     }
-    res.status(HttpStatusCode.CONFLICT).json({ errors: errors.array() });
+    res.status(HttpStatusCode.UNPROCESSABLE_ENTITY).json({ errors: errors.array() });
 }

@@ -301,3 +301,10 @@ CREATE TABLE coupon_redemptions (
     used_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (coupon_id, client_id, order_id) -- evita duplicados
 );
+
+-- Índices de performance para productos
+CREATE INDEX idx_products_price ON products(price);
+CREATE INDEX idx_reviews_product_id ON reviews(product_id);
+CREATE INDEX idx_product_categories_product_id ON product_categories(product_id);
+CREATE INDEX idx_product_categories_category_id ON product_categories(category_id);
+CREATE INDEX idx_products_name_description_fts ON products USING gin(to_tsvector('spanish', name || ' ' || description));

@@ -23,7 +23,8 @@ export const registerValidator = [
         .bail()
         .notEmpty().withMessage('Field `name` cannot be empty')
         .bail()
-        .isString().withMessage('Field `name` must be a string'),
+        .isString().withMessage('Field `name` must be a string')
+        .trim().escape(),
     body('email')
         .exists().withMessage('Field `email` is required')
         .bail()
@@ -49,10 +50,12 @@ export const registerValidator = [
     //* Optional
     body('birth_date')
         .optional()
-        .isString().withMessage('Field `birth_date` must be a string'),
+        .isString().withMessage('Field `birth_date` must be a string')
+        .trim().escape(),
     body('phone')
         .optional()
         .isString().withMessage('Field `phone` must be a string')
+        .trim().escape()
 ];
 
 export const sendEmailValidator = [
