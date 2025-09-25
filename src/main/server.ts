@@ -5,7 +5,7 @@ import { config } from '../infraestructure/config/env';
 const PORT = config.PORT;
 
 const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log('Server running on port:', PORT);
 });
 
 process.on('SIGINT', () => {
