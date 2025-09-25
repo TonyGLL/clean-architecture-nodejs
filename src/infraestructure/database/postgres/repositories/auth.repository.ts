@@ -3,12 +3,26 @@ import { IAuthRepository } from "../../../../domain/repositories/auth.repository
 import { Client } from "../../../../domain/entities/client";
 import { Pool, PoolClient } from "pg";
 import { INFRASTRUCTURE_TYPES } from "../../../ioc/types";
+import { HttpStatusCode } from "../../../../domain/shared/http.status";
+import { HttpError } from "../../../../domain/errors/http.error";
 
 @injectable()
 export class PostgresAuthRepository implements IAuthRepository {
     constructor(
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
+
+    public async updateLastAccess(clientId: number, client: PoolClient): Promise<void> {
+        try {
+            const query = {
+                text: "UPDATE clients SET last_access = NOW() WHERE id = $1",
+                values: [clientId]
+            }
+            await client.query(query);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error updating last access time');
+        }
+    }
 
     public async findByEmail(email: string): Promise<Client | null> {
         const query = {

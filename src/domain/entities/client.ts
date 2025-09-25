@@ -12,6 +12,7 @@ export class Client {
         public birth_date?: Date,
         public phone?: string,
         public password?: string,
+        public readonly last_access?: Date,
         public readonly created_at?: Date,
         public readonly updated_at?: Date
     ) { }

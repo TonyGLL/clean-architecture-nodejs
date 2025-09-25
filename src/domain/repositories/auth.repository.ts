@@ -42,4 +42,12 @@ export interface IAuthRepository {
      * @desc Update client password
      */
     updatePassword(clientId: number, password: string): Promise<void>;
+
+    /**
+     * @method updateLastAccess
+     * @param {number} clientId
+     * @returns {Promise<void>}
+     * @desc Update client's last access time
+     */
+    updateLastAccess(clientId: number, client: PoolClient): Promise<void>;
 }

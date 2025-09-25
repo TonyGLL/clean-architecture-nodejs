@@ -4,12 +4,26 @@ import { User } from '../../../../domain/entities/user';
 import { IUserRepository } from '../../../../domain/repositories/user.repository';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { GetUserDetailsResponseDTO, GetUsersDTO, GetUsersResponseDTO, UpdateUserDTO } from '../../../../application/dtos/user.dto';
+import { HttpError } from '../../../../domain/errors/http.error';
+import { HttpStatusCode } from '../../../../domain/shared/http.status';
 
 @injectable()
 export class PostgresUserRepository implements IUserRepository {
     constructor(
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) { }
+
+    public async updateLastAccess(clientId: number, client: PoolClient): Promise<void> {
+        try {
+            const query = {
+                text: "UPDATE users SET last_access = NOW() WHERE id = $1",
+                values: [clientId]
+            }
+            await client.query(query);
+        } catch (error) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, error instanceof Error ? error.message : 'Error updating last access time');
+        }
+    }
 
     public async getUsers(filters: GetUsersDTO): Promise<GetUsersResponseDTO> {
         const { page = 0, limit = 10, search } = filters;
@@ -23,7 +37,7 @@ export class PostgresUserRepository implements IUserRepository {
         }
 
         const dataQuery = {
-            text: `SELECT id, name, last_name, email, birth_date, phone, created_at, updated_at FROM users ${whereClause} ORDER BY name ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+            text: `SELECT id, name, last_name, email, birth_date, phone, created_at, updated_at, last_access FROM users ${whereClause} ORDER BY name ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
             values: [...params, limit, offset]
         };
 
