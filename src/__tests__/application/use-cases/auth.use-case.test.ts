@@ -23,6 +23,7 @@ describe('RegisterClientUseCase', () => {
             saveClient: jest.fn(),
             saveClientPassword: jest.fn(),
             updatePassword: jest.fn(),
+            updateLastAccess: jest.fn(),
         };
 
         mockHashingService = {
