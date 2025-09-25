@@ -3,7 +3,7 @@ import { pageLimitQueryValidator } from "./general.validator";
 
 export const GetCouponsValidator = [
     ...pageLimitQueryValidator,
-    query('search').optional().isString().withMessage('Search must be a string')
+    query('search').optional().isString().withMessage('Search must be a string').trim().escape()
 ];
 
 export const CreateCouponValidator = [
@@ -12,7 +12,8 @@ export const CreateCouponValidator = [
         .bail()
         .notEmpty().withMessage('Field `code` cannot be empty')
         .bail()
-        .isString().withMessage('Field `code` must be a string'),
+        .isString().withMessage('Field `code` must be a string')
+        .trim().escape(),
     body('discount_type')
         .exists().withMessage('Field `discount_type` is required')
         .bail()
@@ -58,7 +59,8 @@ export const UpdateCouponValidator = [
         .bail()
         .notEmpty().withMessage('Field `code` cannot be empty')
         .bail()
-        .isString().withMessage('Field `code` must be a string'),
+        .isString().withMessage('Field `code` must be a string')
+        .trim().escape(),
     body('discount_type')
         .exists().withMessage('Field `discount_type` is required')
         .bail()
