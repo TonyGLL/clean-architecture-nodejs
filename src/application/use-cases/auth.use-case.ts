@@ -64,6 +64,9 @@ export class LoginUseCase {
 
             if (type === 'client' && user instanceof Client && user.id) {
                 await this.cartRepository.createCartFromLogin(user.id, client);
+                await this.authRepository.updateLastAccess(user.id!, client);
+            } else {
+                await this.userRepository.updateLastAccess(user.id!, client);
             }
 
             await client.query('COMMIT');

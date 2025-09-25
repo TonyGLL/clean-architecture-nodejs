@@ -10,6 +10,7 @@ CREATE TABLE clients (
     birth_date DATE CHECK (birth_date > '1900-01-01'),
     phone VARCHAR(20) CHECK (phone ~ '^[0-9\+\(\)\s-]{8,20}$'),
     deleted BOOLEAN DEFAULT FALSE,
+    last_access TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -47,6 +48,7 @@ CREATE TABLE users (
     birth_date DATE CHECK (birth_date > '1900-01-01'),
     phone VARCHAR(20) CHECK (phone ~ '^[0-9\+\(\)\s-]{8,20}$'),
     deleted BOOLEAN DEFAULT FALSE,
+    last_access TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

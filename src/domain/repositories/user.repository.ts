@@ -76,4 +76,12 @@ export interface IUserRepository {
      * @desc Update user password
      */
     updatePassword(userId: number, hash: string, client: PoolClient): Promise<void>;
+
+    /**
+     * @method updateLastAccess
+     * @param {number} userId
+     * @returns {Promise<void>}
+     * @desc Update user's last access time
+     */
+    updateLastAccess(userId: number, client: PoolClient): Promise<void>;
 }

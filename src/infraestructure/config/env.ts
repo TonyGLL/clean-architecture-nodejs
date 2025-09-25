@@ -16,7 +16,7 @@ const envSchema = z.object({
     SMTP_PORT: z.coerce.number().int().positive("SMTP_PORT must be a positive integer"),
     SMTP_USER: z.string().min(1, "SMTP_USER is required"),
     SMTP_PASS: z.string().min(1, "SMTP_PASS is required"),
-    EMAIL_FROM: z.string().email("EMAIL_FROM must be a valid email"),
+    EMAIL_FROM: z.email("EMAIL_FROM must be a valid email"),
 
     // Stripe configuration
     STRIPE_WEBHOOK_SECRET: z.string().min(1, "STRIPE_WEBHOOK_SECRET is required"),
