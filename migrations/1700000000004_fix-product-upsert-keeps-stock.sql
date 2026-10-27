@@ -1,3 +1,6 @@
+-- Up Migration
+-- The nightly catalog sync used to reset stock to the external default on every run.
+-- Stock is now only set when a product is first inserted; afterwards orders own it.
 CREATE OR REPLACE FUNCTION upsert_products_with_categories(
     products_json JSON
 )
@@ -41,7 +44,6 @@ BEGIN
             name = EXCLUDED.name,
             description = EXCLUDED.description,
             price = EXCLUDED.price,
-            stock = EXCLUDED.stock,
             image = EXCLUDED.image,
             sku = EXCLUDED.sku,
             updated_at = NOW()
@@ -78,3 +80,5 @@ BEGIN
     RETURN processed_count;
 END;
 $$;
+-- Down Migration
+-- Previous behaviour (overwriting stock) is intentionally not restored.

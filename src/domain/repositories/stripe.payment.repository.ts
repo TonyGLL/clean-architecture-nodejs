@@ -97,4 +97,16 @@ export interface IStripePaymentRepository {
      * @desc Find a payment by its intent ID
      */
     findPaymentByIntentId(paymentIntentId: string): Promise<Payment | null>;
+
+    /**
+     * @method recordProviderEvent
+     * @param {string} eventId - Provider event id (e.g. Stripe `evt_...`)
+     * @param {string} eventType
+     * @param {unknown} payload
+     * @param {PoolClient} poolClient - Must be the client of the transaction that processes the event
+     * @returns {Promise<boolean>} true if the event is new, false if it was already processed
+     * @desc Webhook idempotency: inserts the event in the same transaction that applies its effects,
+     * so a rollback also forgets the event (Stripe will retry) and a commit makes duplicates no-ops.
+     */
+    recordProviderEvent(eventId: string, eventType: string, payload: unknown, poolClient: PoolClient): Promise<boolean>;
 }

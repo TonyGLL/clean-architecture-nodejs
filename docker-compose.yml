@@ -10,6 +10,37 @@ services:
       - '127.0.0.1:5432:5432'  # local access only (psql / init-db.sh)
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-root} -d $${POSTGRES_DB:-ca_nodejs}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - ca_nodejs_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_ca_nodejs
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - ca_nodejs_network
+
+  migrate:
+    image: ca_nodejs:0.0.13
+    container_name: ca_nodejs_migrate
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ['node', 'scripts/migrate.js', 'up']
+    env_file:
+      - dev.env
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - ca_nodejs_network
 
@@ -24,9 +55,29 @@ services:
     env_file:
       - dev.env
     depends_on:
-      - db
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     volumes:
       - ./logs:/app/logs
+    networks:
+      - ca_nodejs_network
+
+  # Background process: product sync cron + mail queue consumer (set REDIS_URL=redis://redis:6379 in dev.env)
+  worker:
+    image: ca_nodejs:0.0.13
+    container_name: ca_nodejs_worker
+    command: ['node', 'dist/main/worker.js']
+    env_file:
+      - dev.env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      disable: true
     networks:
       - ca_nodejs_network
 

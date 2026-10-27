@@ -4,11 +4,13 @@ import viewsRouter from "../infraestructure/http/routes/views.routes";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { requestContext, getRequestId } from '../infraestructure/http/middlewares/request-context.middleware';
+import { metricsMiddleware, metricsHandler } from '../infraestructure/http/middlewares/metrics.middleware';
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
-import { productsJob } from "../cron/products";
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 import path from 'path';
 import { config } from '../infraestructure/config/env';
+import { getRedis, isRedisEnabled, withTimeout } from '../infraestructure/queue/redis';
 import pool from '../infraestructure/database/postgres/config';
 
 class App {
@@ -21,20 +23,20 @@ class App {
         this.middlewares();
         this.routes();
         this.express.use(errorHandler);
-        this.startCronJobs();
-    }
-
-    public startCronJobs(): void {
-        productsJob.start();
     }
 
     private middlewares(): void {
         const corsOptions = {
             origin: config.CORS_ORIGIN
         };
+        this.express.use(requestContext);
+        this.express.use(metricsMiddleware);
         this.express.use(cors(corsOptions));
         this.express.use(express.urlencoded({ extended: true }));
-        this.express.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+        morgan.token('id', () => getRequestId());
+        this.express.use(morgan(process.env.NODE_ENV === 'production'
+            ? ':id :remote-addr :method :url :status :res[content-length] - :response-time ms'
+            : 'dev'));
         this.express.use(helmet({
             contentSecurityPolicy: {
                 directives: {
@@ -51,17 +53,18 @@ class App {
     }
 
     private routes(): void {
-        this.express.use('/health', (_: Request, res: Response) => {
-            res.status(200).json({
-                ok: true,
-                cronJobStatus: productsJob.isActive ? 'running' : 'stopped'
-            })
+        this.express.get('/health', (_: Request, res: Response) => {
+            res.status(200).json({ ok: true })
         });
 
+        // Prometheus scrape endpoint; blocked at nginx, reachable only inside the private network
+        this.express.get('/metrics', metricsHandler);
+
         // Readiness: verifies the DB is reachable (use for load balancer / orchestrator probes)
-        this.express.use('/ready', async (_: Request, res: Response) => {
+        this.express.get('/ready', async (_: Request, res: Response) => {
             try {
                 await pool.query('SELECT 1');
+                if (isRedisEnabled()) await withTimeout(getRedis().ping());
                 res.status(200).json({ ok: true });
             } catch {
                 res.status(503).json({ ok: false });

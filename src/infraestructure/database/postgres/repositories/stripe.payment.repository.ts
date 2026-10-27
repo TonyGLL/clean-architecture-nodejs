@@ -134,4 +134,15 @@ export class PostgresStripePaymentRepository implements IStripePaymentRepository
         );
         return result.rows.length > 0 ? result.rows[0] as Payment : null;
     }
+
+    public async recordProviderEvent(eventId: string, eventType: string, payload: unknown, poolClient: PoolClient): Promise<boolean> {
+        const result = await poolClient.query(
+            `INSERT INTO payment_provider_events (provider, event_id, event_type, payload, processed)
+             VALUES ('stripe', $1, $2, $3, TRUE)
+             ON CONFLICT (provider, event_id) DO NOTHING
+             RETURNING id`,
+            [eventId, eventType, JSON.stringify(payload)]
+        );
+        return (result.rowCount ?? 0) > 0;
+    }
 }

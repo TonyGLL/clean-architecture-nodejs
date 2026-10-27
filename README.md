@@ -111,13 +111,16 @@ docker-compose up --build -d
 ```
 The application will be accessible at `http://localhost:80`.
 
-### 4. Initialize the Database
-With the containers running, execute the database initialization script. This only needs to be done once to set up the tables and initial data.
+### 4. Database migrations
+`docker-compose up` runs the one-off `migrate` service (`node scripts/migrate.js up`) before the app starts, so the schema, RBAC seed data and stored procedures are applied automatically. To run them by hand against any database (uses the `PSQL_*` variables or `DATABASE_URL`):
 
 ```bash
-./scripts/init-db.sh
+pnpm migrate up          # apply pending migrations
+pnpm migrate down 1      # roll back the last one
+pnpm migrate create add-something --migration-file-language sql
 ```
-> **Note for Windows Users:** You can run this script using Git Bash or WSL (Windows Subsystem for Linux).
+
+Migrations live in `migrations/` as plain SQL (`-- Up Migration` / `-- Down Migration`). Never edit an applied migration; add a new one (stored procedures are redefined with `CREATE OR REPLACE FUNCTION` in a new migration).
 
 ## 7. Environment Configuration
 

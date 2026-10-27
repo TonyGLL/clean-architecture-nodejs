@@ -6,15 +6,6 @@ import { HttpError } from '../../../domain/errors/http.error';
 import { HttpStatusCode } from '../../../domain/shared/http.status';
 import { ServiceType } from '../../../application/dtos/auth.admin.dto';
 
-// Extend Express Request type to include 'user'
-declare global {
-    namespace Express {
-        interface Request {
-            user?: any; // You can define a more specific type for the user payload
-        }
-    }
-}
-
 const createAuthMiddleware = (serviceType: ServiceType) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const authHeader = req.headers.authorization;

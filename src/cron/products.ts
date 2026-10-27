@@ -4,6 +4,8 @@ import { IFakeStoreAPIProduct } from '../application/dtos/products.dto';
 import { DOMAIN_TYPES } from '../domain/ioc.types';
 import { IProductsRepository } from '../domain/repositories/products.repository';
 import { container } from '../infraestructure/ioc/config';
+import { Pool } from 'pg';
+import { INFRASTRUCTURE_TYPES } from '../infraestructure/ioc/types';
 import { Product } from '../domain/entities/product';
 import { logger } from '../infraestructure/config/winston';
 
@@ -13,6 +15,32 @@ const sanitizeText = (text: string): string => {
     // Remover caracteres de control y no ASCII
     return text.replace(/[^\x20-\x7E]/g, '');
 }
+
+// Arbitrary constant identifying this job in pg_try_advisory_lock; only one process cluster-wide holds it at a time
+const PRODUCTS_SYNC_LOCK_ID = 727001;
+
+/**
+ * Runs the catalog sync only if no other worker is already running it
+ * (safe even when several worker replicas are deployed).
+ */
+export const runProductsSync = async (): Promise<void> => {
+    const pool = container.get<Pool>(INFRASTRUCTURE_TYPES.PostgresPool);
+    const lockClient = await pool.connect();
+    try {
+        const { rows } = await lockClient.query('SELECT pg_try_advisory_lock($1) AS locked', [PRODUCTS_SYNC_LOCK_ID]);
+        if (!rows[0].locked) {
+            logger.info('Product sync already running in another worker, skipping');
+            return;
+        }
+        try {
+            await fetchExternalData();
+        } finally {
+            await lockClient.query('SELECT pg_advisory_unlock($1)', [PRODUCTS_SYNC_LOCK_ID]);
+        }
+    } finally {
+        lockClient.release();
+    }
+};
 
 export const fetchExternalData = async () => {
     try {
@@ -46,7 +74,7 @@ export const fetchExternalData = async () => {
 // Configuración del cron job para ejecutarse cada día a medianoche
 export const productsJob = new CronJob(
     '0 0 * * *', // Ejecutar diariamente a medianoche (00:00)
-    () => fetchExternalData(),
+    () => runProductsSync().catch(() => undefined), // errors are already logged
     null, // onComplete
     false, // No iniciar automáticamente
     'America/Mexico_City' // timeZone
