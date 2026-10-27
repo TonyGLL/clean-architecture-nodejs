@@ -40,6 +40,8 @@ import { IJwtService } from '../../application/services/jwt.service';
 import { JwtService } from '../driven/services/jwt.service';
 import { IMailService } from '../../domain/services/mail.service';
 import { NodeMailerService } from '../driven/services/node-mailer.service';
+import { QueuedMailService } from '../driven/services/queued-mail.service';
+import { isRedisEnabled } from '../queue/redis';
 import { BcryptService } from '../driven/services/bcrypt.service';
 import { IStripeService } from '../../domain/services/stripe.service';
 import { StripePaymentService } from '../driven/services/stripe.payment.service';
@@ -97,7 +99,13 @@ container.bind<ICouponsRepository>(DOMAIN_TYPES.ICouponsRepository).to(PostgresC
 // Services (Interface -> Implementation)
 container.bind<IHashingService>(DOMAIN_TYPES.IHashingService).to(BcryptService);
 container.bind<IJwtService>(APPLICATION_TYPES.IJwtService).to(JwtService);
-container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
+// The worker always sends through SMTP directly; the API enqueues the email when Redis is available
+container.bind<NodeMailerService>(NodeMailerService).toSelf();
+if (isRedisEnabled()) {
+    container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(QueuedMailService);
+} else {
+    container.bind<IMailService>(DOMAIN_TYPES.IMailService).to(NodeMailerService);
+}
 container.bind<IStripeService>(DOMAIN_TYPES.IStripeService).to(StripePaymentService);
 
 // Use Cases (Concrete classes)

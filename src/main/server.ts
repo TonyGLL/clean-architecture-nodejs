@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import app from './app';
 import pool from '../infraestructure/database/postgres/config';
-import { productsJob } from '../cron/products';
 import { config } from '../infraestructure/config/env';
+import { closeMailQueue } from '../infraestructure/queue/mail.queue';
+import { closeRedis, isRedisEnabled } from '../infraestructure/queue/redis';
 import { logger } from '../infraestructure/config/winston';
 
 const PORT = config.PORT;
@@ -14,7 +15,8 @@ const server = app.listen(PORT, () => {
 const shutdown = (signal: string) => {
     logger.info(`${signal} received. Shutting down server...`);
     server.close(async () => {
-        productsJob.stop();
+        if (isRedisEnabled()) await closeMailQueue();
+        await closeRedis();
         await pool.end();
         logger.info('Server off.');
         process.exit(0);

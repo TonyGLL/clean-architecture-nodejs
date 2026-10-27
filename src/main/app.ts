@@ -5,10 +5,10 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { errorHandler } from "../infraestructure/http/middlewares/error.handler";
-import { productsJob } from "../cron/products";
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 import path from 'path';
 import { config } from '../infraestructure/config/env';
+import { getRedis, isRedisEnabled, withTimeout } from '../infraestructure/queue/redis';
 import pool from '../infraestructure/database/postgres/config';
 
 class App {
@@ -21,11 +21,6 @@ class App {
         this.middlewares();
         this.routes();
         this.express.use(errorHandler);
-        this.startCronJobs();
-    }
-
-    public startCronJobs(): void {
-        productsJob.start();
     }
 
     private middlewares(): void {
@@ -52,16 +47,14 @@ class App {
 
     private routes(): void {
         this.express.use('/health', (_: Request, res: Response) => {
-            res.status(200).json({
-                ok: true,
-                cronJobStatus: productsJob.isActive ? 'running' : 'stopped'
-            })
+            res.status(200).json({ ok: true })
         });
 
         // Readiness: verifies the DB is reachable (use for load balancer / orchestrator probes)
         this.express.use('/ready', async (_: Request, res: Response) => {
             try {
                 await pool.query('SELECT 1');
+                if (isRedisEnabled()) await withTimeout(getRedis().ping());
                 res.status(200).json({ ok: true });
             } catch {
                 res.status(503).json({ ok: false });

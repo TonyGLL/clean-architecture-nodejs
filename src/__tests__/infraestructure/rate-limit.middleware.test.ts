@@ -1,3 +1,5 @@
+jest.mock('../../infraestructure/config/env', () => ({ config: {} })); // no REDIS_URL -> in-memory store
+
 import express from 'express';
 import http from 'http';
 import { AddressInfo } from 'net';
