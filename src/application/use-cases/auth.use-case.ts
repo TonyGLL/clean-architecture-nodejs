@@ -18,6 +18,9 @@ import { IUserRepository } from "../../domain/repositories/user.repository";
 import { Role } from "../../domain/entities/role";
 import { ICartRepository } from "../../domain/repositories/cart.repository";
 
+/** Claim that marks a JWT as a password-reset token; such tokens are never accepted as access tokens. */
+export const PASSWORD_RESET_PURPOSE = 'password-reset';
+
 @injectable()
 export class LoginUseCase {
     constructor(
@@ -153,7 +156,7 @@ export class SendEmailUseCase {
 
             if (!existUser) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-            const token = this.jwtService.generateToken({ id: existUser.id }, '15m', type);
+            const token = this.jwtService.generateToken({ id: existUser.id, purpose: PASSWORD_RESET_PURPOSE }, '15m', type);
 
             await this.mailService.sendRestorePasswordEmail(email, token); // Pass token
 
@@ -197,7 +200,11 @@ export class RestorePasswordUseCase {
 
             if (!existUser || !existUser.id) throw new HttpError(HttpStatusCode.NOT_FOUND, 'User not found.');
 
-            this.jwtService.validateToken(dto.token, type);
+            // The token must be a reset token issued for this very account, not just any valid token
+            const payload = this.jwtService.validateToken(dto.token, type);
+            if (payload?.purpose !== PASSWORD_RESET_PURPOSE || payload?.id !== existUser.id) {
+                throw new HttpError(HttpStatusCode.FORBIDDEN, 'Invalid token.');
+            }
 
             const password = await this.hashingService.hash(dto.password);
 

@@ -23,6 +23,8 @@ const createAuthMiddleware = (serviceType: ServiceType) => {
         try {
             const jwtService = container.get<IJwtService>(APPLICATION_TYPES.IJwtService);
             const decoded = jwtService.validateToken(token, serviceType);
+            // Password-reset tokens share the signing secret but must not work as access tokens
+            if (decoded?.purpose) throw new HttpError(HttpStatusCode.FORBIDDEN, 'Forbidden: Invalid token.');
             req.user = decoded;
             next();
         } catch (error) {
