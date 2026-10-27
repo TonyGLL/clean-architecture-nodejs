@@ -53,7 +53,7 @@ export class StripeWebhookController {
         try {
             switch (event.type) {
                 case 'payment_intent.succeeded':
-                    await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+                    await this.handlePaymentIntentSucceeded(event);
                     break;
                 case 'payment_intent.payment_failed':
                     await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
@@ -71,11 +71,20 @@ export class StripeWebhookController {
         res.status(HttpStatusCode.OK).json({ received: true });
     }
 
-    private async handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
+    private async handlePaymentIntentSucceeded(event: Stripe.Event) {
+        const intent = event.data.object as Stripe.PaymentIntent;
         const poolClient = await this.pool.connect();
 
         try {
             await poolClient.query('BEGIN');
+
+            // Idempotency: Stripe may deliver the same event more than once
+            const isNewEvent = await this.stripePaymentRepository.recordProviderEvent(event.id, event.type, event, poolClient);
+            if (!isNewEvent) {
+                await poolClient.query('ROLLBACK');
+                logger.info(`Stripe event ${event.id} already processed, skipping`);
+                return;
+            }
 
             // Change payment status to paid
             const updatePaymentStatusResponse = await this.stripePaymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);

@@ -34,6 +34,10 @@ COPY --from=builder /app/dist ./dist
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
+# Database migrations (run with `node scripts/migrate.js up`)
+COPY migrations ./migrations
+COPY scripts/migrate.js ./scripts/migrate.js
+
 # Run as the unprivileged user built into the node image
 USER node
 

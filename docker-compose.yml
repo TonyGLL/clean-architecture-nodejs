@@ -10,6 +10,26 @@ services:
       - '127.0.0.1:5432:5432'  # local access only (psql / init-db.sh)
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-root} -d $${POSTGRES_DB:-ca_nodejs}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - ca_nodejs_network
+
+  migrate:
+    image: ca_nodejs:0.0.13
+    container_name: ca_nodejs_migrate
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ['node', 'scripts/migrate.js', 'up']
+    env_file:
+      - dev.env
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - ca_nodejs_network
 
@@ -24,7 +44,8 @@ services:
     env_file:
       - dev.env
     depends_on:
-      - db
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./logs:/app/logs
     networks:

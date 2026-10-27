@@ -13,7 +13,7 @@ pnpm start            # node dist/main/server.js
 pnpm test             # jest (ts-jest, tests live in src/__tests__)
 pnpm jest src/__tests__/application/use-cases/auth.use-case.test.ts -t "test name"   # single test
 docker-compose up --build -d   # app + postgres + nginx (app reads env_file: dev.env)
-./scripts/init-db.sh           # runs src/db/schema.sql, inserts.sql, then every stored procedure (needs psql)
+pnpm migrate up                # node-pg-migrate via scripts/migrate.js (reads PSQL_* or DATABASE_URL); also `down 1`
 ```
 
 The project uses **pnpm** (version pinned in `packageManager`; commit `pnpm-lock.yaml`). Use `pnpm install --frozen-lockfile` in CI/Docker. Native build scripts are disabled in `pnpm-workspace.yaml` (`allowBuilds`). pnpm is strict, so every imported package (including `@types/*`) must be declared in `package.json`. 
@@ -29,7 +29,7 @@ Clean Architecture in `src/` (note the folder is spelled `infraestructure`):
 - `infraestructure/`: Postgres repositories (raw `pg`, no ORM), driven services (bcrypt, jwt, nodemailer, stripe), Express controllers/routes/middlewares/validators, IoC.
 - `main/`: `app.ts` builds Express, `server.ts` boots it (graceful shutdown on SIGTERM/SIGINT).
 - `cron/products.ts`: daily job (America/Mexico_City) syncing products from fakestoreapi.com; started from the `App` constructor.
-- `db/`: `schema.sql`, `inserts.sql`, and `stored-procedures/` (SQL functions called by repositories).
+- `migrations/` (repo root): plain-SQL node-pg-migrate files — schema, RBAC seed, stored procedures (SQL functions called by repositories). Change the DB only by adding a new migration; redefine a function with `CREATE OR REPLACE FUNCTION` in a new file. Compose runs them through the `migrate` service before the app.
 
 ### Dependency injection (Inversify)
 Everything is wired in `infraestructure/ioc/config.ts`: interfaces are bound via symbols in `domain/ioc.types.ts`, `application/ioc.types.ts` and `infraestructure/ioc/types.ts`; use cases and controllers are bound `toSelf()`. **Adding a use case/controller/repository requires a binding there**, and route files pull controllers with `container.get(...)` at import time. Middlewares also resolve services from the container.

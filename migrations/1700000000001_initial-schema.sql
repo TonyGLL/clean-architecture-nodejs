@@ -1,3 +1,4 @@
+-- Up Migration
 -- Tabla de clients
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
@@ -142,10 +143,10 @@ CREATE TABLE shopping_carts (
     id SERIAL PRIMARY KEY,
     client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     shipping_address_id INT REFERENCES addresses(id) ON DELETE SET NULL,
-    coupon_id INT REFERENCES coupons(id), -- cupón aplicado en la orden (nullable)
+    coupon_id INT, -- cupón (FK added after coupons is created) aplicado en la orden (nullable)
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')), -- Added 'pending_payment'
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned', 'pending_payment')) -- Added 'pending_payment'
 );
 
 -- Cart items table
@@ -308,3 +309,13 @@ CREATE INDEX idx_reviews_product_id ON reviews(product_id);
 CREATE INDEX idx_product_categories_product_id ON product_categories(product_id);
 CREATE INDEX idx_product_categories_category_id ON product_categories(category_id);
 CREATE INDEX idx_products_name_description_fts ON products USING gin(to_tsvector('spanish', name || ' ' || description));
+ALTER TABLE shopping_carts ADD CONSTRAINT shopping_carts_coupon_id_fkey FOREIGN KEY (coupon_id) REFERENCES coupons(id);
+
+-- Down Migration
+DO $$
+DECLARE t TEXT;
+BEGIN
+    FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'pgmigrations' LOOP
+        EXECUTE format('DROP TABLE IF EXISTS %I CASCADE', t);
+    END LOOP;
+END $$;

@@ -10,7 +10,7 @@ const payment = { order_id: 10, cart_id: 20, client_id: 30 };
 const build = () => {
     const poolClient = { query: jest.fn().mockResolvedValue({}), release: jest.fn() };
     const stripeService = { constructWebhookEvent: jest.fn() };
-    const stripePaymentRepository = { updatePaymentStatus: jest.fn().mockResolvedValue(payment) };
+    const stripePaymentRepository = { updatePaymentStatus: jest.fn().mockResolvedValue(payment), recordProviderEvent: jest.fn().mockResolvedValue(true) };
     const cartRepository = { updateCartStatus: jest.fn(), createCartFromLogin: jest.fn() };
     const orderRepository = { updateOrderStatus: jest.fn() };
     const couponRepository = { addCouponRedemption: jest.fn() };
@@ -77,6 +77,17 @@ describe('StripeWebhookController', () => {
 
         expect(poolClient.query).toHaveBeenCalledWith('ROLLBACK');
         expect(res.status).toHaveBeenCalledWith(500);
+    });
+
+    it('skips events that were already processed (idempotency)', async () => {
+        const { controller, stripeService, stripePaymentRepository, poolClient, orderRepository } = build();
+        stripeService.constructWebhookEvent.mockReturnValue(succeeded);
+        stripePaymentRepository.recordProviderEvent.mockResolvedValue(false);
+        const res = await call(controller);
+
+        expect(orderRepository.updateOrderStatus).not.toHaveBeenCalled();
+        expect(poolClient.query).toHaveBeenCalledWith('ROLLBACK');
+        expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('acknowledges unhandled event types', async () => {
