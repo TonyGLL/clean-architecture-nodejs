@@ -1,4 +1,5 @@
 
+import { Address } from "../../domain/entities/address";
 import { inject, injectable } from "inversify";
 import { IStripePaymentRepository } from "../../domain/repositories/stripe.payment.repository";
 import { DOMAIN_TYPES } from "../../domain/ioc.types";
@@ -13,6 +14,14 @@ import { INFRASTRUCTURE_TYPES } from "../../infraestructure/ioc/types";
 import { Pool } from "pg";
 import { Payment } from "../../domain/entities/payment";
 import { CreateOrderParams, IOrderRepository } from "../../domain/repositories/order.repository";
+
+/** Snapshot of an address as plain text, so the order keeps it even if the client edits or deletes the address later. */
+export const formatAddress = (address: Address | null): string => {
+    if (!address) return '';
+    return [address.address_line1, address.address_line2, address.city, address.state, address.postal_code, address.country]
+        .filter(Boolean)
+        .join(', ');
+};
 
 @injectable()
 export class AddPaymentMethodUseCase {
@@ -179,8 +188,8 @@ export class CreatePaymentIntentUseCase {
                 clientId: dto.clientId,
                 cart,
                 paymentMethod: dto.paymentMethodId!,
-                shippingAddress: "",
-                billingAddress: ""
+                shippingAddress: formatAddress(cart.address),
+                billingAddress: formatAddress(cart.address) // no separate billing address yet
             }
             const order = await this.orderRepository.createOrder(createOrderParams, poolClient);
 

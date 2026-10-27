@@ -12,7 +12,7 @@ const build = () => {
     const stripeService = { constructWebhookEvent: jest.fn() };
     const stripePaymentRepository = { updatePaymentStatus: jest.fn().mockResolvedValue(payment), recordProviderEvent: jest.fn().mockResolvedValue(true) };
     const cartRepository = { updateCartStatus: jest.fn(), createCartFromLogin: jest.fn() };
-    const orderRepository = { updateOrderStatus: jest.fn() };
+    const orderRepository = { markOrderPaid: jest.fn().mockResolvedValue(true) };
     const couponRepository = { addCouponRedemption: jest.fn() };
     const pool = { connect: jest.fn().mockResolvedValue(poolClient) };
 
@@ -50,7 +50,7 @@ describe('StripeWebhookController', () => {
         stripeService.constructWebhookEvent.mockReturnValue(succeeded);
         const res = await call(controller);
 
-        expect(orderRepository.updateOrderStatus).toHaveBeenCalledWith(10, 'succeeded', poolClient);
+        expect(orderRepository.markOrderPaid).toHaveBeenCalledWith(10, 'succeeded', poolClient);
         expect(cartRepository.updateCartStatus).toHaveBeenCalledWith(20, 'completed', poolClient);
         expect(couponRepository.addCouponRedemption).toHaveBeenCalledWith(20, 30, 10);
         expect(poolClient.query).toHaveBeenLastCalledWith('COMMIT');
@@ -61,7 +61,7 @@ describe('StripeWebhookController', () => {
     it('rolls back and answers 500 so Stripe retries when processing fails', async () => {
         const { controller, stripeService, poolClient, orderRepository } = build();
         stripeService.constructWebhookEvent.mockReturnValue(succeeded);
-        orderRepository.updateOrderStatus.mockRejectedValue(new Error('db down'));
+        orderRepository.markOrderPaid.mockRejectedValue(new Error('db down'));
         const res = await call(controller);
 
         expect(poolClient.query).toHaveBeenCalledWith('ROLLBACK');
@@ -85,8 +85,20 @@ describe('StripeWebhookController', () => {
         stripePaymentRepository.recordProviderEvent.mockResolvedValue(false);
         const res = await call(controller);
 
-        expect(orderRepository.updateOrderStatus).not.toHaveBeenCalled();
+        expect(orderRepository.markOrderPaid).not.toHaveBeenCalled();
         expect(poolClient.query).toHaveBeenCalledWith('ROLLBACK');
+        expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('keeps the event but skips fulfilment when the order is no longer pending (expired before payment)', async () => {
+        const { controller, stripeService, poolClient, orderRepository, cartRepository, couponRepository } = build();
+        stripeService.constructWebhookEvent.mockReturnValue(succeeded);
+        orderRepository.markOrderPaid.mockResolvedValue(false);
+        const res = await call(controller);
+
+        expect(cartRepository.updateCartStatus).not.toHaveBeenCalled();
+        expect(couponRepository.addCouponRedemption).not.toHaveBeenCalled();
+        expect(poolClient.query).toHaveBeenLastCalledWith('COMMIT');
         expect(res.status).toHaveBeenCalledWith(200);
     });
 

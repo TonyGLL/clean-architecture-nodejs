@@ -144,7 +144,7 @@ Nota: en `/payments/stripe`, las rutas `create-payment-intent`, `create-setup-in
 
 Detalles del paso B (`CreatePaymentIntentUseCase`):
 - Si el carrito ya tiene un PaymentIntent pendiente y reutilizable, se devuelve el mismo `clientSecret` (no se crean intents duplicados). Si ya fue exitoso, 409.
-- **La orden se crea en este momento**, en estado `pending`, y `createOrder` descuenta el stock con `UPDATE ... SET stock = stock - n WHERE stock >= n`, una operación atómica que impide vender más de lo disponible (si no alcanza, 409).
+- **La orden se crea en este momento**, en estado `pending`, con una copia en texto de la dirección de envío (`formatAddress`), y `createOrder` descuenta el stock con `UPDATE ... SET stock = stock - n WHERE stock >= n`, una operación atómica que impide vender más de lo disponible (si no alcanza, 409). Ese descuento es una **reserva** que dura `ORDER_RESERVATION_MINUTES` (ver 2.6).
 - Todo ocurre en una transacción; un fallo hace `ROLLBACK`.
 
 ### Webhook (`StripeWebhookController`)
@@ -152,14 +152,37 @@ Detalles del paso B (`CreatePaymentIntentUseCase`):
 1. Verifica la firma con `STRIPE_WEBHOOK_SECRET` sobre el cuerpo crudo (si falta o es inválida, 400).
 2. `payment_intent.succeeded` abre una transacción y:
    1. **Idempotencia:** inserta el `event.id` en `payment_provider_events`. Si ya existía, hace `ROLLBACK`, lo registra y responde 200 sin repetir efectos.
-   2. Marca el pago y la orden como `succeeded`.
+   2. Marca el pago como `succeeded` y la orden como pagada **solo si sigue `pending`** (`markOrderPaid`). Si la reserva ya había caducado, conserva el registro del evento, **no** completa el carrito ni canjea cupones y deja un log de error para revisar o reembolsar manualmente.
    3. Pasa el carrito a `completed` y crea uno nuevo para el cliente.
    4. Registra el canje del cupón.
    5. `COMMIT`.
 3. Cualquier error → `ROLLBACK`, log y respuesta **500** para que Stripe reintente (el evento no quedó registrado, así que el reintento se procesa).
-4. `payment_intent.payment_failed` solo se registra en el log (el carrito sigue activo y el cliente puede reintentar). Otros eventos se ignoran con 200.
+4. `payment_intent.payment_failed` solo se registra en el log (el carrito sigue activo y el cliente puede reintentar con la misma orden mientras dure la reserva). Otros eventos se ignoran con 200.
 
-## 2.6 Correos y cola
+## 2.6 Ciclo de vida de la orden
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: create-payment-intent (reserva stock)
+    pending --> succeeded: webhook payment_intent.succeeded
+    pending --> cancelled: el worker caduca la reserva (stock repuesto)
+    succeeded --> processing: admin
+    processing --> shipped: admin
+    shipped --> delivered: admin
+    cancelled --> [*]
+    delivered --> [*]
+```
+
+- **Reserva y caducidad.** Una orden `pending` retiene stock. Cada 5 minutos el worker (`cron/orders.ts`, con *advisory lock* `727002`) ejecuta `ExpirePendingOrdersUseCase` sobre las órdenes `pending` con más de `ORDER_RESERVATION_MINUTES` (30 por defecto, mínimo 5) y, para cada una:
+  1. Consulta el PaymentIntent en Stripe. Si está `succeeded` o `processing`, **la omite**: el dinero se está moviendo y la resuelve el webhook.
+  2. Si no está cancelado, lo **cancela en Stripe** (así un pago tardío no puede completarse para una orden sin stock).
+  3. En una transacción: orden → `cancelled`, devuelve las cantidades a `products.stock` y marca el pago como `canceled` (`cancelPendingOrder`, que solo actúa si la orden sigue `pending`).
+  Un fallo en una orden se registra y no detiene a las demás; se reintenta en la siguiente pasada.
+- **Reintento del cliente.** Tras caducar, el carrito sigue activo con sus productos. Si el cliente vuelve a pagar se crea una orden y un PaymentIntent nuevos (y se vuelve a reservar stock; si ya no hay, 409). La consulta del carrito ignora los pagos `canceled`/`failed`.
+- **Cumplimiento (admin).** Solo se permiten estas transiciones: `succeeded → processing → shipped → delivered`. Cualquier otra responde 409. Las órdenes `pending` no se cancelan a mano: lo hace la caducidad. No hay reembolsos automáticos.
+- **Consulta.** El cliente ve sus órdenes en `GET /client/orders` y `GET /client/orders/:id` (una orden ajena responde 404, no 403). El admin las lista, ve el detalle y cambia el estado (ver 03-api).
+
+## 2.7 Correos y cola
 
 ```mermaid
 flowchart LR
@@ -175,7 +198,7 @@ flowchart LR
 - El caso de uso no cambia: depende de `IMailService` y el contenedor decide la implementación.
 - Encolar tiene un tope de 5 s; si Redis no responde, la petición falla en lugar de colgarse.
 
-## 2.7 Otros módulos
+## 2.8 Otros módulos
 
 | Módulo | Qué hace | Notas |
 | --- | --- | --- |

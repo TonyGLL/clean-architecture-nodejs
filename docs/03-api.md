@@ -47,6 +47,12 @@ Leyenda de acceso: 🌐 público · 🔑 JWT cliente · 🛡️ JWT admin + perm
 
 ¹ Requieren carrito activo con dirección de envío (`checkCartMiddleware`).
 
+### Órdenes 🔑
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/client/orders` | Órdenes del cliente (más recientes primero) con sus productos |
+| GET | `/client/orders/:id` | Detalle; una orden ajena responde 404 |
+
 ### Direcciones 🔑
 `GET /client/address` · `POST /client/address` · `GET|PUT|DELETE /client/address/:id` · `PATCH /client/address/default/:id`
 
@@ -69,7 +75,7 @@ Leyenda de acceso: 🌐 público · 🔑 JWT cliente · 🛡️ JWT admin + perm
 | `catalogs` | `/admin/catalogs/modules`: `GET`, `GET /:id`, `POST`, `PUT /:id`, `DELETE /:id` |
 | `reviews` | `GET /admin/reviews/:productId`, `PATCH /admin/reviews/:productId/:status` (moderar), `DELETE /admin/reviews/:reviewId` |
 | `coupons` | `GET /admin/coupons`, `POST`, `PATCH /:couponId` |
-| `orders` | `GET /admin/orders` (filtros `page`, `limit`, `search`, `status`, `start_date`, `end_date`) |
+| `orders` | `GET /admin/orders` (filtros `page`, `limit`, `search`, `status`, `start_date`, `end_date`), `GET /admin/orders/:id`, `PATCH /admin/orders/:id/status` con `{ "status": "processing" \| "shipped" \| "delivered" }` (solo transiciones válidas, si no 409) |
 
 El permiso exigido depende del método: `GET→can_read`, `POST→can_write`, `PUT/PATCH→can_update`, `DELETE→can_delete`.
 

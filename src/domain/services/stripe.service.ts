@@ -49,6 +49,15 @@ export interface IStripeService {
     retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
 
     /**
+     * Cancels a PaymentIntent so it can no longer be paid (used when an order reservation expires).
+     *
+     * @name cancelPaymentIntent
+     * @param {string} paymentIntentId - The ID of the PaymentIntent to cancel.
+     * @returns {Promise<Stripe.Response<Stripe.PaymentIntent>>} The canceled PaymentIntent.
+     */
+    cancelPaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>>;
+
+    /**
      * Attaches a payment method to a customer in Stripe.
      *
      * @name attachPaymentMethod

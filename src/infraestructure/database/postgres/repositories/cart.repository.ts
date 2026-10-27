@@ -138,7 +138,7 @@ export class PostgresCartRepository implements ICartRepository {
                 LEFT JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_categories pc ON pc.product_id = p.id
                 LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN payments pm ON pm.cart_id = sc.id
+                LEFT JOIN payments pm ON pm.cart_id = sc.id AND pm.status NOT IN ('canceled', 'failed')
                 LEFT JOIN addresses a ON sc.shipping_address_id = a.id
                 LEFT JOIN coupons cp ON sc.coupon_id = cp.id
                 WHERE sc.client_id = $1 AND sc.status = 'active'

@@ -1,7 +1,7 @@
 
 import { Pool, PoolClient } from 'pg';
 import { inject, injectable } from 'inversify';
-import { IOrderRepository, CreateOrderParams } from '../../../../domain/repositories/order.repository';
+import { IOrderRepository, CreateOrderParams, ExpiredOrder } from '../../../../domain/repositories/order.repository';
 import { Order, OrderItem } from '../../../../domain/entities/order';
 import { INFRASTRUCTURE_TYPES } from '../../../ioc/types';
 import { HttpError } from '../../../../domain/errors/http.error';
@@ -16,8 +16,6 @@ export class PostgresOrderRepository implements IOrderRepository {
         try {
             const { page, limit, search, status, start_date, end_date } = dto;
             const offset = (page - 1) * limit;
-            const client = await this.pool.connect();
-
             let baseQuery = 'SELECT * FROM orders';
             const conditions: string[] = [];
             const values: any[] = [];
@@ -52,12 +50,12 @@ export class PostgresOrderRepository implements IOrderRepository {
             baseQuery += ` LIMIT $${valueIndex} OFFSET $${valueIndex + 1}`;
 
             const queryTotal = `SELECT COUNT(*) FROM orders` + (conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '');
-            const totalResult = await client.query(queryTotal, values.slice(0, valueIndex - 1));
+            const totalResult = await this.pool.query(queryTotal, values.slice(0, valueIndex - 1));
             const total = parseInt(totalResult.rows[0].count, 10);
 
             values.push(limit, offset);
 
-            const { rows } = await client.query<Order>(baseQuery, values);
+            const { rows } = await this.pool.query<Order>(baseQuery, values);
             return { total, orders: rows };
         } catch (error) {
             throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Error fetching orders: ${(error as Error).message}`);
@@ -210,5 +208,48 @@ export class PostgresOrderRepository implements IOrderRepository {
         // A full Order object reconstruction might be needed depending on use case.
         const orderData = result.rows[0];
         return await this.findOrderById(orderData.id); // Re-fetch to include items
+    }
+
+    public async markOrderPaid(orderId: number, status: string, poolClient: PoolClient): Promise<boolean> {
+        const result = await poolClient.query(
+            `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 AND status = 'pending' RETURNING id`,
+            [status, orderId]
+        );
+        return (result.rowCount ?? 0) > 0;
+    }
+
+    public async findExpiredPendingOrders(olderThanMinutes: number, limit: number): Promise<ExpiredOrder[]> {
+        const { rows } = await this.pool.query(
+            `SELECT o.id AS order_id, p.external_payment_id
+             FROM orders o
+             LEFT JOIN payments p ON p.order_id = o.id
+             WHERE o.status = 'pending' AND o.created_at < NOW() - make_interval(mins => $1)
+             ORDER BY o.created_at
+             LIMIT $2`,
+            [olderThanMinutes, limit]
+        );
+        return rows.map(row => ({ orderId: row.order_id, paymentIntentId: row.external_payment_id }));
+    }
+
+    public async cancelPendingOrder(orderId: number, poolClient: PoolClient): Promise<boolean> {
+        // The status guard makes this safe against a concurrent payment confirmation
+        const cancelled = await poolClient.query(
+            `UPDATE orders SET status = 'cancelled', updated_at = NOW() WHERE id = $1 AND status = 'pending' RETURNING id`,
+            [orderId]
+        );
+        if (cancelled.rowCount === 0) return false;
+
+        await poolClient.query(
+            `UPDATE products p SET stock = p.stock + oi.quantity, updated_at = NOW()
+             FROM order_items oi
+             WHERE oi.order_id = $1 AND p.id = oi.product_id`,
+            [orderId]
+        );
+        await poolClient.query(
+            `UPDATE payments SET status = 'canceled', updated_at = NOW()
+             WHERE order_id = $1 AND status IN ('pending', 'requires_action', 'requires_confirmation')`,
+            [orderId]
+        );
+        return true;
     }
 }

@@ -12,6 +12,7 @@ Se validan con zod al arrancar (`src/infraestructure/config/env.ts`); si falta u
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | sí | Envío de correo (`secure` se activa con puerto 465) |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET` | sí | Credenciales de Stripe |
 | `REDIS_URL` | no | Activa cola de correos y rate limit compartido (`redis://redis:6379` en Compose) |
+| `ORDER_RESERVATION_MINUTES` | no (30, mínimo 5) | Minutos que una orden sin pagar retiene stock antes de que el worker la cancele |
 | `CORS_ORIGIN` | no (`http://localhost:4200`) | Origen permitido por CORS |
 | `LOG_LEVEL` | no | `debug` por defecto en desarrollo, `info` en producción |
 | `LOG_TO_FILE` | no | `true` para escribir además archivos rotativos en `logs/` |
@@ -76,6 +77,7 @@ Jest + ts-jest, tests en `src/__tests__/`. Los casos de uso se prueban con depen
 | Admin recibe 403 en un endpoint | Ningún rol del usuario tiene el permiso del método en ese módulo | Revisa `role_permissions`; recuerda que los roles van en el JWT (reloguear) |
 | Los correos no llegan | El worker no corre, `REDIS_URL` mal puesto o SMTP rechaza | Revisa logs `Mail job … failed`; los trabajos fallidos se reintentan 5 veces |
 | El webhook devuelve 400 | Firma inválida: `STRIPE_WEBHOOK_SECRET` incorrecto o cuerpo alterado por un proxy | Verifica el secreto del endpoint en Stripe; el cuerpo debe llegar crudo |
+| Aparece el log "succeeded but order … is not pending" | Un pago llegó después de que la reserva caducara | Reembolsa el pago en Stripe o revisa el pedido a mano (es una situación rara: la caducidad cancela antes el PaymentIntent) |
 | El webhook devuelve 500 | Falló la transacción; Stripe reintentará | Busca el `event.id` en los logs |
 | `pnpm install` falla con `ERR_PNPM_IGNORED_BUILDS` | Dependencia nueva con script de build | Decide en `pnpm-workspace.yaml` (`allowBuilds`) |
 | 429 en login | Rate limit de autenticación | Espera 15 minutos; con varias réplicas necesitas Redis para un límite coherente |

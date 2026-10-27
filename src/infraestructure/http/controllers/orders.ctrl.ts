@@ -1,12 +1,14 @@
 import { NextFunction, Request, Response } from "express";
-import { GetAllOrdersUseCase } from "../../../application/use-cases/order.use-case";
+import { GetAllOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from "../../../application/use-cases/order.use-case";
 import { injectable, inject } from "inversify";
 import { GetAllOrdersDTO } from "../../../application/dtos/order.dto";
 
 @injectable()
 export class OrdersController {
     constructor(
-        @inject(GetAllOrdersUseCase) private getAllOrdersUseCase: GetAllOrdersUseCase) { }
+        @inject(GetAllOrdersUseCase) private getAllOrdersUseCase: GetAllOrdersUseCase,
+        @inject(GetOrderByIdUseCase) private getOrderByIdUseCase: GetOrderByIdUseCase,
+        @inject(UpdateOrderStatusUseCase) private updateOrderStatusUseCase: UpdateOrderStatusUseCase) { }
 
     public getAllOrders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
@@ -22,6 +24,24 @@ export class OrdersController {
             };
 
             const [statusCode, data] = await this.getAllOrdersUseCase.execute(dto);
+            res.status(statusCode).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public getOrderById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const [statusCode, data] = await this.getOrderByIdUseCase.execute({ orderId: Number(req.params.id) });
+            res.status(statusCode).json(data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public updateOrderStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const [statusCode, data] = await this.updateOrderStatusUseCase.execute({ orderId: Number(req.params.id), status: req.body.status });
             res.status(statusCode).json(data);
         } catch (error) {
             next(error);

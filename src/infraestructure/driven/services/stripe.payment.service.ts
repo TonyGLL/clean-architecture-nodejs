@@ -39,6 +39,14 @@ export class StripePaymentService implements IStripeService {
         }
     }
 
+    public async cancelPaymentIntent(paymentIntentId: string): Promise<Stripe.Response<Stripe.PaymentIntent>> {
+        try {
+            return await this.stripe.paymentIntents.cancel(paymentIntentId);
+        } catch (error: any) {
+            throw new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, `Stripe cancel payment intent failed: ${error.message}`);
+        }
+    }
+
     public async attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<Stripe.Response<Stripe.PaymentMethod>> {
         try {
             return await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });

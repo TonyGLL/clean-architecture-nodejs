@@ -54,7 +54,7 @@ import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, Update
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 import { AddProductToCartUseCase, ApplyCouponToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase, RemoveCouponFromCartUseCase } from '../../application/use-cases/cart.use-case';
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
-import { GetAllOrdersUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
+import { ExpirePendingOrdersUseCase, GetAllOrdersUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 import { AddProductToWishlistUseCase, CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase, RemoveProductFromWishlistUseCase, UpdateWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
 import { CreateCouponUseCase, GetCouponsUseCase, UpdateCouponUseCase } from '../../application/use-cases/coupons.use-case';
@@ -75,6 +75,7 @@ import { CreateReviewUseCase, DeleteReviewByAdminUseCase, DeleteReviewUseCase, G
 import { ReviewsController } from '../http/controllers/reviews.ctrl';
 import { CouponsController } from '../http/controllers/coupons.ctrl';
 import { OrdersController } from '../http/controllers/orders.ctrl';
+import { ClientOrdersController } from '../http/controllers/client.orders.ctrl';
 
 const container = new Container();
 
@@ -158,6 +159,7 @@ container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf();
 container.bind<GetClientOrdersUseCase>(GetClientOrdersUseCase).toSelf();
 container.bind<UpdateOrderStatusUseCase>(UpdateOrderStatusUseCase).toSelf();
 container.bind<GetAllOrdersUseCase>(GetAllOrdersUseCase).toSelf();
+container.bind<ExpirePendingOrdersUseCase>(ExpirePendingOrdersUseCase).toSelf();
 // Address
 container.bind<CreateAddressUseCase>(CreateAddressUseCase).toSelf();
 container.bind<GetAddressByClientIdUseCase>(GetAddressByClientIdUseCase).toSelf();
@@ -199,5 +201,6 @@ container.bind<WishlistController>(WishlistController).toSelf();
 container.bind<ReviewsController>(ReviewsController).toSelf();
 container.bind<CouponsController>(CouponsController).toSelf();
 container.bind<OrdersController>(OrdersController).toSelf();
+container.bind<ClientOrdersController>(ClientOrdersController).toSelf();
 
 export { container };
