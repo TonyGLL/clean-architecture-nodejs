@@ -12,7 +12,7 @@ router
     .use(authRateLimiter)
     .post('/login', loginValidator, expressValidatorErrors, controller.login)
     .post('/send-email', sendEmailValidator, expressValidatorErrors, controller.sendEmail)
-    .post('/restore-password', restorePasswordValidator, expressValidatorErrors, controller.restorePassword)
+    .post('/restore-password/:token', restorePasswordValidator, expressValidatorErrors, controller.restorePassword)
     ;
 
 export default router;
