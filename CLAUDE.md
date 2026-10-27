@@ -23,6 +23,8 @@ Env vars are validated with zod in `src/infraestructure/config/env.ts`; the proc
 
 ## Architecture
 
+Full human-oriented documentation (flows, API catalog, DB, operations, known limitations) lives in `docs/`; keep it in sync when behavior changes.
+
 Clean Architecture in `src/` (note the folder is spelled `infraestructure`):
 
 - `domain/`: entities, repository/service **interfaces**, `HttpError`, status codes.
