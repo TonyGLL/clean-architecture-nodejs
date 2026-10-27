@@ -10,6 +10,7 @@ import Stripe from "stripe";
 import { INFRASTRUCTURE_TYPES } from "../../ioc/types";
 import { Pool } from "pg";
 import { IOrderRepository } from "../../../domain/repositories/order.repository";
+import { logger } from "../../config/winston";
 import { ICouponsRepository } from "../../../domain/repositories/coupons.repository";
 
 @injectable()
@@ -25,9 +26,6 @@ export class StripeWebhookController {
         @inject(INFRASTRUCTURE_TYPES.PostgresPool) private pool: Pool
     ) {
         this.webhookSecret = config.STRIPE_WEBHOOK_SECRET;
-        if (!this.webhookSecret) {
-            console.warn("STRIPE_WEBHOOK_SECRET is not set. Webhook processing will fail signature verification.");
-        }
     }
 
     public handleWebhook = async (req: Request, res: Response, _: NextFunction): Promise<void> => {
@@ -36,33 +34,38 @@ export class StripeWebhookController {
 
         try {
             if (!sig) {
-                console.error("Webhook error: Missing Stripe signature.");
+                logger.warn("Webhook error: Missing Stripe signature.");
                 res.status(HttpStatusCode.BAD_REQUEST).send(`Webhook Error: Missing signature`);
                 return;
             }
             if (!this.webhookSecret) {
-                console.error("Webhook error: Missing webhook secret configuration.");
+                logger.error("Webhook error: Missing webhook secret configuration.");
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send(`Webhook Error: Server configuration error`);
                 return;
             }
             event = this.stripeService.constructWebhookEvent(req.body, sig, this.webhookSecret);
         } catch (err: any) {
-            console.error(`Webhook signature verification failed: ${err.message}`);
+            logger.warn(`Webhook signature verification failed: ${err.message}`);
             res.status(HttpStatusCode.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
             return;
         }
 
-        switch (event.type) {
-            case 'payment_intent.succeeded':
-                const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
-                await this.handlePaymentIntentSucceeded(paymentIntentSucceeded);
-                break;
-            case 'payment_intent.payment_failed':
-                const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
-                await this.handlePaymentIntentFailed(paymentIntentFailed);
-                break;
-            default:
-                console.error(`Unhandled event type ${event.type}`);
+        try {
+            switch (event.type) {
+                case 'payment_intent.succeeded':
+                    await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+                    break;
+                case 'payment_intent.payment_failed':
+                    await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+                    break;
+                default:
+                    logger.info(`Unhandled Stripe event type ${event.type}`);
+            }
+        } catch (error) {
+            // Respond 5xx so Stripe retries the delivery instead of silently losing the payment confirmation
+            logger.error(`Stripe webhook ${event.id} (${event.type}) failed`, { error });
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ received: false });
+            return;
         }
 
         res.status(HttpStatusCode.OK).json({ received: true });
@@ -77,39 +80,31 @@ export class StripeWebhookController {
             // Change payment status to paid
             const updatePaymentStatusResponse = await this.stripePaymentRepository.updatePaymentStatus(intent.id, intent.status, poolClient);
 
+            if (!updatePaymentStatusResponse) throw new Error(`No payment record found for payment intent ${intent.id}`);
+            const { order_id, cart_id, client_id } = updatePaymentStatusResponse;
+
             // Change order status
-            await this.orderRepository.updateOrderStatus(updatePaymentStatusResponse?.order_id!, intent.status, poolClient);
+            await this.orderRepository.updateOrderStatus(order_id, intent.status, poolClient);
 
             // Change active cart status to completed
-            await this.cartRepository.updateCartStatus(updatePaymentStatusResponse?.cart_id!, 'completed', poolClient);
+            await this.cartRepository.updateCartStatus(cart_id, 'completed', poolClient);
 
             // Create a new cart for the current user
-            await this.cartRepository.createCartFromLogin(updatePaymentStatusResponse?.client_id!, poolClient);
+            await this.cartRepository.createCartFromLogin(client_id, poolClient);
 
-            await this.couponRepository.addCouponRedemption(updatePaymentStatusResponse?.cart_id!, updatePaymentStatusResponse?.client_id!, updatePaymentStatusResponse?.order_id!);
+            await this.couponRepository.addCouponRedemption(cart_id, client_id, order_id);
 
             await poolClient.query('COMMIT');
         } catch (error) {
             await poolClient.query('ROLLBACK');
+            throw error;
         } finally {
             poolClient.release();
         }
     }
 
     private async handlePaymentIntentFailed(intent: Stripe.PaymentIntent) {
-        /* await this.paymentRepository.updatePaymentStatus(
-            intent.id,
-            intent.status,
-            intent.id,
-            undefined,
-            undefined,
-            intent.payment_method_configuration_details
-        );
-
-        const cart = await this.cartRepository.findCartByPaymentIntent(intent.id);
-        if (cart) {
-            await this.cartRepository.updateCartStatus(cart.id, 'active');
-            await this.cartRepository.updateCartPaymentIntent(cart.id, null);
-        } */
+        // The cart stays active so the client can retry with another payment method.
+        logger.warn(`Payment intent ${intent.id} failed`, { reason: intent.last_payment_error?.message });
     }
 }

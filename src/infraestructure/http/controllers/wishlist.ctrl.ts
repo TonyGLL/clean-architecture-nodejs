@@ -30,7 +30,7 @@ export class WishlistController {
             const clientId = req.user.id;
             const dto: GetWishlistDetailsDTO = {
                 clientId,
-                wishlistId: parseInt(req.params.id)
+                wishlistId: Number(req.params.id)
             };
             const [status, data] = await this.getClientWishlistDetailsUseCase.execute(dto);
             res.status(status).json(data);

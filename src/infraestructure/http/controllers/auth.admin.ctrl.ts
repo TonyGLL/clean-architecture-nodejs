@@ -32,7 +32,7 @@ export class AuthAdminController {
     public restorePassword = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email, password } = req.body;
-            const { token } = req.params;
+            const { token } = req.params as { token: string };
             const [status, data] = await this.restorePasswordUseCase.execute({ email, password, token }, 'admin');
             res.status(status).json(data);
         } catch (error) {

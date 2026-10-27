@@ -52,7 +52,7 @@ import { GetAllModulesUseCase, GetModuleByIdUseCase, CreateModuleUseCase, Update
 import { GetProductsByCategoryUseCase, SearchProductsUseCase, UpsertProductsWithCategoriesUseCase, GetProductDetailsUseCase } from '../../application/use-cases/products.use-case';
 import { AddProductToCartUseCase, ApplyCouponToCartUseCase, ClearCartUseCase, DeleteProductFromCartUseCase, GetCartUseCase, LinkAddressToCartUseCase, RemoveCouponFromCartUseCase } from '../../application/use-cases/cart.use-case';
 import { AddPaymentMethodUseCase, CreatePaymentIntentUseCase, CreateSetupIntentUseCase, DeletePaymentMethodUseCase, GetClientPaymentMethodsUseCase } from '../../application/use-cases/stripe.use-case';
-import { CreateOrderUseCase, GetAllOrdersUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
+import { GetAllOrdersUseCase, GetClientOrdersUseCase, GetOrderByIdUseCase, UpdateOrderStatusUseCase } from '../../application/use-cases/order.use-case';
 import { CreateAddressUseCase, DeleteAddressUseCase, GetAddressByClientIdUseCase, GetAddressByIdUseCase, SetDefaultAddressUseCase, UpdateAddressUseCase } from '../../application/use-cases/address.use-case';
 import { AddProductToWishlistUseCase, CreateWishlistUseCase, DeleteWishlistUseCase, GetClientWishlistDetailsUseCase, GetClientWishlistsUseCase, RemoveProductFromWishlistUseCase, UpdateWishlistUseCase } from '../../application/use-cases/wishlist.use-case';
 import { CreateCouponUseCase, GetCouponsUseCase, UpdateCouponUseCase } from '../../application/use-cases/coupons.use-case';
@@ -146,7 +146,6 @@ container.bind<CreatePaymentIntentUseCase>(CreatePaymentIntentUseCase).toSelf();
 container.bind<CreateSetupIntentUseCase>(CreateSetupIntentUseCase).toSelf();
 container.bind<AddPaymentMethodUseCase>(AddPaymentMethodUseCase).toSelf();
 // Order
-container.bind<CreateOrderUseCase>(CreateOrderUseCase).toSelf();
 container.bind<GetOrderByIdUseCase>(GetOrderByIdUseCase).toSelf();
 container.bind<GetClientOrdersUseCase>(GetClientOrdersUseCase).toSelf();
 container.bind<UpdateOrderStatusUseCase>(UpdateOrderStatusUseCase).toSelf();

@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import pool from "../../database/postgres/config";
 import { config } from "../../config/env";
+import { logger } from '../../config/winston';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/checkout', async (req: Request, res: Response) => {
             paymentMethods: paymentMethods
         });
     } catch (error) {
-        console.error('ERROR in /checkout:', error instanceof Error ? error.message : error);
+        logger.error('ERROR in /checkout', { error });
         res.status(500).send('Internal error');
     }
 });
@@ -32,7 +33,7 @@ router.get('/add-card', (req: Request, res: Response) => {
             stripePublicKey: config.STRIPE_PUBLIC_KEY
         });
     } catch (error) {
-        console.error('ERROR in /add-card:', error instanceof Error ? error.message : error);
+        logger.error('ERROR in /add-card', { error });
         res.status(500).send('Internal error');
     }
 });

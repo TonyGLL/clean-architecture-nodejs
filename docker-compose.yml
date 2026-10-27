@@ -3,11 +3,11 @@ services:
     image: postgres:17-alpine
     container_name: postgres_ca_nodejs
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: ca_nodejs
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ca_nodejs}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'  # local access only (psql / init-db.sh)
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

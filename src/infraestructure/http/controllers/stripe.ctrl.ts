@@ -26,7 +26,7 @@ export class StripeController {
     public deletePaymentMethod = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const clientId = req.user!.id;
-            const { paymentMethodId } = req.params; // Stripe Payment Method ID (pm_xxx)
+            const { paymentMethodId } = req.params as { paymentMethodId: string }; // Stripe Payment Method ID (pm_xxx)
 
             const dto: DeletePaymentMethodDTO = { clientId, paymentMethodId };
             const [status, data] = await this.deletePaymentMethodUseCase.execute(dto);
