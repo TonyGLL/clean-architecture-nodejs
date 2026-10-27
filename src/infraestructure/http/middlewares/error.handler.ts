@@ -1,5 +1,6 @@
 import { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { HttpError } from "../../../domain/errors/http.error";
+import { getRequestId } from "./request-context.middleware";
 import { logger } from "../../config/winston";
 
 export const errorHandler: ErrorRequestHandler = (err: Error, _: Request, res: Response, __: NextFunction): any => {
@@ -10,5 +11,5 @@ export const errorHandler: ErrorRequestHandler = (err: Error, _: Request, res: R
     // Log unexpected errors for debugging in production
     logger.error(err);
 
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Server error', requestId: getRequestId() });
 }

@@ -51,5 +51,5 @@ Errors: throw `HttpError(status, message)`; `error.handler.ts` serializes it, an
 ### Views
 EJS pages (`src/views`, routes in `views.routes.ts`) and static assets in `public/` (served by nginx in Docker) support the Stripe checkout/add-card flow; helmet CSP is allow-listed for `js.stripe.com` in `main/app.ts`.
 
-### Logging and probes
-Use the winston `logger` (`infraestructure/config/winston.ts`), not `console`. In production it emits JSON to stdout; rotating files in `logs/` only with `LOG_TO_FILE=true`. `LOG_LEVEL` overrides the level. `/health` is liveness; `/ready` runs `SELECT 1` against Postgres (and pings Redis if enabled) and returns 503 when a dependency is down.
+### Logging, tracing and probes
+Each request gets an `X-Request-Id` (`request-context.middleware.ts`, AsyncLocalStorage) that winston adds to every log line and the 500 body returns. Prometheus metrics (`http_request_duration_seconds` + default process metrics) are served at `/metrics`; nginx returns 404 for it, so scrape from inside the network. Use the winston `logger` (`infraestructure/config/winston.ts`), not `console`. In production it emits JSON to stdout; rotating files in `logs/` only with `LOG_TO_FILE=true`. `LOG_LEVEL` overrides the level. `/health` is liveness; `/ready` runs `SELECT 1` against Postgres (and pings Redis if enabled) and returns 503 when a dependency is down.

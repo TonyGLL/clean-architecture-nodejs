@@ -2,6 +2,14 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 import fs from 'fs';
+import { getRequestId } from '../http/middlewares/request-context.middleware';
+
+// Adds the current request id (if any) to every log line
+const withRequestId = winston.format(info => {
+  const requestId = getRequestId();
+  if (requestId) info.requestId = requestId;
+  return info;
+});
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -34,6 +42,7 @@ if (process.env.LOG_TO_FILE === 'true') {
 }
 
 export const logger = winston.createLogger({
+  format: withRequestId(),
   level: process.env.LOG_LEVEL ?? (isProduction ? 'info' : 'debug'),
   transports,
 });
