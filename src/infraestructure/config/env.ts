@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Define the schema for the environment variables
 const envSchema = z.object({
     PORT: z.coerce.number().default(3000),
+    CORS_ORIGIN: z.string().default('http://localhost:4200'),
     JWT_SECRET_CLIENT: z.string().min(1, "JWT_SECRET_CLIENT is required"),
     JWT_SECRET_ADMIN: z.string().min(1, "JWT_SECRET_ADMIN is required"),
     PSQL_DB: z.string().min(1, "PSQL_DB is required"),

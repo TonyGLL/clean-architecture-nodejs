@@ -35,7 +35,7 @@ export class RoleController {
 
     public getPermissionsByRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.getPermissionsByRoleUseCase.execute(id);
             res.status(status).json(result);
         } catch (error) {
@@ -55,7 +55,7 @@ export class RoleController {
 
     public updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.updateRoleUseCase.execute(id, req.body);
             res.status(status).json(result);
         } catch (error) {
@@ -65,7 +65,7 @@ export class RoleController {
 
     public deleteRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.deleteRoleUseCase.execute(id);
             res.status(status).json(result);
         } catch (error) {

@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { config } from "../../config/env";
+import { logger } from "../../config/winston";
 
 const { PSQL_USER, PSQL_HOST, PSQL_DB, PSQL_PASSWORD, PSQL_PORT } = config;
 
@@ -12,7 +13,7 @@ const pool = new Pool({
 });
 
 pool.on('connect', () => {
-    console.log('DB Postgresql connected');
+    logger.info('DB Postgresql connected');
 });
 
 export default pool;

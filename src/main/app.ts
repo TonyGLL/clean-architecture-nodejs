@@ -8,12 +8,16 @@ import { errorHandler } from "../infraestructure/http/middlewares/error.handler"
 import { productsJob } from "../cron/products";
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 import path from 'path';
+import { config } from '../infraestructure/config/env';
+import pool from '../infraestructure/database/postgres/config';
 
 class App {
     public express: Application;
 
     constructor() {
         this.express = express();
+        // Behind nginx / a cloud load balancer: trust the first proxy so req.ip (rate limiting) is the real client IP
+        this.express.set('trust proxy', 1);
         this.middlewares();
         this.routes();
         this.express.use(errorHandler);
@@ -26,11 +30,11 @@ class App {
 
     private middlewares(): void {
         const corsOptions = {
-            origin: 'http://localhost:4200'
+            origin: config.CORS_ORIGIN
         };
         this.express.use(cors(corsOptions));
         this.express.use(express.urlencoded({ extended: true }));
-        this.express.use(morgan('dev'));
+        this.express.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
         this.express.use(helmet({
             contentSecurityPolicy: {
                 directives: {
@@ -52,6 +56,16 @@ class App {
                 ok: true,
                 cronJobStatus: productsJob.isActive ? 'running' : 'stopped'
             })
+        });
+
+        // Readiness: verifies the DB is reachable (use for load balancer / orchestrator probes)
+        this.express.use('/ready', async (_: Request, res: Response) => {
+            try {
+                await pool.query('SELECT 1');
+                res.status(200).json({ ok: true });
+            } catch {
+                res.status(503).json({ ok: false });
+            }
         });
 
         this.express.use('/api/v1/stripe-webhooks', stripeWebhookRouter);

@@ -62,31 +62,6 @@ export interface ICartRepository {
     updateCartStatus(cartId: number, status: string, poolClient: PoolClient): Promise<void>;
 
     /**
-     * @method updateCartPaymentIntent
-     * @param {number} cartId
-     * @param {(string | null)} paymentIntentId
-     * @returns {Promise<void>}
-     * @desc Update cart payment intent
-     */
-    updateCartPaymentIntent(cartId: number, paymentIntentId: string | null): Promise<void>;
-
-    /**
-     * @method findCartByPaymentIntent
-     * @param {string} paymentIntentId
-     * @returns {Promise<Cart | null>}
-     * @desc Find a cart by payment intent
-     */
-    findCartByPaymentIntent(paymentIntentId: string): Promise<Cart | null>;
-
-    /**
-     * @method getOrCreateActiveCartByClientId
-     * @param {number} clientId
-     * @returns {Promise<Cart>}
-     * @desc Get or create an active cart for a client
-     */
-    getOrCreateActiveCartByClientId(clientId: number): Promise<Cart>;
-
-    /**
      * @method linkAddressToCart
      * @param {number} addressId
      * @param {number} clientId

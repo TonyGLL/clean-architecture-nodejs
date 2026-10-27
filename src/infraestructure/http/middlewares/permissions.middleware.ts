@@ -54,35 +54,20 @@ export const permissionsMiddleware = async (req: Request, _: Response, next: Nex
         const module = await modulesRepository.getModuleByName(moduleName);
         if (!module || !module.id) throw new HttpError(HttpStatusCode.NOT_FOUND, `Module ${moduleName} not found`);
 
-        // 5. Verify the permissions for all user roles concurrently.
+        // 5. Access is granted if ANY of the user's roles has the required permission.
         const roleRepository = container.get<IRoleRepository>(DOMAIN_TYPES.IRoleRepository);
+        const moduleId = Number.parseInt(module.id);
 
-        // Create a list of promises. Each promise resolves if the role has the permission and is rejected if it does not.
-        const permissionChecks = user.roles.map(roleId => {
-            return new Promise<void>((resolve, reject) => {
-                roleRepository.getPermissionByRoleAndModule({ roleId, moduleId: Number.parseInt(module.id!) })
-                    .then(permissions => {
-                        if (permissions && permissions[requiredPermission]) {
-                            resolve(); // Permission found, the promise is fulfilled.
-                        } else {
-                            reject(); // Permission not found or null, the promise is rejected.
-                        }
-                    })
-                    .catch(reject); // Propagate query errors.
-            });
-        });
+        const grants = await Promise.all(user.roles.map(async roleId => {
+            const permissions = await roleRepository.getPermissionByRoleAndModule({ roleId, moduleId });
+            return Boolean(permissions && permissions[requiredPermission]);
+        }));
 
-        try {
-            // Promise.all() will resolve as soon as all permission verification promises are fulfilled.
-            await Promise.all(permissionChecks);
-            next();
-        } catch (error) {
-            // If Promise.all() is rejected, it means that NONE of the promises were fulfilled.
-            // That is, at least 1 role did not have the required permission.
-            // The Promise.all error is an AggregateError, but we do not need its details here.
-            next(new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`));
+        if (!grants.some(Boolean)) {
+            throw new HttpError(HttpStatusCode.FORBIDDEN, `Forbidden: You do not have permission to ${httpMethod} on module ${moduleName}`);
         }
 
+        next();
     } catch (error) {
         // If any error occurs during the process, it is passed to the next error handling middleware.
         next(error);

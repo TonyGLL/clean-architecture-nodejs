@@ -5,6 +5,7 @@ import { DOMAIN_TYPES } from '../domain/ioc.types';
 import { IProductsRepository } from '../domain/repositories/products.repository';
 import { container } from '../infraestructure/ioc/config';
 import { Product } from '../domain/entities/product';
+import { logger } from '../infraestructure/config/winston';
 
 // Función para sanitizar texto (remover caracteres no ASCII)
 const sanitizeText = (text: string): string => {
@@ -37,7 +38,7 @@ export const fetchExternalData = async () => {
         const productsRepository = container.get<IProductsRepository>(DOMAIN_TYPES.IProductsRepository);
         await productsRepository.upsertProductsWithCategories(products);
     } catch (error) {
-        console.error('Error en la petición:', error instanceof Error ? error.message : error);
+        logger.error('Product sync failed', { error });
         throw error; // Opcional: relanzar el error si necesitas manejo adicional
     }
 }

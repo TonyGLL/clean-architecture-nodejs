@@ -7,6 +7,7 @@ import { CreateRoleDTO, GetPermissionsResponeDTO, GetRolesDTO, GetRolesResponseD
 import { HttpError } from '../../domain/errors/http.error';
 import { Pool } from 'pg';
 import { INFRASTRUCTURE_TYPES } from '../../infraestructure/ioc/types';
+import { logger } from "../../infraestructure/config/winston";
 
 @injectable()
 export class GetRolesUseCase {
@@ -58,7 +59,7 @@ export class CreateRoleUseCase {
             return [HttpStatusCode.CREATED, newRole];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in CreateRoleUseCase:', error);
+            logger.error('Error in CreateRoleUseCase', { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
@@ -90,7 +91,7 @@ export class UpdateRoleUseCase {
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in UpdateRoleUseCase:', error);
+            logger.error('Error in UpdateRoleUseCase', { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();
@@ -118,7 +119,7 @@ export class DeleteRoleUseCase {
             return [HttpStatusCode.NO_CONTENT, {}];
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error in DeleteRoleUseCase:', error);
+            logger.error('Error in DeleteRoleUseCase', { error });
             throw error instanceof HttpError ? error : new HttpError(HttpStatusCode.INTERNAL_SERVER_ERROR, 'Unknown error');
         } finally {
             client.release();

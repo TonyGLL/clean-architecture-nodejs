@@ -23,7 +23,7 @@ export class ModulesController {
 
     public getModuleById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.getModuleByIdUseCase.execute(id);
             res.status(status).json(result);
         } catch (error) {
@@ -42,7 +42,7 @@ export class ModulesController {
 
     public updateModule = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.updateModuleUseCase.execute(id, req.body);
             res.status(status).json(result);
         } catch (error) {
@@ -52,7 +52,7 @@ export class ModulesController {
 
     public deleteModule = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { id } = req.params;
+            const { id } = req.params as { id: string };
             const [status, result] = await this.deleteModuleUseCase.execute(id);
             res.status(status).json(result);
         } catch (error) {
