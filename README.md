@@ -145,9 +145,13 @@ The `.env` file holds all configuration variables. Key variables include:
 | `STRIPE_SECRET_KEY`   | Your Stripe secret key.                            |
 | `STRIPE_WEBHOOK_SECRET`| Your Stripe webhook signing secret.                |
 
+## Documentación técnica
+
+La explicación completa del funcionamiento (arquitectura, flujos, API, base de datos, operación y limitaciones) está en [`docs/`](docs/README.md).
+
 ## 8. API Endpoints
 
-All API endpoints are prefixed with `/api/v1`. For a detailed list of all endpoints, please refer to the existing `README.md` or the source code in `src/infrastructure/http/routes`.
+All API endpoints are prefixed with `/api/v1`. For a detailed list of all endpoints, see [`docs/03-api.md`](docs/03-api.md) or the source code in `src/infraestructure/http/routes`.
 
 ## 9. Running Tests
 
