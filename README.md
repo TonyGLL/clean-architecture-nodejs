@@ -82,7 +82,7 @@ Security is a primary focus of this application. The following measures have bee
 Before you begin, ensure you have the following installed:
 
 *   **Docker and Docker Compose:** For running the containerized application stack.
-*   **Node.js and npm:** (Optional, for local development outside of Docker).
+*   **Node.js and pnpm:** (Optional, for local development outside of Docker; `corepack enable` or `npm i -g pnpm`).
 *   **Git:** For cloning the repository.
 
 ## 6. Getting Started
@@ -151,7 +151,7 @@ All API endpoints are prefixed with `/api/v1`. For a detailed list of all endpoi
 To run the automated tests, execute the following command:
 
 ```bash
-npm test
+pnpm test
 ```
 
 ## 10. Contributing

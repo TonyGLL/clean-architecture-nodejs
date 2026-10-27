@@ -6,7 +6,7 @@
             "request": "launch",
             "envFile": "${workspaceFolder}/local.env",
             "runtimeArgs": ["run-script", "dev"],
-            "runtimeExecutable": "npm",
+            "runtimeExecutable": "pnpm",
             "skipFiles": ["<node_internals>/**"],
             "type": "node",
             "console": "integratedTerminal"

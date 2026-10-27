@@ -8,6 +8,5 @@ nodemon.json
 docker-compose.yml
 Dockerfile
 .gitignore
-package-lock.json
 src/db
 jest.*

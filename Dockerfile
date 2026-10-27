@@ -1,21 +1,21 @@
 # Stage 1: Build
 FROM node:lts-alpine AS builder
 WORKDIR /app
+RUN npm install -g pnpm@12.15.0
 
-# Copy package.json and lock file, then install dependencies
-COPY package*.json ./
-RUN npm install --force
+# Install dependencies from the lockfile (reproducible), then build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Copy the rest of the source code and build it
 COPY . .
-RUN npm run build
+RUN pnpm build
 
-# Stage 2: Prune unnecessary dependencies for production
+# Stage 2: Production-only dependencies
 FROM node:lts-alpine AS production-deps
 WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-RUN npm prune --production
+RUN npm install -g pnpm@12.15.0
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 # Stage 3: Runtime
 FROM node:lts-alpine AS runner
@@ -26,13 +26,16 @@ ENV PORT=3000
 
 # Create log directory and set strict permissions
 RUN mkdir -p /app/logs && \
-    chown root:root /app/logs && \
+    chown node:node /app/logs && \
     chmod 700 /app/logs
 
 # Copy build output and production dependencies
 COPY --from=builder /app/dist ./dist
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+
+# Run as the unprivileged user built into the node image
+USER node
 
 # Simple healthcheck
 HEALTHCHECK --interval=30s --timeout=3s \
