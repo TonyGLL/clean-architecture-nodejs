@@ -207,4 +207,4 @@ flowchart LR
 | Reseñas | Una por cliente y producto (`UNIQUE`), rating 1–5; el admin puede moderar (`approved`) o borrar | Índices por producto/rating |
 | Cupones (admin) | Crear, listar, actualizar | Tipos `percentage` y `fixed_amount` |
 | Usuarios, roles y módulos (admin) | CRUD completo y asignación de roles | Protegido por RBAC |
-| Vistas EJS | `/checkout` y `/add-card` para probar Stripe.js | Ver limitaciones |
+| Vistas EJS | `/checkout`, `/add-card` y `/success` para probar Stripe.js en un navegador | Apagadas por defecto (`ENABLE_DEMO_VIEWS=true` para activarlas). No contienen datos: las tarjetas guardadas y todos los pagos pasan por la API con el JWT del cliente, guardado en `localStorage` por `public/js/auth.js` |

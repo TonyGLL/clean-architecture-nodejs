@@ -12,6 +12,7 @@ Se validan con zod al arrancar (`src/infraestructure/config/env.ts`); si falta u
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | sí | Envío de correo (`secure` se activa con puerto 465) |
 | `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET` | sí | Credenciales de Stripe |
 | `REDIS_URL` | no | Activa cola de correos y rate limit compartido (`redis://redis:6379` en Compose) |
+| `ENABLE_DEMO_VIEWS` | no (`false`) | `true` sirve las páginas de demostración de Stripe.js (`/checkout`, `/add-card`, `/success`). Mantenlo apagado fuera de local |
 | `ORDER_RESERVATION_MINUTES` | no (30, mínimo 5) | Minutos que una orden sin pagar retiene stock antes de que el worker la cancele |
 | `CORS_ORIGIN` | no (`http://localhost:4200`) | Origen permitido por CORS |
 | `LOG_LEVEL` | no | `debug` por defecto en desarrollo, `info` en producción |
@@ -26,7 +27,7 @@ Para `scripts/migrate.js` basta con las `PSQL_*` o con `DATABASE_URL`.
 pnpm install --frozen-lockfile   # instalación reproducible
 pnpm dev                         # API con nodemon + ts-node
 pnpm dev:worker                  # worker con ts-node
-pnpm build && pnpm start         # compilar y ejecutar la API
+pnpm build && pnpm start         # compilar (tsc + copia de src/views a dist/views) y ejecutar la API
 pnpm worker                      # ejecutar el worker compilado
 pnpm migrate up                  # migraciones
 ADMIN_EMAIL=… ADMIN_PASSWORD=… pnpm create-admin   # primer administrador

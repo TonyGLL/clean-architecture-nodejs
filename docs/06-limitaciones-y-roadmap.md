@@ -7,8 +7,6 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 ### Seguridad
 | # | Tema | Detalle |
 | --- | --- | --- |
-| S1 | Vista `/checkout` sin autenticación | `views.routes.ts` usa `clientId = 1` fijo y lista sus tarjetas (marca, últimos 4 y ids de Stripe) a cualquiera. Es una página de pruebas de Stripe.js; no debe exponerse tal cual en un entorno real |
-| S2 | Vista `/success` sin plantilla | Renderiza `success`, pero `src/views/` solo tiene `checkout` y `add-card`: responde 500 |
 | S3 | Sesiones | JWT de 1 hora, sin *refresh token* ni revocación/cierre de sesión. Los roles de un admin viajan en el token y no se refrescan hasta volver a iniciar sesión |
 | S4 | Rate limit parcial | Solo protege las rutas de autenticación; el resto de la API no tiene límite |
 | S5 | Sin TLS en nginx | `nginx.conf` escucha en el puerto 80 y envía HSTS, pero no termina TLS. Hazlo en el balanceador de la nube o añade certificados |
@@ -37,13 +35,12 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 
 Orden recomendado, de lo que desbloquea más a lo que pule:
 
-1. **Decidir qué hacer con las vistas EJS** (S1, S2): protegerlas con el JWT, deshabilitarlas en producción o sustituirlas por un front real.
-2. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
-3. **Reglas de cupones completas** (F4).
-4. **Reembolsos y cancelación de órdenes pagadas** (F3): `refunds.create` en Stripe y reposición de stock.
-5. **Pruebas de integración con Testcontainers** (Q1): repositorios y migraciones sobre un Postgres real, incluida la prueba `up → down → up`.
-6. **Imágenes de producto en almacenamiento de objetos** (F8): URLs prefirmadas (S3 o equivalente).
-7. **Trazas con OpenTelemetry** sobre el `X-Request-Id` y las métricas ya existentes.
+1. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
+2. **Reglas de cupones completas** (F4).
+3. **Reembolsos y cancelación de órdenes pagadas** (F3): `refunds.create` en Stripe y reposición de stock.
+4. **Pruebas de integración con Testcontainers** (Q1): repositorios y migraciones sobre un Postgres real, incluida la prueba `up → down → up`.
+5. **Imágenes de producto en almacenamiento de objetos** (F8): URLs prefirmadas (S3 o equivalente).
+6. **Trazas con OpenTelemetry** sobre el `X-Request-Id` y las métricas ya existentes.
 
 ## 6.3 Hoja de ruta hacia cloud
 

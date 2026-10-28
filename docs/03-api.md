@@ -4,7 +4,7 @@ Base: `/api/v1`. Dos árboles independientes:
 
 - `/api/v1/client/*`: tienda. Autenticación: JWT de cliente.
 - `/api/v1/admin/*`: panel. Autenticación: JWT de administrador **más** permiso RBAC por módulo.
-- Fuera del prefijo: `/health`, `/ready`, `/metrics`, `/api/v1/stripe-webhooks` (Stripe) y las vistas EJS `/checkout`, `/add-card`, `/success`.
+- Fuera del prefijo: `/health`, `/ready`, `/metrics`, `/api/v1/stripe-webhooks` (Stripe) y, solo con `ENABLE_DEMO_VIEWS=true`, las vistas EJS de demostración `/checkout`, `/add-card`, `/success` (con el flag apagado responden 404).
 
 Leyenda de acceso: 🌐 público · 🔑 JWT cliente · 🛡️ JWT admin + permiso del módulo (el módulo es el primer segmento tras `/admin`).
 

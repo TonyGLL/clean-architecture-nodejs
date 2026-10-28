@@ -6,7 +6,7 @@
   "author": "Tony Gonzalez",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-assets.js",
     "dev": "nodemon",
     "start": "node dist/main/server.js",
     "typecheck": "tsc --noEmit",

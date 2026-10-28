@@ -6,6 +6,8 @@ const envSchema = z.object({
     REDIS_URL: z.string().optional(), // enables the mail queue and the shared rate-limit store
     // Minutes an unpaid order may hold stock before the worker cancels it and releases the stock
     ORDER_RESERVATION_MINUTES: z.coerce.number().int().min(5).default(30),
+    // Serves the EJS demo pages (/checkout, /add-card, /success) used to try Stripe.js locally. Off by default.
+    ENABLE_DEMO_VIEWS: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
     CORS_ORIGIN: z.string().default('http://localhost:4200'),
     JWT_SECRET_CLIENT: z.string().min(1, "JWT_SECRET_CLIENT is required"),
     JWT_SECRET_ADMIN: z.string().min(1, "JWT_SECRET_ADMIN is required"),

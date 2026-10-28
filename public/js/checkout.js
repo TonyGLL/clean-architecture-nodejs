@@ -37,12 +37,55 @@ function addEventListeners() {
   document.addEventListener('loginSuccess', checkLoginStatus);
   payBtn.addEventListener('click', handlePayment);
 
-  document.querySelectorAll('input[name="payment-method"]').forEach((radio) => {
-    radio.addEventListener('change', handlePaymentMethodChange);
+  // Saved cards are rendered after login, so listen on the container (event delegation)
+  checkoutContent.addEventListener('change', (event) => {
+    if (event.target.name === 'payment-method') handlePaymentMethodChange(event);
   });
 
-  document.querySelectorAll('.delete-method-button').forEach((btn) => {
-    btn.addEventListener('click', handleDeletePaymentMethod);
+  checkoutContent.addEventListener('click', (event) => {
+    if (event.target.closest('.delete-method-button')) handleDeletePaymentMethod(event);
+  });
+}
+
+// Renders the client's saved cards (fetched with the JWT) using DOM APIs, never innerHTML
+async function loadSavedCards() {
+  const container = document.getElementById('saved-cards');
+  container.replaceChildren();
+
+  const response = await fetch('/api/v1/client/payments/stripe/payment-methods', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+  });
+  if (!response.ok) return;
+
+  const methods = await response.json();
+  methods.forEach((method) => {
+    const row = document.createElement('div');
+    row.className = 'radio-group payment-method-row';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'display: flex; align-items: center; gap: 10px; flex-grow: 1;';
+
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'payment-method';
+    radio.id = `pm_${method.id}`;
+    radio.value = method.external_payment_method_id;
+
+    const label = document.createElement('label');
+    label.htmlFor = radio.id;
+    label.textContent = `${method.card_brand} ending in ${method.card_last4}`;
+
+    left.append(radio, label);
+
+    const remove = document.createElement('button');
+    remove.className = 'delete-method-button';
+    remove.dataset.methodId = method.external_payment_method_id;
+    remove.title = 'Delete card';
+    remove.setAttribute('aria-label', 'Delete card');
+    remove.textContent = '🗑️';
+
+    row.append(left, remove);
+    container.append(row);
   });
 }
 
@@ -69,9 +112,15 @@ function checkLoginStatus() {
 // ===================================================================
 // =================== HERE IS THE MAIN CHANGE ===================
 // ===================================================================
-function showCheckoutContent() {
+async function showCheckoutContent() {
   loginPrompt.classList.add('hidden');
   checkoutContent.classList.remove('hidden');
+
+  try {
+    await loadSavedCards();
+  } catch (error) {
+    showError('Could not load your saved cards.');
+  }
 
   // BEFORE: You used a dispatchEvent() which was unreliable.
 
@@ -245,7 +294,7 @@ function handleStripeResult({ error, paymentIntent }) {
 
 async function handleDeletePaymentMethod(event) {
   event.preventDefault();
-  const button = event.currentTarget;
+  const button = event.target.closest('.delete-method-button');
   const methodId = button.dataset.methodId;
 
   const confirmed = confirm(
@@ -283,8 +332,9 @@ async function handleDeletePaymentMethod(event) {
     const selected = document.querySelector(
       'input[name="payment-method"]:checked'
     );
-    if (!selected || selected.id === methodId) {
+    if (!selected) {
       document.getElementById('pm_new').checked = true;
+      handlePaymentMethodChange({ target: document.getElementById('pm_new') });
     }
   } catch (error) {
     showError(error.message);

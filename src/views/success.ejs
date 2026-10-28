@@ -1,0 +1,11 @@
+<%- include('partials/header', { title: 'Payment received' }) %>
+
+<body>
+  <div class="container">
+    <h2>Thank you!</h2>
+    <p>Your payment was received.<% if (orderId) { %> Order reference: <strong><%= orderId %></strong>.<% } %></p>
+    <p>The order is confirmed once the payment provider notifies the server.</p>
+    <a href="/checkout">Back to checkout</a>
+  </div>
+</body>
+</html>

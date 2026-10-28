@@ -1,46 +1,24 @@
 import { Request, Response, Router } from "express";
-import pool from "../../database/postgres/config";
 import { config } from "../../config/env";
-import { logger } from '../../config/winston';
 
+/**
+ * Demo pages to try the Stripe.js flow in a browser. Only mounted when ENABLE_DEMO_VIEWS=true (see main/app.ts).
+ * The pages hold no data: saved cards and every payment action go through the authenticated API
+ * with the client's JWT (public/js/*.js).
+ */
 const router = Router();
 
-// Checkout page
-router.get('/checkout', async (req: Request, res: Response) => {
-    try {
-        // In a real app, you would get the clientId from the session/token
-        // For the example, we hardcode it or pass it as a query param
-        const clientId = 1;
-        const { rows: paymentMethods } = await pool.query(
-            `SELECT id, card_brand, card_last4, external_payment_method_id FROM payment_methods WHERE client_id = $1`,
-            [clientId]
-        );
-
-        res.render('checkout', {
-            stripePublicKey: config.STRIPE_PUBLIC_KEY,
-            paymentMethods: paymentMethods
-        });
-    } catch (error) {
-        logger.error('ERROR in /checkout', { error });
-        res.status(500).send('Internal error');
-    }
+router.get('/checkout', (_: Request, res: Response) => {
+    res.render('checkout', { stripePublicKey: config.STRIPE_PUBLIC_KEY });
 });
 
-// Page to add card
-router.get('/add-card', (req: Request, res: Response) => {
-    try {
-        res.render('add-card', {
-            stripePublicKey: config.STRIPE_PUBLIC_KEY
-        });
-    } catch (error) {
-        logger.error('ERROR in /add-card', { error });
-        res.status(500).send('Internal error');
-    }
+router.get('/add-card', (_: Request, res: Response) => {
+    res.render('add-card', { stripePublicKey: config.STRIPE_PUBLIC_KEY });
 });
 
-// Success page
 router.get('/success', (req: Request, res: Response) => {
-    res.render('success', { orderId: req.query.order_id });
+    const orderId = typeof req.query.order_id === 'string' ? req.query.order_id : '';
+    res.render('success', { orderId });
 });
 
 export default router;
