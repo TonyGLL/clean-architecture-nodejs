@@ -10,6 +10,7 @@ import { errorHandler } from "../infraestructure/http/middlewares/error.handler"
 import stripeWebhookRouter from '../infraestructure/http/routes/stripe.webhook.routes';
 import path from 'path';
 import { config } from '../infraestructure/config/env';
+import { logger } from '../infraestructure/config/winston';
 import { getRedis, isRedisEnabled, withTimeout } from '../infraestructure/queue/redis';
 import pool from '../infraestructure/database/postgres/config';
 
@@ -83,7 +84,10 @@ class App {
         const publicPath = path.join(__dirname, '../../public');
         this.express.use(express.static(publicPath));
 
-        this.express.use('/', viewsRouter);
+        if (config.ENABLE_DEMO_VIEWS) {
+            logger.warn('ENABLE_DEMO_VIEWS is on: serving the Stripe demo pages (/checkout, /add-card, /success)');
+            this.express.use('/', viewsRouter);
+        }
 
         this.express.use('/api/v1', mainRouter);
     }

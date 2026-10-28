@@ -15,34 +15,8 @@
     <div id="checkout-content" class="hidden">
       <h2>Select a payment method</h2>
 
-      <!-- List of saved cards -->
-      <% if (typeof paymentMethods !== 'undefined' && paymentMethods.length > 0) { %>
-        <% paymentMethods.forEach(function(method) { %>
-          <div class="radio-group payment-method-row">
-            <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
-              <input
-                type="radio"
-                name="payment-method"
-                id="pm_<%= method.id %>"
-                value="<%= method.external_payment_method_id %>"
-              />
-              <label for="pm_<%= method.id %>">
-                <%= method.card_brand %> ending in <%= method.card_last4 %>
-              </label>
-            </div>
-
-            <!-- Button to delete method -->
-            <button
-              class="delete-method-button"
-              data-method-id="<%= method.external_payment_method_id %>"
-              title="Delete card"
-              aria-label="Delete card"
-            >
-              🗑️
-            </button>
-          </div>
-        <% }); %>
-      <% } %>
+      <!-- Saved cards: loaded by checkout.js from the authenticated API -->
+      <div id="saved-cards"></div>
 
       <!-- Option for new card -->
       <div class="radio-group">
