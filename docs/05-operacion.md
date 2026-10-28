@@ -29,6 +29,7 @@ pnpm dev:worker                  # worker con ts-node
 pnpm build && pnpm start         # compilar y ejecutar la API
 pnpm worker                      # ejecutar el worker compilado
 pnpm migrate up                  # migraciones
+ADMIN_EMAIL=… ADMIN_PASSWORD=… pnpm create-admin   # primer administrador
 pnpm typecheck && pnpm lint && pnpm test
 pnpm jest ruta/al/test.ts -t "nombre"   # un solo test
 docker-compose up --build -d     # stack completo
@@ -36,12 +37,16 @@ docker-compose up --build -d     # stack completo
 
 pnpm está fijado en `packageManager` y los scripts nativos de dependencias están desactivados en `pnpm-workspace.yaml` (`allowBuilds`). pnpm es estricto: todo paquete importado (incluidos los `@types/*`) debe estar declarado en `package.json`.
 
+### Primer administrador
+
+`scripts/create-admin.js` crea un usuario con el rol `SuperAdmin` (requiere haber ejecutado las migraciones). Lee `ADMIN_EMAIL` y `ADMIN_PASSWORD` del entorno (no de argumentos, para que no queden en el historial del shell ni en `ps`); opcionales: `ADMIN_NAME`, `ADMIN_LAST_NAME`, `ADMIN_ROLE` y `ADMIN_RESET_PASSWORD=true`. La contraseña se valida con las mismas reglas de la API (8+ caracteres, minúscula, mayúscula, número y símbolo) y se guarda con bcrypt. Es **idempotente**: si el correo ya existe, vuelve a asignar el rol y conserva la contraseña salvo que pidas el reseteo. Todo ocurre en una transacción. En Compose: `docker compose run --rm -e ADMIN_EMAIL=… -e ADMIN_PASSWORD=… migrate node scripts/create-admin.js`. Usa las mismas variables `PSQL_*` (o `DATABASE_URL`) que `scripts/migrate.js`.
+
 ## 5.3 Docker
 
 `Dockerfile` en tres etapas: *builder* (instala y compila), *production-deps* (solo dependencias de producción con lockfile congelado) y *runner* (imagen final). La imagen final:
 
 - corre como el usuario sin privilegios `node`;
-- contiene `dist/`, `node_modules` de producción, `migrations/` y `scripts/migrate.js`;
+- contiene `dist/`, `node_modules` de producción, `migrations/` y los scripts `scripts/migrate.js` y `scripts/create-admin.js`;
 - incluye un `HEALTHCHECK` contra `/health`;
 - arranca la API por defecto; el worker usa `command: node dist/main/worker.js`.
 

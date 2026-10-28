@@ -14,6 +14,7 @@ pnpm worker           # node dist/main/worker.js (cron + mail queue consumer; `p
 pnpm test             # jest (ts-jest, tests live in src/__tests__)
 pnpm jest src/__tests__/application/use-cases/auth.use-case.test.ts -t "test name"   # single test
 docker-compose up --build -d   # app + postgres + nginx (app reads env_file: dev.env)
+ADMIN_EMAIL=a@b.co ADMIN_PASSWORD='S3cure!pass' pnpm create-admin   # first SuperAdmin (idempotent; run after migrations)
 pnpm migrate up                # node-pg-migrate via scripts/migrate.js (reads PSQL_* or DATABASE_URL); also `down 1`
 ```
 

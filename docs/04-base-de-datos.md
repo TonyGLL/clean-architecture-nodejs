@@ -84,7 +84,7 @@ Reglas de trabajo:
 - En Compose, el servicio `migrate` las ejecuta antes de levantar la API y el worker. En otros entornos, ejecútalas como paso previo del despliegue.
 - `pgmigrations` registra qué migraciones están aplicadas.
 
-> El primer usuario administrador **no se crea con ninguna migración**: hoy hay que insertarlo manualmente (hash bcrypt en `passwords` y una fila en `user_roles`). Ver [06-limitaciones-y-roadmap.md](06-limitaciones-y-roadmap.md).
+> Ninguna migración crea usuarios. El primer administrador se crea con `pnpm create-admin` (ver [05-operacion.md](05-operacion.md)).
 
 ## 4.3 Funciones almacenadas
 

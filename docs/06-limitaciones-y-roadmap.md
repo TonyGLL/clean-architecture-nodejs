@@ -20,7 +20,6 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 | --- | --- | --- |
 | F3 | Sin reembolsos ni cancelación de órdenes pagadas | Una orden pagada solo avanza (`processing → shipped → delivered`); cancelar y reembolsar es manual en Stripe. Si un pago llegara después de caducar la reserva, solo queda un log de error |
 | F4 | Cupones incompletos | `max_discount`, `valid_from` y `active` existen en la tabla pero no se validan al aplicar; un cupón de monto fijo puede superar el subtotal y dejar un total no positivo (Stripe rechazaría el cobro) |
-| F5 | Primer administrador | Ninguna migración ni script crea el primer usuario administrador; hay que insertarlo a mano (hash bcrypt en `passwords` + fila en `user_roles`) |
 | F6 | Módulo `products` sin rutas admin | El módulo y sus permisos existen, pero no hay endpoints administrativos de productos (el catálogo viene del cron) |
 | F7 | Divisa e impuestos fijos | IVA de 16 % y envío de 40 en la entidad `Cart`; la divisa llega del DTO del pago |
 | F8 | Catálogo de demostración | Los productos vienen de `fakestoreapi.com`; no hay gestión propia de productos ni subida de imágenes |
@@ -38,14 +37,13 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 
 Orden recomendado, de lo que desbloquea más a lo que pule:
 
-1. **Primer admin reproducible** (F5): script `scripts/create-admin.js` que lea email y contraseña de variables de entorno.
-2. **Decidir qué hacer con las vistas EJS** (S1, S2): protegerlas con el JWT, deshabilitarlas en producción o sustituirlas por un front real.
-3. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
-4. **Reglas de cupones completas** (F4).
-5. **Reembolsos y cancelación de órdenes pagadas** (F3): `refunds.create` en Stripe y reposición de stock.
-6. **Pruebas de integración con Testcontainers** (Q1): repositorios y migraciones sobre un Postgres real, incluida la prueba `up → down → up`.
-7. **Imágenes de producto en almacenamiento de objetos** (F8): URLs prefirmadas (S3 o equivalente).
-8. **Trazas con OpenTelemetry** sobre el `X-Request-Id` y las métricas ya existentes.
+1. **Decidir qué hacer con las vistas EJS** (S1, S2): protegerlas con el JWT, deshabilitarlas en producción o sustituirlas por un front real.
+2. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
+3. **Reglas de cupones completas** (F4).
+4. **Reembolsos y cancelación de órdenes pagadas** (F3): `refunds.create` en Stripe y reposición de stock.
+5. **Pruebas de integración con Testcontainers** (Q1): repositorios y migraciones sobre un Postgres real, incluida la prueba `up → down → up`.
+6. **Imágenes de producto en almacenamiento de objetos** (F8): URLs prefirmadas (S3 o equivalente).
+7. **Trazas con OpenTelemetry** sobre el `X-Request-Id` y las métricas ya existentes.
 
 ## 6.3 Hoja de ruta hacia cloud
 
