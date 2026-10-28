@@ -18,9 +18,11 @@ export class PostgresRoleRepository implements IRoleRepository {
 
         try {
             const [result] = (await this.pool.query('SELECT * FROM get_roles($1, $2, $3)', [page, limit, search])).rows;
+            // json_agg yields NULL (not []) for a page without rows, e.g. a page past the end
+            const roles = result.roles ?? [];
             const response: GetRolesResponseDTO = {
-                roles: result.roles,
-                total: result.roles.length ? parseInt(result.total || '0', 10) : 0
+                roles,
+                total: roles.length ? parseInt(result.total || '0', 10) : 0
             };
             return response;
         } catch (error) {

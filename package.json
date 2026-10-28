@@ -14,7 +14,8 @@
     "lint": "eslint src",
     "migrate": "node scripts/migrate.js",
     "worker": "node dist/main/worker.js",
-    "dev:worker": "ts-node --files src/main/worker.ts"
+    "dev:worker": "ts-node --files src/main/worker.ts",
+    "create-admin": "node scripts/create-admin.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

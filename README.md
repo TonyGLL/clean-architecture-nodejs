@@ -122,6 +122,17 @@ pnpm migrate create add-something --migration-file-language sql
 
 Migrations live in `migrations/` as plain SQL (`-- Up Migration` / `-- Down Migration`). Never edit an applied migration; add a new one (stored procedures are redefined with `CREATE OR REPLACE FUNCTION` in a new migration).
 
+### 5. Create the first administrator
+Nothing seeds a user, so create the first `SuperAdmin` once the migrations have run (credentials via environment variables, not arguments):
+
+```bash
+ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD='S3cure!pass' pnpm create-admin
+# inside the stack:
+docker compose run --rm -e ADMIN_EMAIL=admin@example.com -e ADMIN_PASSWORD='S3cure!pass' migrate node scripts/create-admin.js
+```
+
+The password must have 8+ characters with lowercase, uppercase, number and symbol. Running it again is safe: it keeps the existing password unless `ADMIN_RESET_PASSWORD=true`. Optional: `ADMIN_NAME`, `ADMIN_LAST_NAME`, `ADMIN_ROLE`.
+
 ## 7. Environment Configuration
 
 The `.env` file holds all configuration variables. Key variables include:

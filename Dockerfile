@@ -34,9 +34,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-# Database migrations (run with `node scripts/migrate.js up`)
+# Database migrations and first-admin script (`node scripts/migrate.js up`, `node scripts/create-admin.js`)
 COPY migrations ./migrations
-COPY scripts/migrate.js ./scripts/migrate.js
+COPY scripts/migrate.js scripts/create-admin.js scripts/db-url.js ./scripts/
 
 # Run as the unprivileged user built into the node image
 USER node
