@@ -92,8 +92,15 @@ export class StripeWebhookController {
             if (!updatePaymentStatusResponse) throw new Error(`No payment record found for payment intent ${intent.id}`);
             const { order_id, cart_id, client_id } = updatePaymentStatusResponse;
 
-            // Change order status
-            await this.orderRepository.updateOrderStatus(order_id, intent.status, poolClient);
+            // Change order status (only a pending order can be paid)
+            const orderPaid = await this.orderRepository.markOrderPaid(order_id, intent.status, poolClient);
+            if (!orderPaid) {
+                // The reservation expired (or the order was handled otherwise) before the money arrived.
+                // Keep the event/payment record, skip fulfilment and flag it for a manual refund.
+                logger.error(`Payment ${intent.id} succeeded but order ${order_id} is not pending: manual refund or review required`);
+                await poolClient.query('COMMIT');
+                return;
+            }
 
             // Change active cart status to completed
             await this.cartRepository.updateCartStatus(cart_id, 'completed', poolClient);

@@ -89,9 +89,9 @@ La misma imagen Docker ejecuta dos procesos distintos:
 | Proceso | Comando | Responsabilidad |
 | --- | --- | --- |
 | API | `node dist/main/server.js` (por defecto) | HTTP, apagado ordenado con SIGTERM/SIGINT |
-| Worker | `node dist/main/worker.js` | Cron de catálogo + consumidor de la cola de correos |
+| Worker | `node dist/main/worker.js` | Cron de catálogo, caducidad de reservas de órdenes y consumidor de la cola de correos |
 
-Separarlos permite escalar la API sin duplicar tareas programadas. Aun así, el cron usa un *advisory lock* de Postgres (`pg_try_advisory_lock`), de modo que si hay varias réplicas del worker solo una ejecuta la sincronización.
+Separarlos permite escalar la API sin duplicar tareas programadas. Aun así, cada trabajo programado usa un *advisory lock* de Postgres (`pg_try_advisory_lock`, ver `cron/advisory-lock.ts`), de modo que si hay varias réplicas del worker solo una lo ejecuta.
 
 ## 1.5 Topología de despliegue (Docker Compose)
 

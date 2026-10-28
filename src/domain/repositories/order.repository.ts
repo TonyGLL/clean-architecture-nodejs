@@ -16,6 +16,15 @@ export interface CreateOrderParams {
 }
 
 /**
+ * @interface ExpiredOrder
+ * @desc A pending order past its reservation window and its Stripe PaymentIntent (if any)
+ */
+export interface ExpiredOrder {
+    orderId: number;
+    paymentIntentId: string | null;
+}
+
+/**
  * @interface IOrderRepository
  * @desc Interface for order repository
  */
@@ -62,4 +71,32 @@ export interface IOrderRepository {
      * @desc Get all orders with pagination, filtering, and search
      */
     getAllOrders(dto: GetAllOrdersDTO): Promise<GetAllOrdersResponseDTO>;
+
+    /**
+     * @method markOrderPaid
+     * @param {number} orderId
+     * @param {string} status - Status to set (the provider's payment status, e.g. `succeeded`)
+     * @param {PoolClient} poolClient
+     * @returns {Promise<boolean>} false if the order was not `pending` (already paid or cancelled)
+     * @desc Moves a pending order to its paid status; never resurrects cancelled orders
+     */
+    markOrderPaid(orderId: number, status: string, poolClient: PoolClient): Promise<boolean>;
+
+    /**
+     * @method findExpiredPendingOrders
+     * @param {number} olderThanMinutes
+     * @param {number} limit
+     * @returns {Promise<ExpiredOrder[]>}
+     * @desc Pending orders whose stock reservation is older than the allowed window
+     */
+    findExpiredPendingOrders(olderThanMinutes: number, limit: number): Promise<ExpiredOrder[]>;
+
+    /**
+     * @method cancelPendingOrder
+     * @param {number} orderId
+     * @param {PoolClient} poolClient
+     * @returns {Promise<boolean>} false if the order was no longer pending
+     * @desc Cancels a pending order, returns its items to stock and cancels its unpaid payment record
+     */
+    cancelPendingOrder(orderId: number, poolClient: PoolClient): Promise<boolean>;
 }

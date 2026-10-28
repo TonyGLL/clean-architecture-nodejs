@@ -6,6 +6,7 @@ import addressRouter from './address.routes';
 import cartRouter from './cart.routes';
 import wishlistRouter from './wishlist.routes';
 import reviewsRouter from './reviews.routes';
+import clientOrdersRouter from './client.orders.routes';
 import { clientAuthMiddleware } from '../middlewares/auth.middleware';
 
 const mainClientRouter = Router();
@@ -21,6 +22,7 @@ mainClientRouter
     .use('/payments', paymentRouter)
     .use('/address', addressRouter)
     .use('/wishlist', wishlistRouter)
-    .use('/reviews', reviewsRouter);
+    .use('/reviews', reviewsRouter)
+    .use('/orders', clientOrdersRouter);
 
 export default mainClientRouter;

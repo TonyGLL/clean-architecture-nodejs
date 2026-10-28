@@ -18,9 +18,7 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 ### Funcionalidad
 | # | Tema | Detalle |
 | --- | --- | --- |
-| F1 | El stock se reserva al crear el PaymentIntent y no se libera | La orden `pending` y el descuento de stock ocurren en `create-payment-intent`. Si el cliente abandona o el pago falla, el stock queda descontado y la orden pendiente para siempre (`payment_failed` solo registra un log). Hace falta un trabajo en el worker que cancele órdenes pendientes caducadas y reponga stock |
-| F2 | Órdenes sin dirección | `createOrder` recibe `shippingAddress` y `billingAddress` como cadenas vacías, así que la orden no guarda una copia de la dirección de envío |
-| F3 | Casos de uso sin ruta | `GetOrderByIdUseCase`, `GetClientOrdersUseCase` y `UpdateOrderStatusUseCase` están registrados pero no tienen controlador ni ruta: los clientes no pueden consultar sus órdenes y los administradores solo pueden listarlas (`GET /admin/orders`) |
+| F3 | Sin reembolsos ni cancelación de órdenes pagadas | Una orden pagada solo avanza (`processing → shipped → delivered`); cancelar y reembolsar es manual en Stripe. Si un pago llegara después de caducar la reserva, solo queda un log de error |
 | F4 | Cupones incompletos | `max_discount`, `valid_from` y `active` existen en la tabla pero no se validan al aplicar; un cupón de monto fijo puede superar el subtotal y dejar un total no positivo (Stripe rechazaría el cobro) |
 | F5 | Primer administrador | Ninguna migración ni script crea el primer usuario administrador; hay que insertarlo a mano (hash bcrypt en `passwords` + fila en `user_roles`) |
 | F6 | Módulo `products` sin rutas admin | El módulo y sus permisos existen, pero no hay endpoints administrativos de productos (el catálogo viene del cron) |
@@ -40,11 +38,11 @@ Esta lista es deliberadamente honesta: son cosas que hoy **no** funcionan como c
 
 Orden recomendado, de lo que desbloquea más a lo que pule:
 
-1. **Cerrar el ciclo de vida de la orden** (F1, F2, F3): trabajo en el worker que caduca reservas, endpoints de órdenes para clientes y de cambio de estado para admin, y copia de la dirección en la orden.
-2. **Primer admin reproducible** (F5): script `scripts/create-admin.js` que lea email y contraseña de variables de entorno.
-3. **Decidir qué hacer con las vistas EJS** (S1, S2): protegerlas con el JWT, deshabilitarlas en producción o sustituirlas por un front real.
-4. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
-5. **Reglas de cupones completas** (F4).
+1. **Primer admin reproducible** (F5): script `scripts/create-admin.js` que lea email y contraseña de variables de entorno.
+2. **Decidir qué hacer con las vistas EJS** (S1, S2): protegerlas con el JWT, deshabilitarlas en producción o sustituirlas por un front real.
+3. **Sesiones** (S3): *refresh tokens* con rotación guardados en Redis o Postgres y endpoint de logout.
+4. **Reglas de cupones completas** (F4).
+5. **Reembolsos y cancelación de órdenes pagadas** (F3): `refunds.create` en Stripe y reposición de stock.
 6. **Pruebas de integración con Testcontainers** (Q1): repositorios y migraciones sobre un Postgres real, incluida la prueba `up → down → up`.
 7. **Imágenes de producto en almacenamiento de objetos** (F8): URLs prefirmadas (S3 o equivalente).
 8. **Trazas con OpenTelemetry** sobre el `X-Request-Id` y las métricas ya existentes.
